@@ -5,7 +5,7 @@ operator is responsible for loading the eBPF programs into the kernel
 and instruct them to log accesses to files. More specifically, the
 eBPF program will log calls to the kernel funcion `inode_persmission`
 which is called every time a process checks the permissions of an
-inode, which, for example, can happen when opening or reading a file.
+inode. This happens, for example, when opening or reading a file.
 The distributed nature of kubernetes clusters makes the design of the
 application more challenging, this repository explains the design
 considerations and proposes a possible solution.
@@ -17,7 +17,8 @@ on the kubernetes operator.
 # Status
 
 This project is divided into multiple developement sessions:
-- [DONE](https://github.com/San7o/hive-bpf/) setting up the eBPF program and loader outside kubernetes
+- [DONE](https://github.com/San7o/hive-bpf/) setting up the eBPF
+  program and loader outside kubernetes
 - [DONE] setting up the operator and reading the container's PIDs
 - [TODO] loading the eBPF program in kubernetes and tracing the files
 - [TODO] logging the captured information
@@ -31,7 +32,8 @@ This project is divided into multiple developement sessions:
 # Usage
 
 To use an operator, you need a kubernetes cluster. To create one with
-kind, you can use the script `registry-cluster.sh` which will create
+[kind](https://github.com/kubernetes-sigs/kind),
+you can use the script `registry-cluster.sh` which will create
 a cluster with one control node and one worker node. Additionally,
 It sets up a local docker registry to push the operator's image
 during developement. Note that you may need to use `sudo` to run the
@@ -83,24 +85,25 @@ with one of the logged PIDs.
 ## Getting the inode and device id
 
 The first challenge is getting the pair inode + device id of the file
-we want to trace. We need both to identify a real ""phisical"" file
+we want to trace. We need both to identify a real ""physical"" file
 because the inode is an identifier in a superblock, and different
-partitions have different superblocks therefore It is possible to have
+partitions have different superblocks. Therefore, It is possible to have
 different files in different partitions with the same inode. Moreover,
-containers often have some layers of separation between the host
-filesystem and the containerized filesystem and this problem can
+containers often have some ways of sandboxing between the host
+filesystem and the containerized filesystem so this problem can
 occur more often. 
 
 On a UNIX system, getting this information can be done by running the
 `stat(1)` command or calling `stat(2)` with the path of the file, this
-is the easy part. The hard part is to get the path.
+is the easy part. The hard part is to get the path itself.
 
 Considering that the operator lives inside a kubelet in a kubernetes
-cluster, we cannot assume that It can access all the files. In
-fact, It can read at most the filesystems in the kubelet where the
-operator lives. We cannot even assume that kubelets live in the same
-machine. This means that there must be an operator on each kubelet
-that accesses the filesystems of the pods present in Its kubelet. 
+cluster, we cannot assume that It can access all the filasystem's of
+all the pods. In fact, It can read at most the filesystems in the
+kubelet where the operator lives. We cannot even assume that kubelets
+live in the same machine. This means that there must be an operator on
+each kubelet that accesses the filesystems of the pods present in Its
+kubelet. 
 
 The next problem is how do we decide which pod we need to access and
 how. We will answer those two questions separately.
@@ -108,10 +111,10 @@ how. We will answer those two questions separately.
 ### How we decide which pod to access?
 
 First, we need to define how do we filter containers. This can be
-done throught custom kubernetes configurations, mainly by namespaces
+done throught custom kubernetes configurations, utually using namespaces
 and labels. This is something kubernetes understand so we need to
-query kubernetes itself for the pods that mach those filters. This
-is quite easy from a go kubernetes client, we just need to call the
+query kubernetes itself for the pods that match those filters. This
+is quite easy from a kubernetes client in go, we just need to call the
 right function:
 
 ```go
@@ -202,7 +205,7 @@ defer containerdClient.Close()
 ```
 
 Note that the container engine and kubernetes Pods are two separate
-things, but they are both identified from the same `containerID`,
+things, but containers are identified the same `containerID`,
 so we can get the `contianerID`s from the filtered Pods and pass them
 to the container runtime to get the PIDs.
 
