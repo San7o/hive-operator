@@ -205,7 +205,7 @@ defer containerdClient.Close()
 ```
 
 Note that the container engine and kubernetes Pods are two separate
-things, but containers are identified the same `containerID`,
+things, but containers are identified by the same `containerID`,
 so we can get the `contianerID`s from the filtered Pods and pass them
 to the container runtime to get the PIDs.
 
