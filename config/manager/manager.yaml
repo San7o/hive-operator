@@ -45,10 +45,6 @@ spec:
           - name: containerd-sock
             mountPath: /run/containerd/containerd.sock
             readOnly: false
-          - name: host-run
-            mountPath: /run
-          - name: host-var-run
-            mountPath: /var/run
           - name: proc
             mountPath: /host/proc
             readOnly: true
@@ -78,14 +74,6 @@ spec:
           hostPath:
             path: /run/containerd/containerd.sock
             type: Socket
-        - name: host-run
-          hostPath:
-            path: /run
-            type: Directory
-        - name: host-var-run
-          hostPath:
-            path: /var/run
-            type: Directory
         - name: proc
           hostPath:
             path: /proc

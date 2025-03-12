@@ -234,13 +234,13 @@ In particular, the operator performs the following actions in sequence:
 4. Read the (filtered) containers' PIDs
 5. Read the inodes + device id: this is done by calling `stat(2)`
        on the file in `/proc/<PID>/root/<FILE_PATH>` with the path
-	   provided in the operator's configuration and the PID from the
-	   previous point. Both inode number and device id are needed to
-	   uniquely identify a file because different filesystems may have
-	   two different files but the same inode number, valid for Its
-	   filesystem. To handle this cases, we need to save the device id.
-	   If the file does not exist, the operato will handle this
-	   gracefully and just log a message.
+	   provided in the operator's custom resource definition and the
+	   PID from the previous point. Both inode number and device id
+	   are needed to uniquely identify a file because different
+	   filesystems may have two different files but the same inode
+	   number, valid for Its filesystem. To handle this cases, we need
+	   to save the device id. If the file does not exist, the operato
+	   will handle this gracefully and just log a message.
 6. Add each inode + device id and other metadata to the database
        in the table identified by the running kernel identifier. The
 	   databse will make sure that there is only one entry per
@@ -254,6 +254,26 @@ In particular, the operator performs the following actions in sequence:
 Upon rescheduling of a pod, the process needs to be run again from
 step 4. Upon rescheduling of the operator itself, the process
 nedds to be run again from the start.
+
+The custom resource for the discover operator looks like the
+following:
+```
+apiVersion: hive.dynatrace.com/v1alpha1
+kind: Hive
+metadata:
+  labels:
+    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: hive-sample
+spec:
+  files:
+  - path: "/etc/passwd"
+	match:
+	  namespaces:
+	  - "hive-security"
+	  labels:
+	  - "security"
+```
 
 <a name="loader-operator"></a>
 ## Loader Operator

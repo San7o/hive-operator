@@ -29,7 +29,15 @@ type HiveSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Hive. Edit hive_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	//Foo string `json:"foo,omitempty"`
+
+	// Specifies how many informations to log
+	// Values are 0 errors, 1 info, 2 dump (all)
+	LogLevel int `json:"logLevel,omitempty"`
+	// Specifies which file to watch
+	File string `json:"File,omitempty"`
+	// Filters the pods inside this namespace
+	Namespace string `json:"Namespace,omitempty"`
 }
 
 // HiveStatus defines the observed state of Hive

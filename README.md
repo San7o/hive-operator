@@ -80,6 +80,8 @@ reading the inode of a file with the `stat` command located in a
 filesystem of a pod, by reading in `/host/proc/<PID>/root/<FILE>`,
 with one of the logged PIDs.
 
+To kill the operaton, you can run the script `kill-pod.sh`.
+
 # Writeup
 
 ## Getting the inode and device id

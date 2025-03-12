@@ -39,10 +39,17 @@ spec:
           spec:
             description: HiveSpec defines the desired state of Hive
             properties:
-              foo:
-                description: Foo is an example field of Hive. Edit hive_types.go to
-                  remove/update
+              File:
+                description: Specifies which file to watch
                 type: string
+              Namespace:
+                description: Filters the pods inside this namespace
+                type: string
+              logLevel:
+                description: |-
+                  Specifies how many informations to log
+                  Values are 0 errors, 1 info, 2 dump (all)
+                type: integer
             type: object
           status:
             description: HiveStatus defines the observed state of Hive
