@@ -48,12 +48,15 @@ that are in the `security` namespace.
 <a name="components"></a>
 ## Components
 
-The application is composed of multiple components that interact with
-eachother, kubernetes or the operating systems. Those are:
-- discover operator: collects identifying data about the files to check.
-- loader operator: loads the eBPF program into the kernel.
-- eBPF program: logs information when an actor interacts with any
-    of the files selected by the user.
+The application is structured into multiple components that interact
+with eachother, kubernetes or the operating systems. Those are:
+- discover controller: collects identifying data about the files to
+  check.
+- loader controller: loads and updates the eBPF program into the
+  kernel. Logs information to standard output (later, it may log to
+  a central or an external endpoint).
+- eBPF program: logs a process' information when the process interacts
+  with any of the files selected by the user.
 - databse: stores information about files to check.
 
 A detailed description of the aforementioned components is given later
@@ -115,8 +118,8 @@ dynamic environment where things may change and break at any time.
 There may be multiple operating systems so we need to load one eBPF
 program for each one of them. We need to access inode numbers
 of files inside containers that are only accessible inside a
-kubernetes kubelet, pods (briefly, the applications in the cluster
-if form of contaienrs) can be scheduled in any kubelet. All of this
+kubernetes kubelet, pods (that is, the applications in the cluster
+in form of contaienrs) can be scheduled in any kubelet. All of this
 needs to be handled carefully and greately increases the complexity
 of the design.
 
@@ -175,12 +178,12 @@ scheduling and setting up of containers in (potentially) a cluster.
 Each computing unit on the cluster is called a *node*. There are two
 kinds of nodes: a worker node and the control pane. The former will
 run the user's applications and services through contianers grouped
-in *pods* inside a *kubelet* using a container runtime, the latter
-forms the backbone of the kubernetes cluster and is responsbile for
-central management of the workers. It is composed of the api server
-(which the kubelet use to communicate with the control pane) etcd
-(a highly-available key-value store), scheduler and a controller
-manager which runs all of the above.
+in *pods* using a container runtime, the latter forms the backbone of
+the kubernetes cluster and is responsbile for central management of
+the workers. It is composed of the api server (which the kubelet use
+to communicate with the control pane) etcd (a highly-available
+key-value store), scheduler and a controller manager which runs all
+of the above.
 
 A common pattern found in kubernetes is the Operator, which is a
 custom controller that manages some resources called *custom resources*
@@ -210,7 +213,7 @@ The different components are now described below:
 
 The *discover* operator is responsible for fetching files'
 information such as inode number, and for storing them in the databse.
-There must be one discover operator for each kubelet. This is
+There must be one discover operator for each node. This is
 necessary because the operator has to talk directly to the container
 runtime and access the pods' filesystem in order to read the inode.
 Note that when referring to inodes we are technically referring to the
@@ -257,7 +260,7 @@ nedds to be run again from the start.
 
 The custom resource for the discover operator looks like the
 following:
-```
+```yaml
 apiVersion: hive.dynatrace.com/v1alpha1
 kind: Hive
 metadata:
@@ -268,7 +271,7 @@ metadata:
 spec:
   files:
   - path: "/etc/passwd"
-	match:
+    match:
 	  namespaces:
 	  - "hive-security"
 	  labels:

@@ -80,7 +80,7 @@ reading the inode of a file with the `stat` command located in a
 filesystem of a pod, by reading in `/host/proc/<PID>/root/<FILE>`,
 with one of the logged PIDs.
 
-To kill the operaton, you can run the script `kill-pod.sh`.
+To kill the operator, you can run the script `kill-pod.sh`.
 
 # Writeup
 
@@ -110,7 +110,7 @@ kubelet.
 The next problem is how do we decide which pod we need to access and
 how. We will answer those two questions separately.
 
-### How we decide which pod to access?
+### How do we decide which pod to access?
 
 First, we need to define how do we filter containers. This can be
 done throught custom kubernetes configurations, utually using namespaces

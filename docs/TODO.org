@@ -1,0 +1,135 @@
+#+startup: content indent
+
+* Project Status
+
+This document contains future work needed for the project.
+
+** Part 1 - MVP
+*** TODO Udate the design document
+The current design document has been reviewed and some changes
+are required. In particular, the changes are the following:
+- instead of having two operator, the application will have
+  only one operator and two controllers
+- specify how custom resources are defined. Note that in the
+  discover's resource, the use may not specify a pod name.
+- the eBPF should not log to =trace_pipe=, instead It should
+  log to a ringbuffer or perfbuffer.
+- modify the example deployment image to reflect the changes.
+*** TODO Refactor README
+Move the writeup section to a dedicated file. Move the building
+and testing section to a dedicated file. Mention the design
+document.
+*** TODO Move shell scripts into makefile
+Simplify the shell script by moving their execution to the make
+file.
+*** TODO Speedup Compilation Time
+Compiling inside the docker container takes a long time. The
+project should use ledd dependencies or the dependencies should
+be precompiled into libraries only once and linked during
+developement of the operator.
+*** Discover
+**** TODO Refactor =hive= to =hive discover=
+Refactor the project from =hive= to =discover= in the
+file name and resources. To save time, the possibility of
+regenerating the project should be considered.
+**** TODO Setup Custom Resource Definition
+Finalize the CRD managed by the discover controller. Each
+resource represents one or more traced file, and environment
+information such as pod name, namespace, label. Additionally,
+an option to create the file should be provided, if the file
+does not exist.
+
+The API would look something like this:
+#+begin_src yaml
+kind: HivePolicy
+metadata:
+  name: hive-sample-policy
+spec:
+  monitors:
+    - path: /run/secrets/token
+      create: true                    # also creates the file
+      match:
+        pod: my-pod
+        namespace: my-namespace
+        container: my-ctr
+#+end_src
+
+This should be defined in the =api/v1alpha1/hive_types.go=
+and fetched in the discover controller.
+**** TODO Filter pods
+Filter the pods to check based on the custom resource.
+This needs to be done for each custom resource, so the
+time complexity is =O(n*m)= where =n= is the number of
+custom resources, and =m= is the number of containerd (pods).
+**** TODO Watch: Update Loader's CRD when pods are modified
+Create / Remove / Update the loader's CRD on pod events or
+change the status of the resource if possible.
+
+This task depends on the Loader's CRD to be defined.
+**** TODO Reconcile: Update Loader's CRD when CRD is modified
+Update the Loader's CRD accordingly, similarly or qeually to
+the watch over the pods.
+**** TODO Move housekeeping to main
+Move the code responsbile to create the connection with the
+container runtime and to fetch the kernel id in the main.
+*** Loader
+**** TODO Create a new controller using operator-sdk
+https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
+**** TODO Leader Election
+The loader controller should be run only once for each
+running kernel. This is achieved through elections.
+**** TODO Define CRD
+Define the custom resource definition for the loader, which
+contains the inode + device id pair, the pod name, the path
+name and the kernel-id. Refer to the DESIGN document for more
+details. It also should contain a status (added / removed)
+(this needs to be researched).
+**** TODO Load the eBPF program
+The leader should load the eBPF program. This should be tested
+in different cluster configurations (one loader, two loaders,
+kind cluster, vm cluster...)
+**** TODO Reconcile: Update the eBPF program
+When a change happens to the custom resource, the eBPF program's
+map should be updated accordingly, with only the entries that
+match the kernel-id of the loader's machine.
+**** TODO Handle Rescheduling
+When the operator gets rescheduled, the leader Loader
+controller should reload the eBPF program. This can be done
+by watching for pods events and checking the container
+status.
+**** TODO Log to stdout
+The leader should read the eBPF's output and log to standard
+output.
+**** TODO Add log information
+Add additional logging information such as pod name, label,
+namespace, etc to the logged information from the eBPF program.
+**** eBPF
+***** TODO Map of inode number + device id
+The map should be an array of pairs =(inode_number, dev_id)=.
+***** TODO Log to ring buffer
+Instead of writing logs to the system, they should be put
+to a ring buffer for the logger.
+***** TODO Log additional data
+Research what useful information should be logged (such as
+PID, GID...) and log it.
+** Part 2 - Refinement
+*** TODO Log to an external service
+Instead of logging to stdout, the operator may log to a socket
+provided by the user. This would mean that there is a single
+global configuration of the entire operator. The global config
+may be used for other ourposes such as setting a log level.
+** Part 3 - Testing and Deployment
+*** TODO Measure Performance
+Measure the performance of the application with respect to
+how many resources are used (RAM, CPU) and network traffic
+load.
+A possible tool may be cAdvisor.
+*** TODO CI/CD Tests
+Setup CI/CD automated tests on multiple architectures and kernel
+versions, as well as different kubernetes versions and cluster
+runtimes.
+Inspiration should be taken from Falco's and Tetragon's CI/CD.
+*** TODO Official Docker Registry
+Create an official container image on the docker registry.
+*** TODO Helm package
+Create an official helm chart for the application.

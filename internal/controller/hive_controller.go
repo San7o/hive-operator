@@ -25,6 +25,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kuberrors "k8s.io/apimachinery/pkg/api/errors"
+	labels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -179,7 +180,11 @@ func printPIDs(c client.Client, ctx context.Context) error {
 	logVerbosityLevel = hiveList.Items[0].Spec.LogLevel
 
 	// TODO: get filters from configuration
-	if err := c.List(ctx, podList); err != nil {
+
+	pattern := "x in (k8s.io)" // test
+	selector, err := labels.Parse(pattern)
+	opts := ListOptions{LabelSelector: selector, Namespace: "k8s.io"}
+	if err := c.List(ctx, podList, opts); err != nil {
 		return err
 	}
 
