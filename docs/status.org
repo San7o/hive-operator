@@ -5,7 +5,7 @@
 This document contains future work needed for the project.
 
 
-** Part 1 - MVP [1/5][20%]                                             :mvp:
+** Part 1 - MVP [2/5][40%]                                             :mvp:
 *** DONE Udate the design document
 The current design document has been reviewed and some changes
 are required. In particular, the changes are the following:
@@ -17,7 +17,7 @@ are required. In particular, the changes are the following:
   log to a ringbuffer or perfbuffer.
 - modify the example deployment image to reflect the changes.
 - fix minor errors and improve grammar
-*** TODO Refactor README
+*** DONE Refactor README
 Move the writeup section to a dedicated file. Move the building
 and testing section to a dedicated file. Mention the design
 document.

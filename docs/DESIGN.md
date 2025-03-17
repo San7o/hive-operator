@@ -230,9 +230,6 @@ loke the following:
 apiVersion: hive.dynatrace.com/v1alpha1
 kind: HivePolicy
 metadata:
-  labels:
-    app.kubernetes.io/name: hive-operator
-    app.kubernetes.io/managed-by: kustomize
   name: hive-sample-policy
 spec:
   monitors:
