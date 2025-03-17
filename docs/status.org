@@ -4,8 +4,9 @@
 
 This document contains future work needed for the project.
 
-** Part 1 - MVP
-*** TODO Udate the design document
+
+** Part 1 - MVP [1/5][20%]                                             :mvp:
+*** DONE Udate the design document
 The current design document has been reviewed and some changes
 are required. In particular, the changes are the following:
 - instead of having two operator, the application will have
@@ -15,6 +16,7 @@ are required. In particular, the changes are the following:
 - the eBPF should not log to =trace_pipe=, instead It should
   log to a ringbuffer or perfbuffer.
 - modify the example deployment image to reflect the changes.
+- fix minor errors and improve grammar
 *** TODO Refactor README
 Move the writeup section to a dedicated file. Move the building
 and testing section to a dedicated file. Mention the design
@@ -22,12 +24,16 @@ document.
 *** TODO Move shell scripts into makefile
 Simplify the shell script by moving their execution to the make
 file.
+*** TODO Change names
+Change operator name's from manager to controller. Remove
+"dynatrace" from names.
 *** TODO Speedup Compilation Time
 Compiling inside the docker container takes a long time. The
 project should use ledd dependencies or the dependencies should
 be precompiled into libraries only once and linked during
 developement of the operator.
-*** Discover
+
+*** Discover [0/6][0%]                                           :discover:
 **** TODO Refactor =hive= to =hive discover=
 Refactor the project from =hive= to =discover= in the
 file name and resources. To save time, the possibility of
@@ -72,7 +78,8 @@ the watch over the pods.
 **** TODO Move housekeeping to main
 Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
-*** Loader
+
+*** Loader [0/8][0%]                                               :loader:
 **** TODO Create a new controller using operator-sdk
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
 **** TODO Leader Election
@@ -103,7 +110,8 @@ output.
 **** TODO Add log information
 Add additional logging information such as pod name, label,
 namespace, etc to the logged information from the eBPF program.
-**** eBPF
+
+**** eBPF [0/3][0%]                                                 :ebpf:
 ***** TODO Map of inode number + device id
 The map should be an array of pairs =(inode_number, dev_id)=.
 ***** TODO Log to ring buffer
@@ -111,14 +119,16 @@ Instead of writing logs to the system, they should be put
 to a ring buffer for the logger.
 ***** TODO Log additional data
 Research what useful information should be logged (such as
-PID, GID...) and log it.
-** Part 2 - Refinement
+PID, GID, rights wrx, ...) and log it.
+
+** Part 2 - Refinement [0/1][0%]                                :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user. This would mean that there is a single
 global configuration of the entire operator. The global config
 may be used for other ourposes such as setting a log level.
-** Part 3 - Testing and Deployment
+
+** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
 *** TODO Measure Performance
 Measure the performance of the application with respect to
 how many resources are used (RAM, CPU) and network traffic
