@@ -5,7 +5,7 @@
 This document contains future work needed for the project.
 
 
-** Part 1 - MVP [2/5][40%]                                             :mvp:
+** Part 1 - MVP [3/5][60%]                                             :mvp:
 *** DONE Udate the design document
 The current design document has been reviewed and some changes
 are required. In particular, the changes are the following:
@@ -21,7 +21,7 @@ are required. In particular, the changes are the following:
 Move the writeup section to a dedicated file. Move the building
 and testing section to a dedicated file. Mention the design
 document.
-*** TODO Move shell scripts into makefile
+*** DONE Move shell scripts into makefile
 Simplify the shell script by moving their execution to the make
 file.
 *** TODO Change names

@@ -322,3 +322,29 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: create-cluster-local
+create-cluster-local: ## Create a new local cluster with kind
+	sudo ./hack/registry-cluster.sh
+
+.PHONY: delete-cluster-local
+delete-cluster-local: ## Delete the local cluster with kind
+	kubectl config delete-cluster hive
+	kind delete cluster --name hive
+
+
+.PHONY: docker-build-local
+docker-build-local: ## Build the operator docker image
+	sudo docker rmi manager localhost:5001/manager:latest &2>/dev/null || :
+	sudo docker build -t manager .
+	sudo docker tag manager localhost:5001/manager:latest
+
+.PHONY: docker-push-local
+docker-push-local: ## Push the operator docker image in local registry
+	sudo docker push localhost:5001/manager:latest
+
+.PHONY: kill-pods-local
+kill-pods-local: ## Kill pods in local cluster
+	@NAMESPACE="hive-operator-system"; \
+	NAME=$$(kubectl get pods -n $$NAMESPACE -o name); \
+	sudo kubectl delete $$NAME -n $$NAMESPACE

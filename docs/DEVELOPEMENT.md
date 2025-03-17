@@ -5,11 +5,10 @@ To use an operator, you need a kubernetes cluster. To create one with
 you can use the script `registry-cluster.sh` which will create
 a cluster with one control node and one worker node. Additionally,
 It sets up a local docker registry to push the operator's image
-during developement. Note that you may need to use `sudo` to run the
-following commands based on your permissions.
+during developement.
 
 ```bash
-./registry-cluster.sh
+make create-cluster-local
 ```
 
 You can delete the cluster with `delete-cluster.sh` when you do not
@@ -30,7 +29,8 @@ actually changed something that needs to be regenerated.
 
 To build everything inside a docker container, run:
 ```bash
-./docker-build.sh
+make docker-build-local
+make docker-push-local
 ```
 
 This creates a docker image with the operator inside, and pushes It
@@ -41,3 +41,8 @@ make deploy
 
 Check out [TESTING](./TESTING.md) for a guide on how to test the
 application.
+
+To delete the previously created cluster, run:
+```bash
+make delete-cluster-local
+```
