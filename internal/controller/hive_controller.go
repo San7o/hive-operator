@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"errors"
-	"os"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,9 +39,9 @@ import (
 )
 
 const (
-	containerdAddress = "/run/containerd/containerd.sock"
-	namespace         = "k8s.io"
-	kernelIDPath      = "/proc/sys/kernel/random/boot_id"
+	ContainerdAddress = "/run/containerd/containerd.sock"
+	Namespace         = "k8s.io"
+	KernelIDPath      = "/proc/sys/kernel/random/boot_id"
 )
 
 type logVerbosity = int
@@ -56,8 +55,8 @@ const (
 // TODO: move into main or somewhere called by main
 // TODO: defer containerdClient.Close()
 var (
-	containerdClient  *containerd.Client = nil
-	kernelID          string             = ""
+	ContainerdClient  *containerd.Client = nil
+	KernelID          string             = ""
 	logVerbosityLevel logVerbosity       = logVerbosityInfo
 )
 
@@ -165,9 +164,9 @@ func printPIDs(c client.Client, ctx context.Context) error {
 	log := log.FromContext(ctx)
 	podList := &corev1.PodList{}
 	var err error = nil
-
-	// Read log level from custom resource
-	hiveList := &hivev1alpha1.HiveList{} // CRD
+	
+	// Read the custom resource
+	hiveList := &hivev1alpha1.HiveList{}
 	err = c.List(ctx, hiveList)
 	if err != nil {
 		return err
@@ -176,40 +175,40 @@ func printPIDs(c client.Client, ctx context.Context) error {
 		// Nothing to do here
 		return nil
 	}
-	// For now, just take the first as an example
-	logVerbosityLevel = hiveList.Items[0].Spec.LogLevel
+
+	//logVerbosityLevel = hiveList.Items[0].Spec.LogLevel
 
 	// TODO: get filters from configuration
 
+	// TODO: create the pattern from the configuration
 	pattern := "x in (k8s.io)" // test
-	selector, err := labels.Parse(pattern)
-	opts := ListOptions{LabelSelector: selector, Namespace: "k8s.io"}
-	if err := c.List(ctx, podList, opts); err != nil {
+	// Check that the selector is valid
+	_, err = labels.Parse(pattern)
+	if err != nil {
 		return err
 	}
 
-	if containerdClient != nil {
-		serving, err := containerdClient.IsServing(ctx)
+	//labelOpt := client.MatchingLabels{"control-pane": "controller-manager"}
+	//namespaceOpt := client.MatchingFields{"status.phase": "k8s.io"}
+	if err := c.List(ctx, podList); err != nil {
+		return err
+	}
+
+	if ContainerdClient != nil {
+		serving, err := ContainerdClient.IsServing(ctx)
 		if err != nil || !serving {
 			return err
 		}
 	} else {
-		// TODO: move this code into another
-		// function that gets called from the main
-		opt := containerd.WithDefaultNamespace(namespace)
-		containerdClient, err = containerd.New(containerdAddress, opt)
+		opt := containerd.WithDefaultNamespace(Namespace)
+		ContainerdClient, err = containerd.New(ContainerdAddress, opt)
 		if err != nil {
 			return err
 		}
 	}
 
-	kernelID, err := os.ReadFile(kernelIDPath)
-	if err != nil {
-		return err
-	}
-
 	if logVerbosityLevel >= logVerbosityDump {
-		log.Info("kernelID", "kernelID", kernelID)
+		log.Info("kernelID", "kernelID", KernelID)
 	}
 
 	for _, pod := range podList.Items {
@@ -233,7 +232,7 @@ func printPIDs(c client.Client, ctx context.Context) error {
 			}
 
 			// Get local containers from ContainerD
-			containers, err := containerdClient.Containers(ctx)
+			containers, err := ContainerdClient.Containers(ctx)
 			if err != nil {
 				return err
 			}

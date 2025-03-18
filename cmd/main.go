@@ -37,6 +37,7 @@ import (
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 	"github.com/San7o/hive-operator/internal/controller"
+	hiveDiscover "github.com/San7o/hive-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -76,6 +77,13 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	kernelIDBytes, err := os.ReadFile(hiveDiscover.KernelIDPath)
+	if err != nil {
+		setupLog.Error(err, "Cannot read kerrnel boot ID at"+hiveDiscover.KernelIDPath)
+		os.Exit(1)
+	}
+	hiveDiscover.KernelID = string(kernelIDBytes)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -167,4 +175,7 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
+	// Close the connection with containerd
+	hiveDiscover.ContainerdClient.Close()
 }

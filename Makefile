@@ -348,3 +348,8 @@ kill-pods-local: ## Kill pods in local cluster
 	@NAMESPACE="hive-operator-system"; \
 	NAME=$$(kubectl get pods -n $$NAMESPACE -o name); \
 	sudo kubectl delete $$NAME -n $$NAMESPACE
+
+.PHONY: docker-local
+docker-local:
+	@make docker-build-local
+	@make docker-push-local

@@ -20,30 +20,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// HiveSpec defines the desired state of Hive
-type HiveSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Hive. Edit hive_types.go to remove/update
-	//Foo string `json:"foo,omitempty"`
-
-	// Specifies how many informations to log
-	// Values are 0 errors, 1 info, 2 dump (all)
-	LogLevel int `json:"logLevel,omitempty"`
-	// Specifies which file to watch
-	File string `json:"File,omitempty"`
+type HivePolicy struct {
+	// Specifies which path to check
+	Path string `json:"path,omitempty"`
+	// Whether to create the file or not if It cannot be found
+	Create bool `json:"create,omitempty"`
+	// The content of the file if It was created. This field
+	// is used only if Create is set to true
+	Content string `json:"content,omitempty"`
 	// Filters the pods inside this namespace
-	Namespace string `json:"Namespace,omitempty"`
+	Match HivePolicyMatch `json:"match,omitempty"`
+}
+
+type HivePolicyMatch struct {
+	// Filter pod by name
+	Pod string `json:"pod,omitempty"`
+	// Filter pods per namespace
+	Namespace string `json:"namespace,omitempty"`
+	// Filter pods per label
+	Label string `json:"label,omitempty"`
 }
 
 // HiveStatus defines the observed state of Hive
 type HiveStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Either "create" "update" "delete"
+	Operation string `json:"operation,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -54,7 +55,7 @@ type Hive struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   HiveSpec   `json:"spec,omitempty"`
+	Spec   HivePolicy `json:"spec,omitempty"`
 	Status HiveStatus `json:"status,omitempty"`
 }
 

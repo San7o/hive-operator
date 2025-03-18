@@ -7,6 +7,7 @@ This document contains future work needed for the project.
 
 ** Part 1 - MVP [3/5][60%]                                             :mvp:
 *** DONE Udate the design document
+- State "DONE"       from "TODO"       [2025-03-17 Mon 14:48]
 The current design document has been reviewed and some changes
 are required. In particular, the changes are the following:
 - instead of having two operator, the application will have
@@ -18,10 +19,12 @@ are required. In particular, the changes are the following:
 - modify the example deployment image to reflect the changes.
 - fix minor errors and improve grammar
 *** DONE Refactor README
+- State "DONE"       from "TODO"       [2025-03-17 Mon 14:48]
 Move the writeup section to a dedicated file. Move the building
 and testing section to a dedicated file. Mention the design
 document.
 *** DONE Move shell scripts into makefile
+- State "DONE"       from "TODO"       [2025-03-17 Mon 14:48]
 Simplify the shell script by moving their execution to the make
 file.
 *** TODO Change names
@@ -32,13 +35,16 @@ Compiling inside the docker container takes a long time. The
 project should use ledd dependencies or the dependencies should
 be precompiled into libraries only once and linked during
 developement of the operator.
+*** TODO Change the license to GPL-2.0
+Change the license document in all files.
 
-*** Discover [0/6][0%]                                           :discover:
+*** Discover [2/6][33%]                                          :discover:
 **** TODO Refactor =hive= to =hive discover=
 Refactor the project from =hive= to =discover= in the
 file name and resources. To save time, the possibility of
 regenerating the project should be considered.
-**** TODO Setup Custom Resource Definition
+**** DONE Setup Custom Resource Definition
+- State "DONE"       from "TODO"       [2025-03-18 Tue 14:48]
 Finalize the CRD managed by the discover controller. Each
 resource represents one or more traced file, and environment
 information such as pod name, namespace, label. Additionally,
@@ -65,8 +71,9 @@ and fetched in the discover controller.
 **** TODO Filter pods
 Filter the pods to check based on the custom resource.
 This needs to be done for each custom resource, so the
-time complexity is =O(n*m)= where =n= is the number of
-custom resources, and =m= is the number of containerd (pods).
+time complexity is =O(n*m*c)= where =n= is the number of
+custom resources, and =m= is the number of pods and c is the
+number of containers in the node.
 **** TODO Watch: Update Loader's CRD when pods are modified
 Create / Remove / Update the loader's CRD on pod events or
 change the status of the resource if possible.
@@ -75,10 +82,12 @@ This task depends on the Loader's CRD to be defined.
 **** TODO Reconcile: Update Loader's CRD when CRD is modified
 Update the Loader's CRD accordingly, similarly or qeually to
 the watch over the pods.
-**** TODO Move housekeeping to main
+**** DONE Move housekeeping to main
+- State "DONE"       from "TODO"       [2025-03-18 Tue 14:48]
 Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
-
+UPDATE: The runtime connection is lazily done during the logic
+if not done previously
 *** Loader [0/8][0%]                                               :loader:
 **** TODO Create a new controller using operator-sdk
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/

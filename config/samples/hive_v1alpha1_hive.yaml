@@ -4,6 +4,14 @@ metadata:
   labels:
     app.kubernetes.io/name: hive-operator
     app.kubernetes.io/managed-by: kustomize
-  name: hive-sample
+  name: hive-sample-policy
 spec:
-  logLevel: 1
+  path: /etc/passwd
+  create: true
+  content: sup3rs3cr3tp4ssw0rd
+  match:
+    pod: my-pod
+    namespace: hive-security
+    label: security
+status:
+  operation: create

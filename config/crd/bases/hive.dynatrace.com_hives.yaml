@@ -37,22 +37,38 @@ spec:
           metadata:
             type: object
           spec:
-            description: HiveSpec defines the desired state of Hive
             properties:
-              File:
-                description: Specifies which file to watch
-                type: string
-              Namespace:
-                description: Filters the pods inside this namespace
-                type: string
-              logLevel:
+              content:
                 description: |-
-                  Specifies how many informations to log
-                  Values are 0 errors, 1 info, 2 dump (all)
-                type: integer
+                  The content of the file if It was created. This field
+                  is used only if Create is set to true
+                type: string
+              create:
+                description: Whether to create the file or not if It cannot be found
+                type: boolean
+              match:
+                description: Filters the pods inside this namespace
+                properties:
+                  label:
+                    description: Filter pods per label
+                    type: string
+                  namespace:
+                    description: Filter pods per namespace
+                    type: string
+                  pod:
+                    description: Filter pod by name
+                    type: string
+                type: object
+              path:
+                description: Specifies which path to check
+                type: string
             type: object
           status:
             description: HiveStatus defines the observed state of Hive
+            properties:
+              operation:
+                description: Either "create" "update" "delete"
+                type: string
             type: object
         type: object
     served: true

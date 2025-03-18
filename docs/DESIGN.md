@@ -230,11 +230,15 @@ loke the following:
 apiVersion: hive.dynatrace.com/v1alpha1
 kind: HivePolicy
 metadata:
+  labels:
+    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/managed-by: kustomize
   name: hive-sample-policy
 spec:
   monitors:
   - path: /etc/passwd
     create: true
+	content: sup3rs3cr3tp4ssw0rd
     match:
 	  pod: my-pod
 	  namespace: hive-security

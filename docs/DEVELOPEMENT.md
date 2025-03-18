@@ -33,6 +33,11 @@ make docker-build-local
 make docker-push-local
 ```
 
+Or in short:
+```bash
+make docker-local
+```
+
 This creates a docker image with the operator inside, and pushes It
 int the local registry. Finally, you can deploy everything with:
 ```bash
@@ -45,4 +50,15 @@ application.
 To delete the previously created cluster, run:
 ```bash
 make delete-cluster-local
+```
+
+During developement, instead of building the container each time,
+you can first try to compile with `make build` to check compiler
+errors.
+
+## Example Policy
+
+You can apply the sample policy in `config/samples/hive_v1alpha1_hive.yaml`
+```bash
+sudo kubectl apply -f config/samples/hive_v1alpha1_hive.yaml
 ```
