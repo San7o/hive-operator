@@ -5,7 +5,7 @@
 This document contains future work needed for the project.
 
 
-** Part 1 - MVP [3/5][60%]                                             :mvp:
+** Part 1 - MVP [4/6][66%]                                             :mvp:
 *** DONE Udate the design document
 - State "DONE"       from "TODO"       [2025-03-17 Mon 14:48]
 The current design document has been reviewed and some changes
@@ -35,7 +35,8 @@ Compiling inside the docker container takes a long time. The
 project should use ledd dependencies or the dependencies should
 be precompiled into libraries only once and linked during
 developement of the operator.
-*** TODO Change the license to GPL-2.0
+*** DONE Change the license to GPL-2.0
+- State "DONE"       from "TODO"       [2025-03-18 Tue 15:51]
 Change the license document in all files.
 
 *** Discover [2/6][33%]                                          :discover:
