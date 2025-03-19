@@ -17,6 +17,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type ContainerRuntime = string
@@ -81,4 +84,50 @@ func GetInodeDevID(pid Pid, path string, create bool, mode uint32) (Ino, Dev, er
 	}
 
 	return stat.Ino, stat.Dev, nil
+}
+
+func doesMatchPodPolicy(pod corev1.Pod, hive hivev1alpha1.Hive) bool {
+
+	// Check name
+	found := true
+	if len(hive.Spec.Match.Pod) > 0 {
+		found = false
+		for _, name := range hive.Spec.Match.Pod {
+			if name == pod.Name {
+				found = true
+				break
+			}
+		}
+	}
+	if !found {
+		return false
+	}
+
+	// Check namespace
+	if len(hive.Spec.Match.Namespace) > 0 {
+		found = false
+		for _, namespace := range hive.Spec.Match.Namespace {
+			if namespace == pod.Namespace {
+				found = true
+				break
+			}
+		}
+	}
+	if !found {
+		return false
+	}
+
+	// Check label
+	if len(hive.Spec.Match.Label) > 0 {
+		found = false
+		for _, label := range hive.Spec.Match.Label {
+			val, exists := pod.Labels[label.Key]
+			if exists && val == label.Value {
+				found = true
+				break
+			}
+		}
+	}
+
+	return found
 }

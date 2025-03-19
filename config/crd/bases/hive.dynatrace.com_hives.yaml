@@ -46,20 +46,26 @@ spec:
                 properties:
                   label:
                     description: Filter pods per label
-                    properties:
-                      key:
-                        type: string
-                      value:
-                        type: string
-                    required:
-                    - value
-                    type: object
+                    items:
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - value
+                      type: object
+                    type: array
                   namespace:
                     description: Filter pods per namespace
-                    type: string
+                    items:
+                      type: string
+                    type: array
                   pod:
                     description: Filter pod by name
-                    type: string
+                    items:
+                      type: string
+                    type: array
                 type: object
               mode:
                 description: |-

@@ -30,11 +30,11 @@ type HivePolicy struct {
 
 type HivePolicyMatch struct {
 	// Filter pod by name
-	Pod string `json:"pod,omitempty"`
+	Pod []string `json:"pod,omitempty"`
 	// Filter pods per namespace
-	Namespace string `json:"namespace,omitempty"`
+	Namespace []string `json:"namespace,omitempty"`
 	// Filter pods per label
-	Label LabelType `json:"label,omitempty"`
+	Label []LabelType `json:"label,omitempty"`
 }
 
 type LabelType struct {

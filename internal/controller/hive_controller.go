@@ -197,19 +197,9 @@ func printPIDs(c client.Client, ctx context.Context) error {
 			for _, hive := range hiveList.Items {
 
 				// Check if the pod is matched
-				if hive.Spec.Match.Pod != "" && hive.Spec.Match.Pod != pod.Name {
+				matched := doesMatchPodPolicy(pod, hive)
+				if !matched {
 					continue
-				}
-				if hive.Spec.Match.Namespace != "" {
-					if hive.Spec.Match.Namespace != pod.Namespace {
-						continue
-					}
-				}
-				if hive.Spec.Match.Label.Key != "" {
-					val, exists := pod.Labels[hive.Spec.Match.Label.Key]
-					if !exists || val != hive.Spec.Match.Label.Value {
-						continue
-					}
 				}
 
 				// Get PIDs
@@ -231,7 +221,7 @@ func printPIDs(c client.Client, ctx context.Context) error {
 							return err
 						}
 
-						log.Info("Found container with PID", "PID", task.Pid())
+						//log.Info("Found container with PID", "PID", task.Pid())
 						inode, devID, err := GetInodeDevID(task.Pid(),
 							hive.Spec.Path, hive.Spec.Create, hive.Spec.Mode)
 						if err != nil {

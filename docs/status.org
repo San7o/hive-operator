@@ -30,16 +30,11 @@ file.
 *** TODO Change names
 Change operator name's from manager to controller. Remove
 "dynatrace" from names.
-*** TODO Speedup Compilation Time
-Compiling inside the docker container takes a long time. The
-project should use ledd dependencies or the dependencies should
-be precompiled into libraries only once and linked during
-developement of the operator.
 *** DONE Change the license to GPL-2.0
 - State "DONE"       from "TODO"       [2025-03-18 Tue 15:51]
 Change the license document in all files.
 
-*** Discover [3/6][50%]                                          :discover:
+*** Discover [4/7][57%]                                          :discover:
 **** TODO Refactor =hive= to =hive discover=
 Refactor the project from =hive= to =discover= in the
 file name and resources. To save time, the possibility of
@@ -76,6 +71,9 @@ This needs to be done for each custom resource, so the
 time complexity is =O(n*m*c)= where =n= is the number of
 custom resources, and =m= is the number of pods and c is the
 number of containers in the node.
+**** DONE Filters with multiple entries
+- State "DONE"       from "TODO"       [2025-03-19 Wed 14:52]
+Allow multiple entries in the match filters.
 **** TODO Watch: Update Loader's CRD when pods are modified
 Create / Remove / Update the loader's CRD on pod events or
 change the status of the resource if possible.
@@ -140,7 +138,11 @@ Instead of logging to stdout, the operator may log to a socket
 provided by the user. This would mean that there is a single
 global configuration of the entire operator. The global config
 may be used for other ourposes such as setting a log level.
-
+*** TODO Speedup Compilation Time
+Compiling inside the docker container takes a long time. The
+project should use ledd dependencies or the dependencies should
+be precompiled into libraries only once and linked during
+developement of the operator.
 ** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
 *** TODO Measure Performance
 Measure the performance of the application with respect to

@@ -240,11 +240,13 @@ spec:
     create: true
     mode: 444
     match:
-      pod: my-pod
-      namespace: hive-security
+      pod:
+	  - my-pod
+      namespace:
+	  - hive-security
       label:
-		key: security-level
-		value: high
+      - key: security-level
+	    value: high
 ```
 the user may not specify a field, the application should assume that
 all the pods are selected unless filters are specified.
