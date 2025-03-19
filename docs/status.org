@@ -39,7 +39,7 @@ developement of the operator.
 - State "DONE"       from "TODO"       [2025-03-18 Tue 15:51]
 Change the license document in all files.
 
-*** Discover [2/6][33%]                                          :discover:
+*** Discover [3/6][50%]                                          :discover:
 **** TODO Refactor =hive= to =hive discover=
 Refactor the project from =hive= to =discover= in the
 file name and resources. To save time, the possibility of
@@ -69,7 +69,8 @@ spec:
 
 This should be defined in the =api/v1alpha1/hive_types.go=
 and fetched in the discover controller.
-**** TODO Filter pods
+**** DONE Filter pods
+- State "DONE"       from "TODO"       [2025-03-19 Wed 14:19]
 Filter the pods to check based on the custom resource.
 This needs to be done for each custom resource, so the
 time complexity is =O(n*m*c)= where =n= is the number of
@@ -83,6 +84,8 @@ This task depends on the Loader's CRD to be defined.
 **** TODO Reconcile: Update Loader's CRD when CRD is modified
 Update the Loader's CRD accordingly, similarly or qeually to
 the watch over the pods.
+
+This taks depends on the Loader's CRD to be defined.
 **** DONE Move housekeeping to main
 - State "DONE"       from "TODO"       [2025-03-18 Tue 14:48]
 Move the code responsbile to create the connection with the

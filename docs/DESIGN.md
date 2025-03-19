@@ -236,13 +236,15 @@ metadata:
   name: hive-sample-policy
 spec:
   monitors:
-  - path: /etc/passwd
+  - path: /secret.txt
     create: true
-	content: sup3rs3cr3tp4ssw0rd
+    mode: 444
     match:
-	  pod: my-pod
-	  namespace: hive-security
-	  label: security
+      pod: my-pod
+      namespace: hive-security
+      label:
+		key: security-level
+		value: high
 ```
 the user may not specify a field, the application should assume that
 all the pods are selected unless filters are specified.
@@ -442,13 +444,13 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-data-i2nv1b10cw
 spec:
-	- path-name: /etc/shadow
-	  pod-name: my-pod
-	  inode-no: 12345
-	  dev-id: 123
-	  kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
+    - path-name: /etc/shadow
+      pod-name: my-pod
+      inode-no: 12345
+      dev-id: 123
+      kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
 status:
-	operation: added
+    operation: added
 ```
 
 <a name="limitations"></a>

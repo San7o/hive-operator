@@ -61,11 +61,20 @@ func IsContainerRuntimeSupported(runtime ContainerRuntime) bool {
 	return false
 }
 
-func GetInodeDevID(pid Pid, path string) (Ino, Dev, error) {
+func GetInodeDevID(pid Pid, path string, create bool, mode uint32) (Ino, Dev, error) {
 	pidStr := strconv.FormatUint(uint64(pid), 10)
 	target := procMountpoint + separator + pidStr +
 		separator + "root" + separator + path
 	var stat syscall.Stat_t
+
+	if create {
+		fd, err := syscall.Creat(target, mode)
+		if err != nil {
+			return uint64(0), uint64(0), err
+		}
+		syscall.Close(fd)
+	}
+
 	err := syscall.Stat(target, &stat)
 	if err != nil {
 		return uint64(0), uint64(0), err

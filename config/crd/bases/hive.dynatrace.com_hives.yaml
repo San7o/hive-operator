@@ -38,11 +38,6 @@ spec:
             type: object
           spec:
             properties:
-              content:
-                description: |-
-                  The content of the file if It was created. This field
-                  is used only if Create is set to true
-                type: string
               create:
                 description: Whether to create the file or not if It cannot be found
                 type: boolean
@@ -51,7 +46,14 @@ spec:
                 properties:
                   label:
                     description: Filter pods per label
-                    type: string
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    required:
+                    - value
+                    type: object
                   namespace:
                     description: Filter pods per namespace
                     type: string
@@ -59,6 +61,12 @@ spec:
                     description: Filter pod by name
                     type: string
                 type: object
+              mode:
+                description: |-
+                  The content of the file if It was created. This field
+                  is used only if Create is set to true
+                format: int32
+                type: integer
               path:
                 description: Specifies which path to check
                 type: string

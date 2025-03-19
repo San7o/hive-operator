@@ -20,7 +20,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kuberrors "k8s.io/apimachinery/pkg/api/errors"
-	labels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,20 +39,9 @@ const (
 	KernelIDPath      = "/proc/sys/kernel/random/boot_id"
 )
 
-type logVerbosity = int
-
-const (
-	logVerbosityError logVerbosity = 0
-	logVerbosityInfo  logVerbosity = 1
-	logVerbosityDump  logVerbosity = 2
-)
-
-// TODO: move into main or somewhere called by main
-// TODO: defer containerdClient.Close()
 var (
-	ContainerdClient  *containerd.Client = nil
-	KernelID          string             = ""
-	logVerbosityLevel logVerbosity       = logVerbosityInfo
+	ContainerdClient *containerd.Client = nil
+	KernelID         string             = ""
 )
 
 // HiveReconciler reconciles a Hive object
@@ -151,7 +139,6 @@ func (r *HiveReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&hivev1alpha1.Hive{}).
-		// TODO: Watch for Deployment
 		Watches(&corev1.Pod{}, podWatchHandler).
 		Complete(r)
 }
@@ -160,36 +147,8 @@ func printPIDs(c client.Client, ctx context.Context) error {
 	log := log.FromContext(ctx)
 	podList := &corev1.PodList{}
 	var err error = nil
-	
-	// Read the custom resource
-	hiveList := &hivev1alpha1.HiveList{}
-	err = c.List(ctx, hiveList)
-	if err != nil {
-		return err
-	}
-	if len(hiveList.Items) == 0 {
-		// Nothing to do here
-		return nil
-	}
 
-	//logVerbosityLevel = hiveList.Items[0].Spec.LogLevel
-
-	// TODO: get filters from configuration
-
-	// TODO: create the pattern from the configuration
-	pattern := "x in (k8s.io)" // test
-	// Check that the selector is valid
-	_, err = labels.Parse(pattern)
-	if err != nil {
-		return err
-	}
-
-	//labelOpt := client.MatchingLabels{"control-pane": "controller-manager"}
-	//namespaceOpt := client.MatchingFields{"status.phase": "k8s.io"}
-	if err := c.List(ctx, podList); err != nil {
-		return err
-	}
-
+	// Check if a client for containerd exists
 	if ContainerdClient != nil {
 		serving, err := ContainerdClient.IsServing(ctx)
 		if err != nil || !serving {
@@ -203,57 +162,87 @@ func printPIDs(c client.Client, ctx context.Context) error {
 		}
 	}
 
-	if logVerbosityLevel >= logVerbosityDump {
-		log.Info("kernelID", "kernelID", KernelID)
+	// Get local containers from ContainerD
+	containers, err := ContainerdClient.Containers(ctx)
+	if err != nil {
+		return err
 	}
+	attach := containerdCio.NewAttach()
 
+	// Read the custom resource
+	hiveList := &hivev1alpha1.HiveList{}
+	err = c.List(ctx, hiveList)
+	if err != nil {
+		return err
+	}
+	if len(hiveList.Items) == 0 {
+		// Nothing to do here
+		return nil
+	}
+	if err := c.List(ctx, podList); err != nil {
+		return err
+	}
+	//log.Info("kernelID", "kernelID", KernelID)
+
+	// For each pod
 	for _, pod := range podList.Items {
+		// For each container in a pod
 		for _, containerStatus := range pod.Status.ContainerStatuses {
 			if !containerStatus.Ready {
 				continue
 			}
-			if logVerbosityLevel >= logVerbosityDump {
-				log.Info("Found container", "Container", containerStatus.Name)
-			}
+			//log.Info("Found container", "Container", containerStatus.Name)
 
-			// Get PIDs
-			runtime, id, err := SplitContainerRuntimeID(containerStatus.ContainerID)
-			supported := IsContainerRuntimeSupported(runtime)
-			if !supported {
-				return errors.New("Container runtime " + runtime + " is not suported.")
-			}
+			// For each Hive Resource
+			for _, hive := range hiveList.Items {
 
-			if logVerbosityLevel >= logVerbosityDump {
-				log.Info("ContainerID", "ID", id)
-			}
-
-			// Get local containers from ContainerD
-			containers, err := ContainerdClient.Containers(ctx)
-			if err != nil {
-				return err
-			}
-			attach := containerdCio.NewAttach()
-			for _, container := range containers {
-				if container.ID() == id {
-					task, err := container.Task(ctx, attach)
-					if err != nil {
-						return err
+				// Check if the pod is matched
+				if hive.Spec.Match.Pod != "" && hive.Spec.Match.Pod != pod.Name {
+					continue
+				}
+				if hive.Spec.Match.Namespace != "" {
+					if hive.Spec.Match.Namespace != pod.Namespace {
+						continue
 					}
+				}
+				if hive.Spec.Match.Label.Key != "" {
+					val, exists := pod.Labels[hive.Spec.Match.Label.Key]
+					if !exists || val != hive.Spec.Match.Label.Value {
+						continue
+					}
+				}
 
-					if logVerbosityLevel >= logVerbosityDump {
+				// Get PIDs
+				runtime, id, err := SplitContainerRuntimeID(containerStatus.ContainerID)
+				if err != nil {
+					return err
+				}
+				supported := IsContainerRuntimeSupported(runtime)
+				if !supported {
+					return errors.New("Container runtime " + runtime + " is not suported.")
+				}
+				// log.Info("ContainerID", "ID", id)
+
+				// For each container managed by the container runtime
+				for _, container := range containers {
+					if container.ID() == id {
+						task, err := container.Task(ctx, attach)
+						if err != nil {
+							return err
+						}
+
 						log.Info("Found container with PID", "PID", task.Pid())
-					}
-					inode, devID, err := GetInodeDevID(task.Pid(), "/etc/passwd")
-					if err != nil {
-						return err
-					}
+						inode, devID, err := GetInodeDevID(task.Pid(),
+							hive.Spec.Path, hive.Spec.Create, hive.Spec.Mode)
+						if err != nil {
+							return err
+						}
 
-					if logVerbosityLevel >= logVerbosityInfo {
 						log.Info("Inode number", "inode", inode)
 						log.Info("DevID", "devID", devID)
+					} else {
+						//log.Info("Container not found", "ID", containerID[1])
 					}
-				} else {
-					//log.Info("Container not found", "ID", containerID[1])
 				}
 			}
 		}

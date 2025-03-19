@@ -6,12 +6,14 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-policy
 spec:
-  path: /etc/passwd
+  path: /secret.txt
   create: true
-  content: sup3rs3cr3tp4ssw0rd
+  mode: 444
   match:
-    pod: my-pod
-    namespace: hive-security
-    label: security
+    pod: nginx-pod
+    namespace: default
+    label:
+      key: security-level
+      value: high
 status:
   operation: create

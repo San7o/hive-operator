@@ -23,7 +23,7 @@ type HivePolicy struct {
 	Create bool `json:"create,omitempty"`
 	// The content of the file if It was created. This field
 	// is used only if Create is set to true
-	Content string `json:"content,omitempty"`
+	Mode uint32 `json:"mode,omitempty"`
 	// Filters the pods inside this namespace
 	Match HivePolicyMatch `json:"match,omitempty"`
 }
@@ -34,7 +34,12 @@ type HivePolicyMatch struct {
 	// Filter pods per namespace
 	Namespace string `json:"namespace,omitempty"`
 	// Filter pods per label
-	Label string `json:"label,omitempty"`
+	Label LabelType `json:"label,omitempty"`
+}
+
+type LabelType struct {
+	Key   string `json:"key,omitempty"`
+	Value string `json:"value,otmiempty"`
 }
 
 // HiveStatus defines the observed state of Hive
