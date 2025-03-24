@@ -90,8 +90,9 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [0/8][0%]                                               :loader:
-**** TODO Create a new controller using operator-sdk
+*** Loader [1/8][12%]                                              :loader:
+**** DONE Create a new controller using operator-sdk
+- State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
 **** TODO Leader Election
 The loader controller should be run only once for each

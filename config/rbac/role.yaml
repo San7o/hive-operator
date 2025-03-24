@@ -30,6 +30,7 @@ rules:
 - apiGroups:
   - hive.dynatrace.com
   resources:
+  - hivedata
   - hives
   verbs:
   - create
@@ -42,12 +43,14 @@ rules:
 - apiGroups:
   - hive.dynatrace.com
   resources:
+  - hivedata/finalizers
   - hives/finalizers
   verbs:
   - update
 - apiGroups:
   - hive.dynatrace.com
   resources:
+  - hivedata/status
   - hives/status
   verbs:
   - get

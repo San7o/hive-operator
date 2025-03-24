@@ -3,8 +3,10 @@ module github.com/San7o/hive-operator
 go 1.22.0
 
 require (
+	github.com/containerd/containerd v1.7.25
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
+	k8s.io/api v0.31.0
 	k8s.io/apimachinery v0.31.0
 	k8s.io/client-go v0.31.0
 	sigs.k8s.io/controller-runtime v0.19.0
@@ -22,7 +24,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
-	github.com/containerd/containerd v1.7.25 // indirect
 	github.com/containerd/containerd/api v1.8.0 // indirect
 	github.com/containerd/continuity v0.4.4 // indirect
 	github.com/containerd/errdefs v0.3.0 // indirect
@@ -114,7 +115,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.31.0 // indirect
 	k8s.io/apiextensions-apiserver v0.31.0 // indirect
 	k8s.io/apiserver v0.31.0 // indirect
 	k8s.io/component-base v0.31.0 // indirect

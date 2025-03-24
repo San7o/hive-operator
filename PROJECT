@@ -20,4 +20,13 @@ resources:
   kind: Hive
   path: github.com/San7o/hive-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: dynatrace.com
+  group: hive
+  kind: HiveData
+  path: github.com/San7o/hive-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"
