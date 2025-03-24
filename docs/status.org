@@ -122,16 +122,32 @@ output.
 Add additional logging information such as pod name, label,
 namespace, etc to the logged information from the eBPF program.
 
-**** eBPF [0/3][0%]                                                 :ebpf:
-***** TODO Map of inode number + device id
+**** eBPF [4/4][100%]                                               :ebpf:
+***** CANCEL Map of inode number + device id
+- State "CANCEL"     from "TODO"       [2025-03-21 Fri 18:13]
 The map should be an array of pairs =(inode_number, dev_id)=.
-***** TODO Log to ring buffer
+
+This is harder than expected, apparently the inode's kernel
+id is not the same as the user space's stat.st_dev for some
+filesystems. Please read the following for more information:
+https://www.sabi.co.uk/blog/21-two.html?210804#210804
+The eBPF program cannot call the stat syscall nor It cannot
+reacreate It because (1) a lot of conditional compilation is
+used and (2) the functions called depend on the underlying
+filesystem which we cannot call from the eBPF program.
+***** DONE Log to ring buffer
+- State "DONE"       from "TODO"       [2025-03-24 Mon 10:44]
 Instead of writing logs to the system, they should be put
 to a ring buffer for the logger.
-***** TODO Log additional data
+Read https://nakryiko.com/posts/bpf-ringbuf/
+***** DONE Log additional data
+- State "DONE"       from "TODO"       [2025-03-21 Fri 18:13]
 Research what useful information should be logged (such as
 PID, GID, rights wrx, ...) and log it.
-
+***** DONE Modify map with array on inodes
+- State "DONE"       from "TODO"       [2025-03-24 Mon 09:12]
+The map should contain multiple inodes and should Iterate
+over them.
 ** Part 2 - Refinement [0/1][0%]                                :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket

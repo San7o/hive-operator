@@ -336,6 +336,11 @@ run everywhere (CORE) which means that the ebpf program does not need
 to be compiled each time It needs to be loaded, but can be compiled
 only once and even shipped with the binaries of the application.
 
+Example log string:
+```json
+{pid:10721,tgid:10721,uid:1000,gid:1000,ino:2160719,mask:36}
+```
+
 <a name="database"></a>
 ## Database
 
