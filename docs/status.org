@@ -90,14 +90,40 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [1/8][12%]                                              :loader:
+*** Loader [3/8][37%]                                              :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
-**** TODO Leader Election
+**** DONE Leader Election
+- State "DONE"       from "TODO"       [2025-04-08 Tue 11:14]
 The loader controller should be run only once for each
 running kernel. This is achieved through elections.
-**** TODO Define CRD
+This code implements a simple loader election:
+https://github.com/kubernetes-retired/contrib/pull/353/files
+
+I have discovered from this post
+https://carlosbecker.com/posts/k8s-leader-election/ that there is a
+leader election package in kubernetes:
+https://pkg.go.dev/k8s.io/client-go/tools/leaderelection however,
+there is the following disclaimer: this is an alpha API. This library
+will likely change significantly or even be removed entirely in
+subsequent releases. Depend on this API at your own risk.
+
+I could try to reimplement this myself.
+In theory, to make leader elections work a system needs a
+shared resource and a locking mechanism. The leader has the
+lock and he can release It so that all the candidates can
+compete again for the log. The leader prvides an hearthbeat
+so that when the beat stop, It is considered dead and the
+lock is leased.
+
+I may use the alpha implementation in the first release of
+Hive.
+Check out other solutions such as
+https://github.com/bpfman/bpfman
+
+**** DONE Define CRD
+- State "DONE"       from "TODO"       [2025-04-08 Tue 10:40]
 Define the custom resource definition for the loader, which
 contains the inode + device id pair, the pod name, the path
 name and the kernel-id. Refer to the DESIGN document for more
@@ -160,6 +186,29 @@ Compiling inside the docker container takes a long time. The
 project should use ledd dependencies or the dependencies should
 be precompiled into libraries only once and linked during
 developement of the operator.
+*** TODO Use LSM for eBPF security
+https://landlock.io/ Landlock is a linux security module that can be
+used to limit the capabilities of eBPF programs. From the kubernetes
+documentation: "With seccomp, a BPF program only has access to the
+parameters of the syscall but cannot dereference the pointers, making
+it impossible to make security decisions based on a file. seccomp also
+uses classic BPF, meaning it cannot make use of eBPF maps, the
+mechanism for interfacing with user space. This restriction means
+security policies cannot be changed in seccomp-bpf based on a
+configuration in an eBPF map. 
+BPF programs with Landlock don’t receive the arguments
+of the syscalls but a reference to a kernel object. In the example
+above, this means it will have a reference to the file, so it does not
+need to dereference a pointer, consider relative paths, or perform
+chroots."
+https://kubernetes.io/blog/2017/12/using-ebpf-in-kubernetes/#application-applied-lsm
+However, I cannot find any usage / documentation of this online...
+Alternatively, investigate other linux security modules like SELinux
+and AppArmor to achive the same goal.
+
+If I run "cat /sys/kernel/security/lsm" I see that there is a
+bpf active security module on my system. What is this? How does
+this work?
 ** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
 *** TODO Measure Performance
 Measure the performance of the application with respect to

@@ -19,6 +19,11 @@ matches the filters of the sample policy:
 kubectl apply -f config/samples/sample-nginx-pod.yaml
 ```
 
+There is a sample HiveData resource in the same directory:
+```bash
+kubectl apply -f config/samples/hive_v1alpha1_hivedata.yaml
+```
+
 After deployment, wou should see the information
 logged in the operator's standard output.
 

@@ -42,6 +42,7 @@ nodes:
     evictionHard:
       memory.available: "500Mi"
 - role: worker
+- role: worker
 EOF
 
 # 3. Add the registry config to the nodes

@@ -39,13 +39,35 @@ spec:
           spec:
             description: HiveDataSpec defines the desired state of HiveData
             properties:
-              foo:
-                description: Foo is an example field of HiveData. Edit hivedata_types.go
-                  to remove/update
-                type: string
+              hive-data:
+                items:
+                  properties:
+                    dev-id:
+                      description: The device id of the file. Currently unsupported
+                      format: int64
+                      type: integer
+                    inode-no:
+                      description: The inode number of the file
+                      format: int32
+                      type: integer
+                    kernel-id:
+                      description: A string to uniquely identify a running kernel
+                      type: string
+                    path-name:
+                      description: The path of the file
+                      type: string
+                    pod-name:
+                      description: The name of the pod where this file lives
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: HiveDataStatus defines the observed state of HiveData
+            properties:
+              operation:
+                description: Either "created", "removed" or "updated"
+                type: string
             type: object
         type: object
     served: true

@@ -451,13 +451,14 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-data-i2nv1b10cw
 spec:
+  hive-data:
     - path-name: /etc/shadow
       pod-name: my-pod
       inode-no: 12345
       dev-id: 123
       kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
 status:
-    operation: added
+    operation: created
 ```
 
 <a name="limitations"></a>

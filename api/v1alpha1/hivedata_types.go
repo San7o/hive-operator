@@ -16,22 +16,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type HiveDataType struct {
+	// The path of the file
+	PathName string `json:"path-name,omitempty"`
+	// The name of the pod where this file lives
+	PodName string `json:"pod-name,omitempty"`
+	// The inode number of the file
+	InodeNo uint32 `json:"inode-no,omitempty"`
+	// The device id of the file. Currently unsupported
+	DevID uint64 `json:"dev-id,omitempty"`
+	// A string to uniquely identify a running kernel
+	KernelID string `json:"kernel-id,omitempty"`
+}
 
 // HiveDataSpec defines the desired state of HiveData
 type HiveDataSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of HiveData. Edit hivedata_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	HiveData []HiveDataType `json:"hive-data,omitempty"`
 }
 
 // HiveDataStatus defines the observed state of HiveData
 type HiveDataStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Either "created", "removed" or "updated"
+	Operation string `json:"operation,omitempty"`
 }
 
 // +kubebuilder:object:root=true

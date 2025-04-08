@@ -329,9 +329,8 @@ create-cluster-local: ## Create a new local cluster with kind
 
 .PHONY: delete-cluster-local
 delete-cluster-local: ## Delete the local cluster with kind
-	kubectl config delete-cluster hive
-	kind delete cluster --name hive
-
+	sudo kubectl config delete-cluster kind-hive
+	sudo kind delete cluster --name hive
 
 .PHONY: docker-build-local
 docker-build-local: ## Build the operator docker image

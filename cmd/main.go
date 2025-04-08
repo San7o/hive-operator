@@ -13,9 +13,11 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"os"
+	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -51,17 +53,15 @@ func init() {
 
 func main() {
 	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
+	var hiveProbeAddr string
+	var hiveDataProbeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&hiveProbeAddr, "hive-health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&hiveDataProbeAddr, "hive-data-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
@@ -80,6 +80,7 @@ func main() {
 		os.Exit(1)
 	}
 	hiveDiscover.KernelID = string(kernelIDBytes)
+	hiveDiscover.KernelID = strings.TrimSpace(hiveDiscover.KernelID)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -124,58 +125,78 @@ func main() {
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	// HiveData manager
+	hiveDataMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "a5d24928.dynatrace.com",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
-		// LeaderElectionReleaseOnCancel: true,
+		HealthProbeBindAddress: hiveDataProbeAddr,
+		LeaderElection:         true,
+		LeaderElectionID:       hiveDiscover.KernelID,
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "unable to start hiveData manager")
+		os.Exit(1)
+	}
+
+	// Hive manager
+	hiveMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		Metrics:                metricsServerOptions,
+		WebhookServer:          webhookServer,
+		HealthProbeBindAddress: hiveProbeAddr,
+	})
+	if err != nil {
+		setupLog.Error(err, "unable to start hive manager")
 		os.Exit(1)
 	}
 
 	if err = (&controller.HiveReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Hive")
+		Client: hiveMgr.GetClient(),
+		Scheme: hiveMgr.GetScheme(),
+	}).SetupWithManager(hiveMgr); err != nil {
+		setupLog.Error(err, "unable to create hive controller", "controller", "Hive")
 		os.Exit(1)
 	}
+
 	if err = (&controller.HiveDataReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "HiveData")
+		Client: hiveDataMgr.GetClient(),
+		Scheme: hiveDataMgr.GetScheme(),
+	}).SetupWithManager(hiveDataMgr); err != nil {
+		setupLog.Error(err, "unable to create hiveData controller", "controller", "HiveData")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err := hiveMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err := hiveMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+	if err := hiveDataMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := hiveDataMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
+	setupLog.Info("starting hive managers")
+
+	go func() {
+		if err := hiveMgr.Start(context.Background()); err != nil {
+			setupLog.Error(err, "problem running hive manager")
+			os.Exit(1)
+		}
+	}()
+
+	if err := hiveDataMgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		setupLog.Error(err, "problem running hiveData manager")
 		os.Exit(1)
 	}
 
