@@ -90,7 +90,7 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [3/8][37%]                                              :loader:
+*** Loader [4/8][50%]                                              :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
@@ -129,7 +129,8 @@ contains the inode + device id pair, the pod name, the path
 name and the kernel-id. Refer to the DESIGN document for more
 details. It also should contain a status (added / removed)
 (this needs to be researched).
-**** TODO Load the eBPF program
+**** DONE Load the eBPF program
+- State "DONE"       from "TODO"       [2025-04-08 Tue 18:29]
 The leader should load the eBPF program. This should be tested
 in different cluster configurations (one loader, two loaders,
 kind cluster, vm cluster...)
@@ -139,9 +140,15 @@ map should be updated accordingly, with only the entries that
 match the kernel-id of the loader's machine.
 **** TODO Handle Rescheduling
 When the operator gets rescheduled, the leader Loader
-controller should reload the eBPF program. This can be done
-by watching for pods events and checking the container
-status.
+controller should reload the eBPF program.
+
+Note: This is implicitly done because each replica contains
+information about if the program is loaded or not. If one
+replica becomes the leader, it won't have loaded the program
+so It will do it at the first opportunity. The problem arises
+if a replica gives up Its leadership without terminating, this
+case should be handled by unloading the program and unsetting
+the variable.
 **** TODO Log to stdout
 The leader should read the eBPF's output and log to standard
 output.

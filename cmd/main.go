@@ -200,6 +200,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Close the connection with containerd
-	hiveDiscover.ContainerdClient.Close()
+	// Cleanup
+	if hiveDiscover.ContainerdClient != nil {
+		hiveDiscover.ContainerdClient.Close()
+	}
+	if hiveDiscover.RingbuffReader != nil {
+		hiveDiscover.RingbuffReader.Close()
+	}
+	hiveDiscover.Objs.Close()
+	hiveDiscover.KeyProbe.Close()
 }

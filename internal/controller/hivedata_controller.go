@@ -14,6 +14,7 @@ package controller
 
 import (
 	"context"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -21,6 +22,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+)
+
+var (
+	Loaded      bool       = false
+	LoadedMutex sync.Mutex = sync.Mutex{}
 )
 
 // HiveDataReconciler reconciles a HiveData object
@@ -45,7 +51,17 @@ type HiveDataReconciler struct {
 func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	LoadedMutex.Lock()
+	if !Loaded {
+		log.Info("Loading eBPF program")
+		if err := LoadBpf(ctx); err != nil {
+			log.Error(nil, "Error loading eBPF program")
+			return ctrl.Result{}, err
+		}
+		Loaded = true
+		go LogData(context.Background())
+	}
+	LoadedMutex.Unlock()
 
 	log.Info("TODO: HiveData reconciler triggered")
 

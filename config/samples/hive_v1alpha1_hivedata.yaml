@@ -10,7 +10,7 @@ spec:
     - path-name: /etc/shadow
       pod-name: my-pod
       inode-no: 12345
-      dev-id: 123
+      dev-id: 1234
       kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
 status:
     operation: created
