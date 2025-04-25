@@ -240,10 +240,8 @@ spec:
     create: true
     mode: 444
     match:
-      pod:
-	  - my-pod
-      namespace:
-	  - hive-security
+      pod: my-pod
+      namespace: hive-security
       label:
       - key: security-level
 	    value: high
@@ -447,18 +445,17 @@ apiVersion: hive.dynatrace.com/v1alpha1
 kind: HiveData
 metadata:
   labels:
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: hive-operator-system
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-data-i2nv1b10cw
 spec:
   hive-data:
     - path-name: /etc/shadow
       pod-name: my-pod
+      pod-namespace: default
       inode-no: 12345
       dev-id: 123
       kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
-status:
-    operation: created
 ```
 
 <a name="limitations"></a>

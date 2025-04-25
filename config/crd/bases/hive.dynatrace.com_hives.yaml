@@ -44,6 +44,9 @@ spec:
               match:
                 description: Filters the pods inside this namespace
                 properties:
+                  ip:
+                    description: Filter pods by IP
+                    type: string
                   label:
                     description: Filter pods per label
                     items:
@@ -58,14 +61,10 @@ spec:
                     type: array
                   namespace:
                     description: Filter pods per namespace
-                    items:
-                      type: string
-                    type: array
+                    type: string
                   pod:
                     description: Filter pod by name
-                    items:
-                      type: string
-                    type: array
+                    type: string
                 type: object
               mode:
                 description: |-
@@ -75,13 +74,6 @@ spec:
                 type: integer
               path:
                 description: Specifies which path to check
-                type: string
-            type: object
-          status:
-            description: HiveStatus defines the observed state of Hive
-            properties:
-              operation:
-                description: Either "create" "update" "delete"
                 type: string
             type: object
         type: object

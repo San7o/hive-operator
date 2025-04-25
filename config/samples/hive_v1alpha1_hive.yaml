@@ -10,12 +10,8 @@ spec:
   create: true
   mode: 444
   match:
-    pod:
-    - nginx-pod
-    namespace:
-    - default
+    pod: nginx-pod
+    namespace: default
     label:
     - key: security-level
       value: high
-status:
-  operation: create

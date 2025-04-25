@@ -15,13 +15,12 @@ package controller
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	kuberrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -63,52 +62,149 @@ type HiveReconciler struct {
 // move the current state of the cluster closer to the desired state.
 func (r *HiveReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-	log.Info("Reconcile triggered with req: ")
+	log.Info("Reconcile triggered.")
+	var err error = nil
 
-	if err := printPIDs(r.Client, ctx); err != nil {
-		log.Error(err, "Error printing pids")
-		return ctrl.Result{}, err
-	}
-
-	// Logic here
-	hive := &hivev1alpha1.Hive{}
-	err := r.Client.Get(ctx, req.NamespacedName, hive)
-	if err != nil {
-		if kuberrors.IsNotFound(err) {
-			// Request object not found, could have been
-			// deleted after reconcile request.
-			// Owned objects are automatically garbage
-			// collected. For additional cleanup logic
-			// use finalizers.
-			// Return and don't requeue
-			log.Info("Hive resource not found. Ignoring since object must be deleted")
-			return ctrl.Result{}, nil
+	// Check if a containerd client exists or create one
+	if ContainerdClient != nil {
+		serving, err := ContainerdClient.IsServing(ctx)
+		if err != nil || !serving {
+			return ctrl.Result{}, err
 		}
-		// Error reading the object - requeue the request
-		log.Error(err, "Failed to get Hive")
+	} else {
+		opt := containerd.WithDefaultNamespace(Namespace)
+		ContainerdClient, err = containerd.New(ContainerdAddress, opt)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	hiveList := &hivev1alpha1.HiveList{}
+	err = r.Client.List(ctx, hiveList)
+	if err != nil {
+		// if kuberrors.IsNotFound(err) {
+		// 	log.Info("Hive resource not found. Ignoring.")
+		// 	return ctrl.Result{}, nil
+		// }
+		log.Error(err, "Failed to get Hive resource")
 		return ctrl.Result{}, nil
 	}
 
-	// Check if the deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.Client.Get(ctx,
-		types.NamespacedName{Name: hive.Name, Namespace: hive.Namespace},
-		found)
-	if err != nil && kuberrors.IsNotFound(err) {
-		log.Info("TODO: Creating a new Deployment")
+	hiveDataList := &hivev1alpha1.HiveDataList{}
+	err = r.Client.List(ctx, hiveDataList)
+	if err != nil {
+		// if kuberrors.IsNotFound(err) {
+		// 	log.Info("Hive Data resource not found. Ignoring.")
+		// 	return ctrl.Result{}, nil
+		// }
+		log.Error(err, "Failed to get Hive Data resource")
 		return ctrl.Result{}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Deployment")
-		return ctrl.Result{}, err
 	}
 
-	log.Info("TODO: Deployment already created")
+	// Check if HiveData resources exist for each hive resource.
+	// In case it does not or It is incomplete, create it.
+	for _, hive := range hiveList.Items {
+
+		labelMap := make(client.MatchingLabels)
+		for _, label := range hive.Spec.Match.Label {
+			labelMap[label.Key] = label.Value
+		}
+
+		matchingFields := client.MatchingFields{}
+		if len(hive.Spec.Match.PodName) != 0 {
+			matchingFields["metadata.name"] = hive.Spec.Match.PodName
+		}
+		if len(hive.Spec.Match.Namespace) != 0 {
+			matchingFields["metadata.namespace"] = hive.Spec.Match.Namespace
+		}
+		if len(hive.Spec.Match.IP) != 0 {
+			matchingFields["metadata.podIP"] = hive.Spec.Match.IP
+		}
+
+		podList := &corev1.PodList{}
+		err = r.Client.List(ctx, podList, labelMap, matchingFields)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+ 
+		for _, pod := range podList.Items {
+			found := false
+			for _, data := range hiveDataList.Items {
+				if data.Spec.PodName == pod.Name &&
+					data.Spec.PodNamespace == pod.Namespace &&
+					data.Spec.PathName == hive.Spec.Path {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+
+				inode, devID, ok, err := getInodeDevidFromPod(ctx, pod, hive)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+				if !ok {
+					continue
+				}
+
+				// Create a hive data resource
+				hiveData := &hivev1alpha1.HiveData{
+					ObjectMeta: metav1.ObjectMeta{
+						// Unique name
+						Name:      "hive-data-" + pod.Name + "-" + pod.Namespace + "-" + strconv.FormatUint(uint64(inode), 10),
+						Namespace: "hive-operator-system",
+					},
+					Spec: hivev1alpha1.HiveDataSpec{
+						PathName:     hive.Spec.Path,
+						PodName:      pod.Name,
+						PodNamespace: pod.Namespace,
+						InodeNo:      inode,
+						DevID:        devID,
+						KernelID:     KernelID,
+					},
+				}
+				err = r.Client.Create(ctx, hiveData)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+				log.Info("Created new Hive Data resource.")
+			}
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *HiveReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	// Index pod name, namespace and ip so we can query a pod
+	fieldIndexer := mgr.GetFieldIndexer()
+	err := fieldIndexer.IndexField(context.Background(), &corev1.Pod{}, "metadata.name",
+		func(rawObj client.Object) []string {
+			return []string{rawObj.GetName()}
+		})
+	if err != nil {
+		return err
+	}
+
+	err = fieldIndexer.IndexField(context.Background(), &corev1.Pod{}, "metadata.namespace",
+		func(rawObj client.Object) []string {
+			return []string{rawObj.GetNamespace()}
+		})
+	if err != nil {
+		return err
+	}
+
+	err = fieldIndexer.IndexField(context.Background(), &corev1.Pod{}, "metadata.podIP",
+		func(rawObj client.Object) []string {
+			pod := rawObj.(*corev1.Pod)
+			return []string{pod.Status.PodIP}
+		})
+	if err != nil {
+		return err
+	}
 
 	// EnqueueRequestsFromMapFunc enqueues Requests by running a
 	// transformation function that outputs a collection of
@@ -131,9 +227,9 @@ func (r *HiveReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		func(ctx context.Context, obj client.Object) []reconcile.Request {
 			log := log.FromContext(ctx)
 			log.Info("TODO: Reconciling Watched Pod")
-			if err := printPIDs(r.Client, ctx); err != nil {
-				log.Error(err, "Error Printing PIDs")
-			}
+			//if err := printPIDs(r.Client, ctx); err != nil {
+			//	log.Error(err, "Error Printing PIDs")
+			//}
 			return []reconcile.Request{}
 		})
 
@@ -238,4 +334,62 @@ func printPIDs(c client.Client, ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, Hive hivev1alpha1.Hive) (uint32, uint64, bool, error) {
+	//log := log.FromContext(ctx)
+	var err error = nil
+
+	// Get local containers from ContainerD
+	containers, err := ContainerdClient.Containers(ctx)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	attach := containerdCio.NewAttach()
+
+	for _, containerStatus := range Pod.Status.ContainerStatuses {
+		if !containerStatus.Ready {
+			// TODO Resend
+			continue
+		}
+		//log.Info("Found container", "Container", containerStatus.Name)
+
+		matched := doesMatchPodPolicy(Pod, Hive)
+		if !matched {
+			continue
+		}
+
+		runtime, id, err := SplitContainerRuntimeID(containerStatus.ContainerID)
+		if err != nil {
+			return 0, 0, false, err
+		}
+		supported := IsContainerRuntimeSupported(runtime)
+		if !supported {
+			return 0, 0, false, errors.New("Container runtime " + runtime + " is not suported.")
+		}
+		// log.Info("ContainerID", "ID", id)
+
+		for _, container := range containers {
+			if container.ID() == id {
+				task, err := container.Task(ctx, attach)
+				if err != nil {
+					return 0, 0, false, err
+				}
+
+				//log.Info("Found container with PID", "PID", task.Pid())
+				inode, devID, err := GetInodeDevID(task.Pid(),
+					Hive.Spec.Path, Hive.Spec.Create, Hive.Spec.Mode)
+				if err != nil {
+					return 0, 0, false, err
+				}
+
+				//log.Info("Inode number", "inode", inode)
+				//log.Info("DevID", "devID", devID)
+				return uint32(inode), devID, true, nil
+			} else {
+				//log.Info("Container not found", "ID", containerID[1])
+			}
+		}
+	}
+	return 0, 0, false, nil
 }

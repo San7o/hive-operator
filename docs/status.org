@@ -34,7 +34,7 @@ Change operator name's from manager to controller. Remove
 - State "DONE"       from "TODO"       [2025-03-18 Tue 15:51]
 Change the license document in all files.
 
-*** Discover [4/7][57%]                                          :discover:
+*** Discover [5/7][71%]                                          :discover:
 **** TODO Refactor =hive= to =hive discover=
 Refactor the project from =hive= to =discover= in the
 file name and resources. To save time, the possibility of
@@ -79,7 +79,8 @@ Create / Remove / Update the loader's CRD on pod events or
 change the status of the resource if possible.
 
 This task depends on the Loader's CRD to be defined.
-**** TODO Reconcile: Update Loader's CRD when CRD is modified
+**** DONE Reconcile: Update Loader's CRD when CRD is modified
+- State "DONE"       from "TODO"       [2025-04-25 Fri 13:48]
 Update the Loader's CRD accordingly, similarly or qeually to
 the watch over the pods.
 
@@ -90,7 +91,7 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [4/8][50%]                                              :loader:
+*** Loader [5/8][62%]                                              :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
@@ -149,7 +150,8 @@ so It will do it at the first opportunity. The problem arises
 if a replica gives up Its leadership without terminating, this
 case should be handled by unloading the program and unsetting
 the variable.
-**** TODO Log to stdout
+**** DONE Log to stdout
+- State "DONE"       from "TODO"       [2025-04-08 Tue 18:35]
 The leader should read the eBPF's output and log to standard
 output.
 **** TODO Add log information
@@ -182,7 +184,7 @@ PID, GID, rights wrx, ...) and log it.
 - State "DONE"       from "TODO"       [2025-03-24 Mon 09:12]
 The map should contain multiple inodes and should Iterate
 over them.
-** Part 2 - Refinement [0/1][0%]                                :refinement:
+** Part 2 - Refinement [0/4][0%]                                :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user. This would mean that there is a single
@@ -216,6 +218,13 @@ and AppArmor to achive the same goal.
 If I run "cat /sys/kernel/security/lsm" I see that there is a
 bpf active security module on my system. What is this? How does
 this work?
+*** TODO Allow multiple valued in match fields
+When specifying a Hive Policy, the user should be able to
+specify multiple values for each match field (pod name and
+namespaces). Kubernetes does not support this natively so multiple
+one request for each combination should be done, greately
+increasing the time complexity.
+*** TODO Make the output compliant to OpenTelemetry
 ** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
 *** TODO Measure Performance
 Measure the performance of the application with respect to

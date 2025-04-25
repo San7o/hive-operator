@@ -47,15 +47,15 @@ int kprobe_inode_permission(struct pt_regs *ctx)
 			check(&ino, &mask, i);
 		}
 
-    // Test data
-    struct log_data data;
-		data.pid = 123;
-		data.tgid = 123;
-		data.uid = 123;
-		data.gid = 123;
-		data.ino = ino;
-		data.mask = mask;
-    bpf_ringbuf_output(&rb, &data, sizeof(struct log_data), 0);
+    // Test output
+    /* struct log_data data; */
+		/* data.pid = 123; */
+		/* data.tgid = 123; */
+		/* data.uid = 123; */
+		/* data.gid = 123; */
+		/* data.ino = ino; */
+		/* data.mask = mask; */
+    /* bpf_ringbuf_output(&rb, &data, sizeof(struct log_data), 0); */
     
     return 0;
 }

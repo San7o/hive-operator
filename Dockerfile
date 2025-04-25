@@ -12,6 +12,7 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
+COPY ebpf/ ebpf/
 COPY cmd/main.go cmd/main.go
 COPY api/ api/
 COPY internal/controller/ internal/controller/

@@ -30,9 +30,11 @@ type HivePolicy struct {
 
 type HivePolicyMatch struct {
 	// Filter pod by name
-	Pod []string `json:"pod,omitempty"`
+	PodName string `json:"pod,omitempty"`
 	// Filter pods per namespace
-	Namespace []string `json:"namespace,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+	// Filter pods by IP
+	IP string `json:"ip,omitempty"`
 	// Filter pods per label
 	Label []LabelType `json:"label,omitempty"`
 }
@@ -43,10 +45,10 @@ type LabelType struct {
 }
 
 // HiveStatus defines the observed state of Hive
-type HiveStatus struct {
-	// Either "create" "update" "delete"
-	Operation string `json:"operation,omitempty"`
-}
+//type HiveStatus struct {
+// Either "create" "update" "delete"
+//Operation string `json:"operation,omitempty"`
+//}
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -56,8 +58,8 @@ type Hive struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   HivePolicy `json:"spec,omitempty"`
-	Status HiveStatus `json:"status,omitempty"`
+	Spec HivePolicy `json:"spec,omitempty"`
+	//Status HiveStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

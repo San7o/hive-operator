@@ -6,11 +6,9 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-data
 spec:
-  hive-data:
-    - path-name: /etc/shadow
-      pod-name: my-pod
-      inode-no: 12345
-      dev-id: 1234
-      kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
-status:
-    operation: created
+  path-name: /etc/shadow
+  pod-name: my-pod
+  pod-namespace: default
+  inode-no: 12345
+  dev-id: 1234
+  kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
