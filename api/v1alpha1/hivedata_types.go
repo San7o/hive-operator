@@ -24,6 +24,8 @@ type HiveDataSpec struct {
 	PodName string `json:"pod-name,omitempty"`
 	// The namespace of the pod where the file lives
 	PodNamespace string `json:"pod-namespace,omitempty"`
+	// The IP of the pod
+	PodIP string `json:"pod-ip,omitempty"`
 	// The inode number of the file
 	InodeNo uint32 `json:"inode-no,omitempty"`
 	// The device id of the file. Currently unsupported

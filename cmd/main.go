@@ -35,7 +35,7 @@ import (
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 	"github.com/San7o/hive-operator/internal/controller"
-	hiveDiscover "github.com/San7o/hive-operator/internal/controller"
+	hive "github.com/San7o/hive-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -74,13 +74,13 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	kernelIDBytes, err := os.ReadFile(hiveDiscover.KernelIDPath)
+	kernelIDBytes, err := os.ReadFile(hive.KernelIDPath)
 	if err != nil {
-		setupLog.Error(err, "Cannot read kerrnel boot ID at"+hiveDiscover.KernelIDPath)
+		setupLog.Error(err, "Cannot read kerrnel boot ID at"+hive.KernelIDPath)
 		os.Exit(1)
 	}
-	hiveDiscover.KernelID = string(kernelIDBytes)
-	hiveDiscover.KernelID = strings.TrimSpace(hiveDiscover.KernelID)
+	hive.KernelID = string(kernelIDBytes)
+	hive.KernelID = strings.TrimSpace(hive.KernelID)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -132,7 +132,7 @@ func main() {
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: hiveDataProbeAddr,
 		LeaderElection:         true,
-		LeaderElectionID:       hiveDiscover.KernelID,
+		LeaderElectionID:       hive.KernelID,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start hiveData manager")
@@ -195,18 +195,28 @@ func main() {
 		}
 	}()
 
-	if err := hiveDataMgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	hiveDataMgrCtx := ctrl.SetupSignalHandler()
+
+	// Unload the eBPF program when leadership is lost
+	go func() {
+		<-hiveDataMgrCtx.Done() // Wait until leadership is lost
+		setupLog.Info("Hive manager lost leadership!")
+
+		hive.UnloadBpf(context.Background())
+	}()
+
+	if err := hiveDataMgr.Start(hiveDataMgrCtx); err != nil {
 		setupLog.Error(err, "problem running hiveData manager")
 		os.Exit(1)
 	}
 
 	// Cleanup
-	if hiveDiscover.ContainerdClient != nil {
-		hiveDiscover.ContainerdClient.Close()
+	if hive.ContainerdClient != nil {
+		hive.ContainerdClient.Close()
 	}
-	if hiveDiscover.RingbuffReader != nil {
-		hiveDiscover.RingbuffReader.Close()
+	if hive.RingbuffReader != nil {
+		hive.RingbuffReader.Close()
 	}
-	hiveDiscover.Objs.Close()
-	hiveDiscover.KeyProbe.Close()
+	hive.Objs.Close()
+	hive.Kprobe.Close()
 }

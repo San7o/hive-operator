@@ -12,7 +12,7 @@
 
 // Package v1alpha1 contains API Schema definitions for the hive v1alpha1 API group
 // +kubebuilder:object:generate=true
-// +groupName=hive.dynatrace.com
+// +groupName=hive.com
 package v1alpha1
 
 import (
@@ -22,7 +22,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "hive.dynatrace.com", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "hive.com", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

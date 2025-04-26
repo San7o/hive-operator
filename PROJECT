@@ -2,7 +2,7 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: dynatrace.com
+domain: hive.com
 layout:
 - go.kubebuilder.io/v4
 plugins:
@@ -15,7 +15,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: dynatrace.com
+  domain: hive.com
   group: hive
   kind: Hive
   path: github.com/San7o/hive-operator/api/v1alpha1
@@ -24,7 +24,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: dynatrace.com
+  domain: hive.com
   group: hive
   kind: HiveData
   path: github.com/San7o/hive-operator/api/v1alpha1

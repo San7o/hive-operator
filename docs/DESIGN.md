@@ -227,7 +227,7 @@ The user is able to specify which files to check and into which pods
 via a custom resource managed by the discover controller, which looks
 loke the following:
 ```yaml
-apiVersion: hive.dynatrace.com/v1alpha1
+apiVersion: hive.com/v1alpha1
 kind: HivePolicy
 metadata:
   labels:
@@ -441,7 +441,7 @@ same key exists before creating a new one.
 
 The custom resource would look like the following:
 ```yaml
-apiVersion: hive.dynatrace.com/v1alpha1
+apiVersion: hive.com/v1alpha1
 kind: HiveData
 metadata:
   labels:

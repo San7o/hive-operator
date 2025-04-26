@@ -16,7 +16,7 @@ import (
 var (
 	RingbuffReader *ringbuf.Reader = nil
 	Objs           bpfObjects      = bpfObjects{}
-	KeyProbe       link.Link       = nil
+	Kprobe         link.Link       = nil
 )
 
 func LoadBpf(ctx context.Context) error {
@@ -35,7 +35,7 @@ func LoadBpf(ctx context.Context) error {
 		return err
 	}
 
-	KeyProbe, err = link.Kprobe(kprobed_func, Objs.KprobeInodePermission, nil)
+	Kprobe, err = link.Kprobe(kprobed_func, Objs.KprobeInodePermission, nil)
 	if err != nil {
 		log.Error(err, "Error Opening kprobe")
 		return err
@@ -65,7 +65,28 @@ func LoadBpf(ctx context.Context) error {
 		return err
 
 	}
+
 	return nil
+}
+
+func UnloadBpf(ctx context.Context) {
+	log := log.FromContext(ctx)
+	if Kprobe != nil {
+		if err := Kprobe.Close(); err != nil {
+			log.Error(err, "Failed to close ebpf program")
+			return
+		}
+
+		if err := Objs.TracedInodes.Close(); err != nil {
+			log.Error(err, "Failed to close eBPF map")
+			return
+		}
+
+		Loaded = false
+
+		log.Info("Ebpf program closed")
+	}
+	return
 }
 
 func LogData(ctx context.Context) {

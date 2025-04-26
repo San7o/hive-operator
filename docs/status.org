@@ -35,10 +35,9 @@ Change operator name's from manager to controller. Remove
 Change the license document in all files.
 
 *** Discover [5/7][71%]                                          :discover:
-**** TODO Refactor =hive= to =hive discover=
-Refactor the project from =hive= to =discover= in the
-file name and resources. To save time, the possibility of
-regenerating the project should be considered.
+**** TODO Refactor =hive= to =hive policy=
+Refactor the CRD from =hive= to =hive policy= in the
+file name and resources.
 **** DONE Setup Custom Resource Definition
 - State "DONE"       from "TODO"       [2025-03-18 Tue 14:48]
 Finalize the CRD managed by the discover controller. Each
@@ -74,15 +73,14 @@ number of containers in the node.
 **** DONE Filters with multiple entries
 - State "DONE"       from "TODO"       [2025-03-19 Wed 14:52]
 Allow multiple entries in the match filters.
-**** TODO Watch: Update Loader's CRD when pods are modified
-Create / Remove / Update the loader's CRD on pod events or
-change the status of the resource if possible.
-
-This task depends on the Loader's CRD to be defined.
-**** DONE Reconcile: Update Loader's CRD when CRD is modified
+**** DONE Reconcile: Update HiveData CRD when HivePolicy is modified
 - State "DONE"       from "TODO"       [2025-04-25 Fri 13:48]
-Update the Loader's CRD accordingly, similarly or qeually to
-the watch over the pods.
+Update the Loader's CRD accordingly. When a HivePolicy is added,
+the corresponding HiveData resources are generated. When a
+HivePolicy is deleted, it should delete Its corresponding
+HiveDatas. Similarly for updates. To handle deletions and
+updates, we delegate to the reconciliation of HiveData, which
+will check if each HiveData referst to a HivePolicy.2
 
 This taks depends on the Loader's CRD to be defined.
 **** DONE Move housekeeping to main
@@ -91,7 +89,7 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [5/8][62%]                                              :loader:
+*** Loader [7/9][77%]                                              :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
@@ -135,11 +133,18 @@ details. It also should contain a status (added / removed)
 The leader should load the eBPF program. This should be tested
 in different cluster configurations (one loader, two loaders,
 kind cluster, vm cluster...)
-**** TODO Reconcile: Update the eBPF program
+**** DONE Reconcile: Update the eBPF program
+- State "DONE"       from "TODO"       [2025-04-26 Sat 17:06]
 When a change happens to the custom resource, the eBPF program's
 map should be updated accordingly, with only the entries that
 match the kernel-id of the loader's machine.
-**** TODO Handle Rescheduling
+**** TODO Watch: Update HiveData when pods are modified
+Create / Remove / Update the loader's CRD on pod events or
+change the status of the resource if possible.
+
+This task depends on the Loader's CRD to be defined.
+**** DONE Handle Rescheduling
+- State "DONE"       from "TODO"       [2025-04-26 Sat 14:53]
 When the operator gets rescheduled, the leader Loader
 controller should reload the eBPF program.
 
@@ -195,36 +200,21 @@ Compiling inside the docker container takes a long time. The
 project should use ledd dependencies or the dependencies should
 be precompiled into libraries only once and linked during
 developement of the operator.
-*** TODO Use LSM for eBPF security
-https://landlock.io/ Landlock is a linux security module that can be
-used to limit the capabilities of eBPF programs. From the kubernetes
-documentation: "With seccomp, a BPF program only has access to the
-parameters of the syscall but cannot dereference the pointers, making
-it impossible to make security decisions based on a file. seccomp also
-uses classic BPF, meaning it cannot make use of eBPF maps, the
-mechanism for interfacing with user space. This restriction means
-security policies cannot be changed in seccomp-bpf based on a
-configuration in an eBPF map. 
-BPF programs with Landlock don’t receive the arguments
-of the syscalls but a reference to a kernel object. In the example
-above, this means it will have a reference to the file, so it does not
-need to dereference a pointer, consider relative paths, or perform
-chroots."
-https://kubernetes.io/blog/2017/12/using-ebpf-in-kubernetes/#application-applied-lsm
-However, I cannot find any usage / documentation of this online...
-Alternatively, investigate other linux security modules like SELinux
-and AppArmor to achive the same goal.
-
-If I run "cat /sys/kernel/security/lsm" I see that there is a
-bpf active security module on my system. What is this? How does
-this work?
-*** TODO Allow multiple valued in match fields
+*** TODO Allow multiple values in match fields
 When specifying a Hive Policy, the user should be able to
 specify multiple values for each match field (pod name and
 namespaces). Kubernetes does not support this natively so multiple
 one request for each combination should be done, greately
 increasing the time complexity.
 *** TODO Make the output compliant to OpenTelemetry
+*** TODO Resend reconcile request when container is not ready
+During the Hive Policy reconciliation, if a container is not
+ready it is skipped and the HiveData won't be created. This can
+be solved by sending another reconciliation request if the status
+is not ready. It will keep looping until the container will be
+ready.
+*** TODO Add addtional match selectors
+Add match fields like Hostname.
 ** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
 *** TODO Measure Performance
 Measure the performance of the application with respect to

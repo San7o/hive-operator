@@ -8,7 +8,7 @@ metadata:
   name: hivedata-editor-role
 rules:
 - apiGroups:
-  - hive.dynatrace.com
+  - hive.com
   resources:
   - hivedata
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive.dynatrace.com
+  - hive.com
   resources:
   - hivedata/status
   verbs:

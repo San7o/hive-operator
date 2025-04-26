@@ -9,7 +9,7 @@ Currently, only pods using containerd runtime are supported.
 Specify a path to monitor by using a custom resource with the following
 format:
 ```yaml
-apiVersion: hive.dynatrace.com/v1alpha1
+apiVersion: hive.com/v1alpha1
 kind: HivePolicy
 metadata:
   labels:
