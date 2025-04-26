@@ -86,7 +86,7 @@ func GetInodeDevID(pid Pid, path string, create bool, mode uint32) (Ino, Dev, er
 	return stat.Ino, stat.Dev, nil
 }
 
-func doesMatchPodPolicy(pod corev1.Pod, hive hivev1alpha1.Hive) bool {
+func doesMatchPodPolicy(pod corev1.Pod, hive hivev1alpha1.HivePolicy) bool {
 
 	if hive.Spec.Match.PodName != pod.Name ||
 		hive.Spec.Match.Namespace != pod.Namespace {

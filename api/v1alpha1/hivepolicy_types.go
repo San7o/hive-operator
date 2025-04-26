@@ -16,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type HivePolicy struct {
+type HivePolicySpec struct {
 	// Specifies which path to check
 	Path string `json:"path,omitempty"`
 	// Whether to create the file or not if It cannot be found
@@ -44,33 +44,24 @@ type LabelType struct {
 	Value string `json:"value,otmiempty"`
 }
 
-// HiveStatus defines the observed state of Hive
-//type HiveStatus struct {
-// Either "create" "update" "delete"
-//Operation string `json:"operation,omitempty"`
-//}
-
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// Hive is the Schema for the hives API
-type Hive struct {
+type HivePolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec HivePolicy `json:"spec,omitempty"`
-	//Status HiveStatus `json:"status,omitempty"`
+	Spec HivePolicySpec `json:"spec,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// HiveList contains a list of Hive
-type HiveList struct {
+type HivePolicyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Hive `json:"items"`
+	Items           []HivePolicy `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Hive{}, &HiveList{})
+	SchemeBuilder.Register(&HivePolicy{}, &HivePolicyList{})
 }

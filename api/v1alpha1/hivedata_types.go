@@ -34,27 +34,18 @@ type HiveDataSpec struct {
 	KernelID string `json:"kernel-id,omitempty"`
 }
 
-// HiveDataStatus defines the observed state of HiveData
-//type HiveDataStatus struct {
-// Either "created", "removed" or "updated"
-//Operation string `json:"operation,omitempty"`
-//}
-
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// HiveData is the Schema for the hivedata API
 type HiveData struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec HiveDataSpec `json:"spec,omitempty"`
-	//Status HiveDataStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// HiveDataList contains a list of HiveData
 type HiveDataList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

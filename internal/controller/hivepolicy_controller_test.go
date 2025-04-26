@@ -36,13 +36,13 @@ var _ = Describe("Hive Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		hive := &hivev1alpha1.Hive{}
+		hive := &hivev1alpha1.HivePolicy{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind Hive")
 			err := k8sClient.Get(ctx, typeNamespacedName, hive)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &hivev1alpha1.Hive{
+				resource := &hivev1alpha1.HivePolicy{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -55,7 +55,7 @@ var _ = Describe("Hive Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &hivev1alpha1.Hive{}
+			resource := &hivev1alpha1.HivePolicy{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -64,7 +64,7 @@ var _ = Describe("Hive Controller", func() {
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &HiveReconciler{
+			controllerReconciler := &HivePolicyReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

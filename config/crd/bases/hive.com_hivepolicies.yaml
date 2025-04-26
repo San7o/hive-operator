@@ -4,20 +4,19 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: hivedata.hive.com
+  name: hivepolicies.hive.com
 spec:
   group: hive.com
   names:
-    kind: HiveData
-    listKind: HiveDataList
-    plural: hivedata
-    singular: hivedata
+    kind: HivePolicy
+    listKind: HivePolicyList
+    plural: hivepolicies
+    singular: hivepolicy
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: HiveData is the Schema for the hivedata API
         properties:
           apiVersion:
             description: |-
@@ -37,30 +36,43 @@ spec:
           metadata:
             type: object
           spec:
-            description: HiveDataSpec defines the desired state of HiveData
             properties:
-              dev-id:
-                description: The device id of the file. Currently unsupported
-                format: int64
-                type: integer
-              inode-no:
-                description: The inode number of the file
+              create:
+                description: Whether to create the file or not if It cannot be found
+                type: boolean
+              match:
+                description: Filters the pods inside this namespace
+                properties:
+                  ip:
+                    description: Filter pods by IP
+                    type: string
+                  label:
+                    description: Filter pods per label
+                    items:
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - value
+                      type: object
+                    type: array
+                  namespace:
+                    description: Filter pods per namespace
+                    type: string
+                  pod:
+                    description: Filter pod by name
+                    type: string
+                type: object
+              mode:
+                description: |-
+                  The content of the file if It was created. This field
+                  is used only if Create is set to true
                 format: int32
                 type: integer
-              kernel-id:
-                description: A string to uniquely identify a running kernel
-                type: string
-              path-name:
-                description: The path of the file
-                type: string
-              pod-ip:
-                description: The IP of the pod
-                type: string
-              pod-name:
-                description: The name of the pod where this file lives
-                type: string
-              pod-namespace:
-                description: The namespace of the pod where the file lives
+              path:
+                description: Specifies which path to check
                 type: string
             type: object
         type: object

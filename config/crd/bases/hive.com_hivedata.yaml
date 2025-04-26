@@ -17,7 +17,6 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: HiveData is the Schema for the hivedata API
         properties:
           apiVersion:
             description: |-

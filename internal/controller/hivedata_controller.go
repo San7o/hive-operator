@@ -69,7 +69,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		go LogData(context.Background())
 	}
 
-	hivePolicyList := &hivev1alpha1.HiveList{}
+	hivePolicyList := &hivev1alpha1.HivePolicyList{}
 	err := r.Client.List(ctx, hivePolicyList)
 	if err != nil {
 		log.Error(err, "Failed to get Hive Policy resource")

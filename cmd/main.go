@@ -140,7 +140,7 @@ func main() {
 	}
 
 	// Hive manager
-	hiveMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	hivePolicyMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
@@ -151,11 +151,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.HiveReconciler{
-		Client: hiveMgr.GetClient(),
-		Scheme: hiveMgr.GetScheme(),
-	}).SetupWithManager(hiveMgr); err != nil {
-		setupLog.Error(err, "unable to create hive controller", "controller", "Hive")
+	if err = (&controller.HivePolicyReconciler{
+		Client: hivePolicyMgr.GetClient(),
+		Scheme: hivePolicyMgr.GetScheme(),
+	}).SetupWithManager(hivePolicyMgr); err != nil {
+		setupLog.Error(err, "unable to create HivePolicy controller", "controller", "HivePolicy")
 		os.Exit(1)
 	}
 
@@ -163,16 +163,16 @@ func main() {
 		Client: hiveDataMgr.GetClient(),
 		Scheme: hiveDataMgr.GetScheme(),
 	}).SetupWithManager(hiveDataMgr); err != nil {
-		setupLog.Error(err, "unable to create hiveData controller", "controller", "HiveData")
+		setupLog.Error(err, "unable to create HiveData controller", "controller", "HiveData")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
-	if err := hiveMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err := hivePolicyMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := hiveMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err := hivePolicyMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
@@ -189,7 +189,7 @@ func main() {
 	setupLog.Info("starting hive managers")
 
 	go func() {
-		if err := hiveMgr.Start(context.Background()); err != nil {
+		if err := hivePolicyMgr.Start(context.Background()); err != nil {
 			setupLog.Error(err, "problem running hive manager")
 			os.Exit(1)
 		}

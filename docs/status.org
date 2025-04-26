@@ -5,7 +5,7 @@
 This document contains future work needed for the project.
 
 
-** Part 1 - MVP [4/6][66%]                                             :mvp:
+** Part 1 - MVP [4/4][100%]                                            :mvp:
 *** DONE Udate the design document
 - State "DONE"       from "TODO"       [2025-03-17 Mon 14:48]
 The current design document has been reviewed and some changes
@@ -27,15 +27,13 @@ document.
 - State "DONE"       from "TODO"       [2025-03-17 Mon 14:48]
 Simplify the shell script by moving their execution to the make
 file.
-*** TODO Change names
-Change operator name's from manager to controller. Remove
-"dynatrace" from names.
 *** DONE Change the license to GPL-2.0
 - State "DONE"       from "TODO"       [2025-03-18 Tue 15:51]
 Change the license document in all files.
 
-*** Discover [5/7][71%]                                          :discover:
-**** TODO Refactor =hive= to =hive policy=
+*** Discover [6/6][100%]                                         :discover:
+**** DONE Refactor =hive= to =hive policy=
+- State "DONE"       from "TODO"       [2025-04-26 Sat 17:51]
 Refactor the CRD from =hive= to =hive policy= in the
 file name and resources.
 **** DONE Setup Custom Resource Definition
@@ -189,7 +187,7 @@ PID, GID, rights wrx, ...) and log it.
 - State "DONE"       from "TODO"       [2025-03-24 Mon 09:12]
 The map should contain multiple inodes and should Iterate
 over them.
-** Part 2 - Refinement [0/4][0%]                                :refinement:
+** Part 2 - Refinement [0/6][0%]                                :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user. This would mean that there is a single
