@@ -56,8 +56,6 @@ type HivePolicyReconciler struct {
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=deployments/status,verbs=get
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
 func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("HivePolicy reconcile triggered.")
@@ -91,8 +89,8 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	// Check if HiveData resources exist for each hive resource.
-	// In case it does not or It is incomplete, create it.
+	// Loop over the HivePolicies and check if all the corresponsing
+	// HiveData exist. In case they does not, a new HiveData is created.
 	for _, hivePolicy := range hivePolicyList.Items {
 
 		labelMap := make(client.MatchingLabels)
@@ -135,13 +133,15 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					return ctrl.Result{}, err
 				}
 				if !ok {
+					log.Info("Inode in matched pod not found.")
 					continue
 				}
 
-				// Create a hive data resource
+				// Here we are crating a new HiveData since an already existing
+				// one for this Pod and this HivePolicy has not been found
 				hiveData := &hivev1alpha1.HiveData{
 					ObjectMeta: metav1.ObjectMeta{
-						// Unique name
+						// Give it an unique name
 						Name:      "hive-data-" + pod.Name + "-" + pod.Namespace + "-" + strconv.FormatUint(uint64(inode), 10),
 						Namespace: "hive-operator-system",
 					},
@@ -165,8 +165,10 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Force a reconciliation for HiveData, which will delete any
-	// HiveData that does not belong anymore to a HivePolicy when this
-	// is deleted.
+	// HiveData that does not belong anymore to a HivePolicy. This is
+	// necessary to handle delection of HivePolicies.
+	// We trigger a reconciliation by updating an annotation with the
+	// current time.
 	if len(hiveDataList.Items) != 0 {
 		orig := hiveDataList.Items[0].DeepCopy()
 		if hiveDataList.Items[0].Annotations == nil {
@@ -181,7 +183,6 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
 func (r *HivePolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// Index pod name, namespace and ip so we can query a pod
@@ -216,11 +217,16 @@ func (r *HivePolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// Return: Inode number, Device id, is found, error
 func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1alpha1.HivePolicy) (uint32, uint64, bool, error) {
 	//log := log.FromContext(ctx)
 	var err error = nil
 
-	// Get local containers from ContainerD
+	if Pod.Status.Phase != corev1.PodRunning {
+		// TODO: Resend Reconciliation
+		return 0, 0, false, nil
+	}
+
 	containers, err := ContainerdClient.Containers(ctx)
 	if err != nil {
 		return 0, 0, false, err
@@ -229,7 +235,7 @@ func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1
 
 	for _, containerStatus := range Pod.Status.ContainerStatuses {
 		if !containerStatus.Ready {
-			// TODO Resend
+			// TODO: Resend Reconciliation
 			continue
 		}
 

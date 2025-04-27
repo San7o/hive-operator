@@ -87,7 +87,7 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [7/9][77%]                                              :loader:
+*** Loader [8/9][88%]                                              :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
@@ -136,7 +136,8 @@ kind cluster, vm cluster...)
 When a change happens to the custom resource, the eBPF program's
 map should be updated accordingly, with only the entries that
 match the kernel-id of the loader's machine.
-**** TODO Watch: Update HiveData when pods are modified
+**** DONE Watch: Update HiveData when pods are modified
+- State "DONE"       from "TODO"       [2025-04-27 Sun 12:49]
 Create / Remove / Update the loader's CRD on pod events or
 change the status of the resource if possible.
 
