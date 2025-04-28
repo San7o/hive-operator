@@ -350,22 +350,20 @@ The controller performs the following actions in sequence when a CRUD
 operation occurs on an HivePolicy resource:
 
 1. Identify the kernel instance: the controller will fetch an unique
-       identifier for the running kernel (for example reading
-       `/proc/sys/kernel/random/boot_id`).
+   identifier for the running kernel (for example reading
+   `/proc/sys/kernel/random/boot_id`).
        
-       This is needed because the loader should send to the eBPF
-       program only the inodes that exist on the running kernel. In
-       other words, and inode makes sense only in the kernel where It
-       runs. Therefore, the discover controller needs to identify Its
-       running kernel in order to share the inodes with the right
-       loader (there is one loader per running kernel, more info
-       below).
+   This is needed because the loader should send to the eBPF program
+   only the inodes that exist on the running kernel. In other words,
+   and inode makes sense only in the kernel where It runs. Therefore,
+   the discover controller needs to identify Its running kernel in
+   order to share the inodes with the right loader (there is one
+   loader per running kernel, more info below).
 
 2. Initialize a connection with the container runtime of the kubelet
-       where the controller lives, if not previously done. Interfacing
-       to the container runtime is necessary to know which PID
-       corresponds to which container, and through the PID we can
-       access the filesystem.
+   where the controller lives, if not previously done. Interfacing to
+   the container runtime is necessary to know which PID corresponds to
+   which container, and through the PID we can access the filesystem.
 
 3. Read all the HivePolicies to know which filters to apply for
    selecting pods and which files to check.
