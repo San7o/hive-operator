@@ -194,16 +194,11 @@ Instead of logging to stdout, the operator may log to a socket
 provided by the user. This would mean that there is a single
 global configuration of the entire operator. The global config
 may be used for other ourposes such as setting a log level.
-*** TODO Speedup Compilation Time
-Compiling inside the docker container takes a long time. The
-project should use ledd dependencies or the dependencies should
-be precompiled into libraries only once and linked during
-developement of the operator.
 *** TODO Allow multiple values in match fields
 When specifying a Hive Policy, the user should be able to
 specify multiple values for each match field (pod name and
 namespaces). Kubernetes does not support this natively so multiple
-one request for each combination should be done, greately
+request for each combination of fields should be executed, greately
 increasing the time complexity.
 *** TODO Make the output compliant to OpenTelemetry
 *** TODO Resend reconcile request when container is not ready

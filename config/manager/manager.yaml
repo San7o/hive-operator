@@ -33,8 +33,9 @@ spec:
       - command:
         - /manager
         args:
-          - --hive-health-probe-bind-address=:8081
+          - --hive-policy-health-probe-bind-address=:8081
           - --hive-data-health-probe-bind-address=:8082
+          - --hive-pod-health-probe-bind-address=:8083
         image: localhost:5001/manager:latest
         name: manager
         securityContext:

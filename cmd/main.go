@@ -53,15 +53,17 @@ func init() {
 
 func main() {
 	var metricsAddr string
-	var hiveProbeAddr string
+	var hivePolicyProbeAddr string
 	var hiveDataProbeAddr string
+	var hivePodProbeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&hiveProbeAddr, "hive-health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&hivePolicyProbeAddr, "hive-policy-health-probe-bind-address", ":8081", "The address the hive policy endpoint binds to.")
 	flag.StringVar(&hiveDataProbeAddr, "hive-data-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
+		flag.StringVar(&hivePodProbeAddr, "hive-pod-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
@@ -144,10 +146,24 @@ func main() {
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: hiveProbeAddr,
+		HealthProbeBindAddress: hivePolicyProbeAddr,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start hive manager")
+		os.Exit(1)
+	}
+
+	// Pod manager
+	hivePodMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		Metrics:                metricsServerOptions,
+		WebhookServer:          webhookServer,
+		HealthProbeBindAddress: hivePodProbeAddr,
+		LeaderElection:         true,
+		LeaderElectionID:       "hive",
+	})
+	if err != nil {
+		setupLog.Error(err, "unable to start hivePod manager")
 		os.Exit(1)
 	}
 
@@ -166,6 +182,14 @@ func main() {
 		setupLog.Error(err, "unable to create HiveData controller", "controller", "HiveData")
 		os.Exit(1)
 	}
+
+	if err = (&controller.HivePodReconciler{
+		Client: hivePodMgr.GetClient(),
+	}).SetupWithManager(hivePodMgr); err != nil {
+		setupLog.Error(err, "unable to create HivePod controller", "controller", "HivePod")
+		os.Exit(1)
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := hivePolicyMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -186,11 +210,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := hivePodMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := hivePodMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
 	setupLog.Info("starting hive managers")
 
 	go func() {
 		if err := hivePolicyMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "problem running hive manager")
+			setupLog.Error(err, "problem running HivePolicy manager")
+			os.Exit(1)
+		}
+	}()
+
+	go func() {
+		if err := hivePodMgr.Start(context.Background()); err != nil {
+			setupLog.Error(err, "problem running HivePod manager")
 			os.Exit(1)
 		}
 	}()
@@ -206,7 +246,7 @@ func main() {
 	}()
 
 	if err := hiveDataMgr.Start(hiveDataMgrCtx); err != nil {
-		setupLog.Error(err, "problem running hiveData manager")
+		setupLog.Error(err, "problem running HiveData manager")
 		os.Exit(1)
 	}
 

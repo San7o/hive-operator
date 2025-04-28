@@ -56,6 +56,11 @@ type HivePolicyReconciler struct {
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=deployments/status,verbs=get
 
+// The HivePolicy reconciliation is responsible for the following:
+//   - For each HivePolicy, fetch files' information such as the inode
+//     number from the matched contianers.
+//   - create HiveData resources with the previously fetched information
+//     if not already present.
 func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("HivePolicy reconcile triggered.")
@@ -166,7 +171,7 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Force a reconciliation for HiveData, which will delete any
 	// HiveData that does not belong anymore to a HivePolicy. This is
-	// necessary to handle delection of HivePolicies.
+	// necessary to handle deletion of HivePolicies.
 	// We trigger a reconciliation by updating an annotation with the
 	// current time.
 	if len(hiveDataList.Items) != 0 {
