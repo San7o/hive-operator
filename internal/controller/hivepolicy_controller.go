@@ -133,9 +133,12 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 			if !found {
 
-				inode, devID, ok, err := getInodeDevidFromPod(ctx, pod, hivePolicy)
+				inode, devID, ok, requeue, err := getInodeDevidFromPod(ctx, pod, hivePolicy)
 				if err != nil {
 					return ctrl.Result{}, err
+				}
+				if requeue {
+					return ctrl.Result{Requeue: true}, nil
 				}
 				if !ok {
 					log.Info("Inode in matched pod not found.")
@@ -222,26 +225,25 @@ func (r *HivePolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// Return: Inode number, Device id, is found, error
-func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1alpha1.HivePolicy) (uint32, uint64, bool, error) {
-	//log := log.FromContext(ctx)
+// Return: Inode number, Device id, is found, do requeue, error
+func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1alpha1.HivePolicy) (uint32, uint64, bool, bool, error) {
 	var err error = nil
 
 	if Pod.Status.Phase != corev1.PodRunning {
-		// TODO: Resend Reconciliation
-		return 0, 0, false, nil
+		// Requeue
+		return 0, 0, false, true, nil
 	}
 
 	containers, err := ContainerdClient.Containers(ctx)
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, false, err
 	}
 	attach := containerdCio.NewAttach()
 
 	for _, containerStatus := range Pod.Status.ContainerStatuses {
 		if !containerStatus.Ready {
-			// TODO: Resend Reconciliation
-			continue
+			// Requeue
+			return 0, 0, false, true, err
 		}
 
 		matched := doesMatchPodPolicy(Pod, HivePolicy)
@@ -251,29 +253,29 @@ func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1
 
 		runtime, id, err := SplitContainerRuntimeID(containerStatus.ContainerID)
 		if err != nil {
-			return 0, 0, false, err
+			return 0, 0, false, false, err
 		}
 		supported := IsContainerRuntimeSupported(runtime)
 		if !supported {
-			return 0, 0, false, errors.New("Container runtime " + runtime + " is not suported.")
+			return 0, 0, false, false, errors.New("Container runtime " + runtime + " is not suported.")
 		}
 
 		for _, container := range containers {
 			if container.ID() == id {
 				task, err := container.Task(ctx, attach)
 				if err != nil {
-					return 0, 0, false, err
+					return 0, 0, false, false, err
 				}
 
 				inode, devID, err := GetInodeDevID(task.Pid(),
 					HivePolicy.Spec.Path, HivePolicy.Spec.Create, HivePolicy.Spec.Mode)
 				if err != nil {
-					return 0, 0, false, err
+					return 0, 0, false, false, err
 				}
 
-				return uint32(inode), devID, true, nil
+				return uint32(inode), devID, true, false, nil
 			}
 		}
 	}
-	return 0, 0, false, nil
+	return 0, 0, false, false, nil
 }

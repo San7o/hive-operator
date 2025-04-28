@@ -359,6 +359,8 @@ operation occurs on an HivePolicy resource:
    the discover controller needs to identify Its running kernel in
    order to share the inodes with the right loader (there is one
    loader per running kernel, more info below).
+   
+   This is node only once at startup.
 
 2. Initialize a connection with the container runtime of the kubelet
    where the controller lives, if not previously done. Interfacing to
@@ -384,6 +386,9 @@ operation occurs on an HivePolicy resource:
      
    - Create the HiveData with the information from the pod, the policy,
      and the inode.
+
+   If the pod is not ready, or a container inside the pod is not ready,
+   requeue and restart from point 2.
 
 6. Trigger a reconciliation for HiveData, which will be responsible
    for deleting any resource that does not belong anymore to a

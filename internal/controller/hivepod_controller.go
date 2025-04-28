@@ -31,12 +31,13 @@ type HivePodReconciler struct {
 
 // There are two main operations we are concearned about with
 // pods: pod creation and pod termination.
-// - creation: upon creation, the controller should send a
-//   reconcile request for HivePolicy so that new HiveData will
-//   be generated for the new pod.
-// - termination: upon termination, the controller should check if
-//   each HiveData refers to an existing pod. If it doesn't, then
-//   that resource should be eliminated.
+//   - creation: upon creation, the controller should send a
+//     reconcile request for HivePolicy so that new HiveData will
+//     be generated for the new pod.
+//   - termination: upon termination, the controller should check if
+//     each HiveData refers to an existing pod. If it doesn't, then
+//     that resource should be eliminated.
+//
 // Failures are treated as terminations.
 func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 

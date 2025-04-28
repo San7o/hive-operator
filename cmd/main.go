@@ -63,7 +63,7 @@ func main() {
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&hivePolicyProbeAddr, "hive-policy-health-probe-bind-address", ":8081", "The address the hive policy endpoint binds to.")
 	flag.StringVar(&hiveDataProbeAddr, "hive-data-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
-		flag.StringVar(&hivePodProbeAddr, "hive-pod-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
+	flag.StringVar(&hivePodProbeAddr, "hive-pod-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
