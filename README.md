@@ -18,16 +18,15 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-policy
 spec:
-  monitors:
-  - path: /secret.txt
-    create: true
-    mode: 444
-    match:
-      pod: my-pod
-      namespace: hive-security
-      label:
-      - key: security-level
-        value: high
+  path: /secret.txt
+  create: true
+  mode: 444
+  match:
+    pod: nginx-pod
+    namespace: default
+    label:
+    - key: security-level
+      value: high
 ```
 
 You can select match conditions to filter which pods to monitor for a
