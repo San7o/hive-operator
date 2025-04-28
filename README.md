@@ -39,12 +39,11 @@ use the operator in more detail.
 
 # Development
 
-Please read the [DEVELOPMENT](./docs/DEVELOPMENT.md) and
-[TESTING](./docs/TESTING.md) documents to get started on Hive's
-developement.
-
 The [DESIGN](./docs/DESIGN.md) document contains all the information
 about the internals of the operator.
+
+Please read the [DEVELOPMENT](./docs/DEVELOPMENT.md) document to build
+and get started with Hive's developement.
 
 The [status](./docs/status.org) contains information about the current
 status of development and future work.
