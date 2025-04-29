@@ -87,7 +87,7 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [11/11][100%]                                           :loader:
+*** Loader [12/12][100%]                                           :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
@@ -174,7 +174,8 @@ ready it is skipped and the HiveData won't be created. This can
 be solved by sending another reconciliation request if the status
 is not ready. It will keep looping until the container will be
 ready.
-**** TODO Fix error ""non-exact field matches are not supported by the cache"
+**** DONE Fix error "non-exact field matches are not supported by the cache"
+- State "DONE"       from "TODO"       [2025-04-29 Tue 15:30]
 **** eBPF [4/4][100%]                                               :ebpf:
 ***** CANCEL Map of inode number + device id
 - State "CANCEL"     from "TODO"       [2025-03-21 Fri 18:13]
@@ -204,9 +205,7 @@ over them.
 ** Part 2 - Refinement [0/6][0%]                                :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
-provided by the user. This would mean that there is a single
-global configuration of the entire operator. The global config
-may be used for other ourposes such as setting a log level.
+provided by the user or to a standard socket.
 *** TODO Allow multiple values in match fields
 When specifying a Hive Policy, the user should be able to
 specify multiple values for each match field (pod name and
@@ -214,6 +213,8 @@ namespaces). Kubernetes does not support this natively so multiple
 request for each combination of fields should be executed, greately
 increasing the time complexity.
 *** TODO Make the output compliant to OpenTelemetry
+Learn more about OpenTelemetry and how to interface the operator
+with OpenTelemetry.
 *** TODO Add addtional match selectors
 Add match fields like Hostname.
 ** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
