@@ -44,22 +44,38 @@ spec:
                 type: integer
               inode-no:
                 description: The inode number of the file
-                format: int32
+                format: int64
                 type: integer
               kernel-id:
                 description: A string to uniquely identify a running kernel
                 type: string
-              path-name:
+              match:
+                description: Filters for the pod
+                properties:
+                  ip:
+                    description: Filter pods by IP
+                    type: string
+                  label:
+                    description: Filter pods per label
+                    items:
+                      properties:
+                        key:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - value
+                      type: object
+                    type: array
+                  namespace:
+                    description: Filter pods per namespace
+                    type: string
+                  pod:
+                    description: Filter pod by name
+                    type: string
+                type: object
+              path:
                 description: The path of the file
-                type: string
-              pod-ip:
-                description: The IP of the pod
-                type: string
-              pod-name:
-                description: The name of the pod where this file lives
-                type: string
-              pod-namespace:
-                description: The namespace of the pod where the file lives
                 type: string
             type: object
         type: object

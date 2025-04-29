@@ -447,22 +447,23 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: hive-sample-data
 spec:
-  path-name: /etc/shadow
-  pod-name: my-pod
-  pod-namespace: default
-  inode-no: 12345
-  dev-id: 1234
-  kernel-id: 76e8b798-72ec-4e9a-a357-bbee935004a2
+  dev-id: 87
+  inode-no: 2865504
+  kernel-id: dc4250f6-f06e-4ea3-86eb-f7a2d8ee01de
+  path: /secret.txt
+  match:
+    ip: 10.244.1.2
+    namespace: default
+    pod: nginx-pod
+    label:
+    - key: security-level
+      value: high
 ```
 
 The fields, all under the `spec` one, are the following:
-- `path-name`: The path of the file to trace. This is not needed by
+- `path`: The path of the file to trace. This is not needed by
   the eBPF program, instead this is necessary as part of the key to
   uniquely identify that an HiveData refers to an HivePolicy.
-- `pod-name`: The name of the pod where this inode lives, needed for
-  the key.
-- `pod-namespace`: The namespace of the pod where the inode lives,
-  needed for the key.
 - `inode-no`: The inode number of the file to trace, needed for
   eBPF tracing.
 - `dev-id`: Device id of the file to trace, nedded for eBPF tracing.
@@ -471,6 +472,7 @@ The fields, all under the `spec` one, are the following:
   for further details.
 - `kernel-id`: An unique identifier of a running kernel, to discriminate
   which loader controller should handle this HiveData.
+- `match`: Same as HivePolicy, but all the fields are completed.
 
 An HiveData is uniquely identified by the `path-name`, `pod-name` and
 `pod-namespace` fields.

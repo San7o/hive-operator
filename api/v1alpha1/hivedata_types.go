@@ -19,19 +19,15 @@ import (
 // HiveDataSpec defines the desired state of HiveData
 type HiveDataSpec struct {
 	// The path of the file
-	PathName string `json:"path-name,omitempty"`
-	// The name of the pod where this file lives
-	PodName string `json:"pod-name,omitempty"`
-	// The namespace of the pod where the file lives
-	PodNamespace string `json:"pod-namespace,omitempty"`
-	// The IP of the pod
-	PodIP string `json:"pod-ip,omitempty"`
+	Path string `json:"path,omitempty"`
 	// The inode number of the file
-	InodeNo uint32 `json:"inode-no,omitempty"`
+	InodeNo uint64 `json:"inode-no,omitempty"`
 	// The device id of the file. Currently unsupported
 	DevID uint64 `json:"dev-id,omitempty"`
 	// A string to uniquely identify a running kernel
 	KernelID string `json:"kernel-id,omitempty"`
+	// Filters for the pod
+	Match HivePolicyMatch `json:"match,omitempty"`
 }
 
 // +kubebuilder:object:root=true

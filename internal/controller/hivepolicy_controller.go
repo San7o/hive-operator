@@ -44,6 +44,7 @@ var (
 
 type HivePolicyReconciler struct {
 	client.Client
+	UncachedClient client.Reader
 	Scheme *runtime.Scheme
 }
 
@@ -115,17 +116,17 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		podList := &corev1.PodList{}
-		err = r.Client.List(ctx, podList, labelMap, matchingFields)
+		err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 
 		for _, pod := range podList.Items {
 			found := false
-			for _, data := range hiveDataList.Items {
-				if data.Spec.PodName == pod.Name &&
-					data.Spec.PodNamespace == pod.Namespace &&
-					data.Spec.PathName == hivePolicy.Spec.Path {
+			for _, hiveData := range hiveDataList.Items {
+				if hiveData.Spec.Match.PodName == pod.Name &&
+					hiveData.Spec.Match.Namespace == pod.Namespace &&
+					hiveData.Spec.Path == hivePolicy.Spec.Path {
 					found = true
 					break
 				}
@@ -141,7 +142,7 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					return ctrl.Result{Requeue: true}, nil
 				}
 				if !ok {
-					log.Info("Inode in matched pod not found.")
+					log.Info("Inode of " + hivePolicy.Spec.Path + " in matched pod " + pod.Name + " not found.")
 					continue
 				}
 
@@ -154,13 +155,16 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						Namespace: "hive-operator-system",
 					},
 					Spec: hivev1alpha1.HiveDataSpec{
-						PathName:     hivePolicy.Spec.Path,
-						PodName:      pod.Name,
-						PodNamespace: pod.Namespace,
-						PodIP:        pod.Status.PodIPs[0].IP,
-						InodeNo:      inode,
-						DevID:        devID,
-						KernelID:     KernelID,
+						Path:     hivePolicy.Spec.Path,
+						InodeNo:  inode,
+						DevID:    devID,
+						KernelID: KernelID,
+						Match: hivev1alpha1.HivePolicyMatch{
+							PodName:   pod.Name,
+							Namespace: pod.Namespace,
+							IP:        pod.Status.PodIPs[0].IP,
+							Label:     hivePolicy.Spec.Match.Label,
+						},
 					},
 				}
 				err = r.Client.Create(ctx, hiveData)
@@ -226,7 +230,7 @@ func (r *HivePolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // Return: Inode number, Device id, is found, do requeue, error
-func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1alpha1.HivePolicy) (uint32, uint64, bool, bool, error) {
+func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1alpha1.HivePolicy) (uint64, uint64, bool, bool, error) {
 	var err error = nil
 
 	if Pod.Status.Phase != corev1.PodRunning {
@@ -244,11 +248,6 @@ func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1
 		if !containerStatus.Ready {
 			// Requeue
 			return 0, 0, false, true, err
-		}
-
-		matched := doesMatchPodPolicy(Pod, HivePolicy)
-		if !matched {
-			continue
 		}
 
 		runtime, id, err := SplitContainerRuntimeID(containerStatus.ContainerID)
@@ -273,9 +272,10 @@ func getInodeDevidFromPod(ctx context.Context, Pod corev1.Pod, HivePolicy hivev1
 					return 0, 0, false, false, err
 				}
 
-				return uint32(inode), devID, true, false, nil
+				return inode, devID, true, false, nil
 			}
 		}
 	}
+
 	return 0, 0, false, false, nil
 }

@@ -86,7 +86,7 @@ func main() {
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
-	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
+	// prevent from being vulnerablpe to the HTTP/2 Stream Cancellation and
 	// Rapid Reset CVEs. For more information see:
 	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
 	// - https://github.com/advisories/GHSA-4374-p667-p6c8
@@ -168,16 +168,18 @@ func main() {
 	}
 
 	if err = (&controller.HivePolicyReconciler{
-		Client: hivePolicyMgr.GetClient(),
-		Scheme: hivePolicyMgr.GetScheme(),
+		Client:         hivePolicyMgr.GetClient(),
+		UncachedClient: hivePolicyMgr.GetAPIReader(),
+		Scheme:         hivePolicyMgr.GetScheme(),
 	}).SetupWithManager(hivePolicyMgr); err != nil {
 		setupLog.Error(err, "unable to create HivePolicy controller", "controller", "HivePolicy")
 		os.Exit(1)
 	}
 
 	if err = (&controller.HiveDataReconciler{
-		Client: hiveDataMgr.GetClient(),
-		Scheme: hiveDataMgr.GetScheme(),
+		Client:         hiveDataMgr.GetClient(),
+		UncachedClient: hiveDataMgr.GetAPIReader(),
+		Scheme:         hiveDataMgr.GetScheme(),
 	}).SetupWithManager(hiveDataMgr); err != nil {
 		setupLog.Error(err, "unable to create HiveData controller", "controller", "HiveData")
 		os.Exit(1)

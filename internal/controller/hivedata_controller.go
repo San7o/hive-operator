@@ -35,7 +35,8 @@ var (
 
 type HiveDataReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	UncachedClient client.Reader
+	Scheme         *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=hive.com,resources=hivedata,verbs=get;list;watch;create;update;patch;delete
@@ -53,7 +54,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{}, err
 		}
 		Loaded = true
-		go LogData(context.Background())
+		go LogData(context.Background(), r.UncachedClient)
 	}
 
 	hivePolicyList := &hivev1alpha1.HivePolicyList{}
@@ -83,15 +84,26 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 		found := false
 		for _, hivePolicy := range hivePolicyList.Items {
-			if (hiveData.Spec.PathName == hivePolicy.Spec.Path) &&
-				(hivePolicy.Spec.Match.PodName != "" ||
-					hiveData.Spec.PodName != hivePolicy.Spec.Match.PodName) &&
-				(hivePolicy.Spec.Match.Namespace != "" ||
-					hiveData.Spec.PodNamespace != hivePolicy.Spec.Match.Namespace) &&
-				(hivePolicy.Spec.Match.IP != "" ||
-					hiveData.Spec.PodIP != hivePolicy.Spec.Match.IP) {
-				// TODO: match labels
-				found = true
+			if (hiveData.Spec.Path == hivePolicy.Spec.Path) &&
+				(hivePolicy.Spec.Match.PodName == "" ||
+					hiveData.Spec.Match.PodName == hivePolicy.Spec.Match.PodName) &&
+				(hivePolicy.Spec.Match.Namespace == "" ||
+					hiveData.Spec.Match.Namespace == hivePolicy.Spec.Match.Namespace) &&
+				(hivePolicy.Spec.Match.IP == "" ||
+					hiveData.Spec.Match.IP == hivePolicy.Spec.Match.IP) &&
+				len(hivePolicy.Spec.Match.Label) == len(hivePolicy.Spec.Match.Label) {
+				sameLabels := true
+				for i := 0; i < len(hivePolicy.Spec.Match.Label); i++ {
+					if hivePolicy.Spec.Match.Label[i].Key != hivePolicy.Spec.Match.Label[i].Key ||
+						hivePolicy.Spec.Match.Label[i].Value != hivePolicy.Spec.Match.Label[i].Value {
+						sameLabels = false
+						break
+					}
+				}
+
+				if sameLabels {
+					found = true
+				}
 				break
 			}
 		}

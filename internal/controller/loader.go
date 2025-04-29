@@ -6,10 +6,12 @@ import (
 	"encoding/binary"
 	"errors"
 
+	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
 	"github.com/cilium/ebpf/rlimit"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -89,7 +91,7 @@ func UnloadBpf(ctx context.Context) {
 	return
 }
 
-func LogData(ctx context.Context) {
+func LogData(ctx context.Context, cli client.Reader) {
 
 	log := log.FromContext(ctx)
 
@@ -115,7 +117,27 @@ func LogData(ctx context.Context) {
 			continue
 		}
 
-		log.Info("New event", "pid", data.Pid, "tgid", data.Tgid, "uid",
-			data.Uid, "gid", data.Gid, "ino", data.Ino, "mask", data.Mask)
+		hiveDataList := &hivev1alpha1.HiveDataList{}
+		err = cli.List(ctx, hiveDataList)
+		if err != nil {
+			log.Error(err, "Failed to get Hive Data resource")
+			return
+		}
+		found := false
+		for _, hiveData := range hiveDataList.Items {
+			if hiveData.Spec.InodeNo == data.Ino {
+				log.Info("New Hive event", "pod-name",
+					hiveData.Spec.Match.PodName, "namespace",
+					hiveData.Spec.Match.Namespace, "ip", hiveData.Spec.Match.IP,
+					"path", hiveData.Spec.Path, "pid", data.Pid, "tgid",
+					data.Tgid, "uid", data.Uid, "gid", data.Gid, "ino",
+					data.Ino, "mask", data.Mask)
+				found = true
+				break
+			}
+		}
+		if !found {
+			log.Info("eBPF data received but no corresponsing hiveData was found")
+		}
 	}
 }

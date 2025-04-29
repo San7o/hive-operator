@@ -87,7 +87,7 @@ Move the code responsbile to create the connection with the
 container runtime and to fetch the kernel id in the main.
 UPDATE: The runtime connection is lazily done during the logic
 if not done previously
-*** Loader [9/9][100%]                                             :loader:
+*** Loader [11/11][100%]                                           :loader:
 **** DONE Create a new controller using operator-sdk
 - State "DONE"       from "TODO"       [2025-03-24 Mon 11:32]
 https://sdk.operatorframework.io/docs/cli/operator-sdk_create_api/
@@ -158,6 +158,15 @@ the variable.
 - State "DONE"       from "TODO"       [2025-04-08 Tue 18:35]
 The leader should read the eBPF's output and log to standard
 output.
+**** DONE Match labels when comparing HiveData and HivePolicy during reconciliation
+- State "DONE"       from "TODO"       [2025-04-29 Tue 11:46]
+The HiveData resource should have the same =match= section
+as HivePolicy.
+**** DONE Rich log information
+- State "DONE"       from "TODO"       [2025-04-29 Tue 11:46]
+Add additional logging information such as pod name, label,
+namespace, and more to the logged information after an eBPF
+output.
 **** DONE Resend reconcile request when container is not ready
 - State "DONE"       from "TODO"       [2025-04-28 Mon 18:10]
 During the Hive Policy reconciliation, if a container is not
@@ -165,6 +174,7 @@ ready it is skipped and the HiveData won't be created. This can
 be solved by sending another reconciliation request if the status
 is not ready. It will keep looping until the container will be
 ready.
+**** TODO Fix error ""non-exact field matches are not supported by the cache"
 **** eBPF [4/4][100%]                                               :ebpf:
 ***** CANCEL Map of inode number + device id
 - State "CANCEL"     from "TODO"       [2025-03-21 Fri 18:13]
@@ -192,10 +202,6 @@ PID, GID, rights wrx, ...) and log it.
 The map should contain multiple inodes and should Iterate
 over them.
 ** Part 2 - Refinement [0/6][0%]                                :refinement:
-*** TODO Add log information
-Add additional logging information such as pod name, label,
-namespace, etc to the logged information from the eBPF program.
-
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user. This would mean that there is a single

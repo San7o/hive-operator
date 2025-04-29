@@ -11,6 +11,7 @@ The operator will parse this policy every time one is added / removed / updated
 and It will instruct the eBPF program to trace the right files.
 
 An example HivePolicy is located in [config/samples/hive_v1alpha1_hivepolicy.yaml](../config/samples/hive_v1alpha1_hivepolicy.yaml).
+More examples can be found in the same directory.
 
 ```yaml
 apiVersion: hive.com/v1alpha1

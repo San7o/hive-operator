@@ -65,8 +65,8 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		}
 		found := false
 		for _, pod := range podList.Items {
-			if hiveData.Spec.PodName == pod.Name &&
-				hiveData.Spec.PodNamespace == pod.Namespace &&
+			if hiveData.Spec.Match.PodName == pod.Name &&
+				hiveData.Spec.Match.Namespace == pod.Namespace &&
 				// If the pod has terminated or has failed, we want to
 				// remove the HiveData so that it will be regenerated
 				// later duing the reconciliation of HivePolicy. This
