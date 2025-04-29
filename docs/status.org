@@ -202,22 +202,7 @@ PID, GID, rights wrx, ...) and log it.
 - State "DONE"       from "TODO"       [2025-03-24 Mon 09:12]
 The map should contain multiple inodes and should Iterate
 over them.
-** Part 2 - Refinement [0/6][0%]                                :refinement:
-*** TODO Log to an external service
-Instead of logging to stdout, the operator may log to a socket
-provided by the user or to a standard socket.
-*** TODO Allow multiple values in match fields
-When specifying a Hive Policy, the user should be able to
-specify multiple values for each match field (pod name and
-namespaces). Kubernetes does not support this natively so multiple
-request for each combination of fields should be executed, greately
-increasing the time complexity.
-*** TODO Make the output compliant to OpenTelemetry
-Learn more about OpenTelemetry and how to interface the operator
-with OpenTelemetry.
-*** TODO Add addtional match selectors
-Add match fields like Hostname.
-** Part 3 - Testing and Deployment [0/4][0%]                       :testing:
+** Part 2 - Testing and Deployment [0/4][0%]                       :testing:
 *** TODO Measure Performance
 Measure the performance of the application with respect to
 how many resources are used (RAM, CPU) and network traffic
@@ -232,3 +217,19 @@ Inspiration should be taken from Falco's and Tetragon's CI/CD.
 Create an official container image on the docker registry.
 *** TODO Helm package
 Create an official helm chart for the application.
+
+** Optional - Refinement [0/6][0%]                              :refinement:
+*** TODO Log to an external service
+Instead of logging to stdout, the operator may log to a socket
+provided by the user or to a standard socket.
+*** TODO Allow multiple values in match fields
+When specifying a Hive Policy, the user should be able to
+specify multiple values for each match field (pod name and
+namespaces). Kubernetes does not support this natively so multiple
+request for each combination of fields should be executed, greately
+increasing the time complexity.
+*** TODO Make the output compliant to OpenTelemetry
+Learn more about OpenTelemetry and how to interface the operator
+with OpenTelemetry.
+*** TODO Add addtional match selectors
+Add match fields like Hostname.

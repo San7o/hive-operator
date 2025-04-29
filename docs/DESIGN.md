@@ -541,8 +541,8 @@ Failures are treated as terminations.
 The implementation of said logic is achieved through a reconcile
 function like other controllers.
 
-Since Pod are global resources acceddes by anyone, we need only one
+Since Pod are global resources accessed by anyone, we need only one
 pod controller in the cluster. This is the sole reason why we need
 a separate controller from the others: there is a discover controller
 on each system, a loader controller on each running kernel, and a
-pod controller per cluster.
+single pod controller per cluster.
