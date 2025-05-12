@@ -13,7 +13,7 @@ the application operates.
 - [Overview](#overview)
   - [Application Description](#description)
   - [Components](#components)
-  - [How to manitor accesses to files](#accesses)
+  - [How to monitor accesses to files](#accesses)
   - [How to uniquely identify a file](#identify)
   - [Kubernetes makes things harder](#complications)
   - [Example](#example)
@@ -57,7 +57,7 @@ that have the `security=high` label.
 ## Components
 
 The application is implemented as a single kubernetes operator and is
-structured into multiple components that interact with eachother,
+structured into multiple components that interact with each other,
 kubernetes or the operating systems.
 
 Those components are:
@@ -124,7 +124,7 @@ aswell point to a different file.
 To solve this problem, we can save both the inode number and the
 device id, which will be different for each filesystem unless the
 filesystem has been bind mounted. In this last case, from the user
-prespective, the binded filesystem and the filesystem onto which the
+perspective, the binded filesystem and the filesystem onto which the
 binded one is mounted have different inode numbers so just this is
 enough.
 
@@ -161,7 +161,7 @@ An example deployment would look like the following:
 ![design-image](./images/overall-design.png)
 
 On the picture, notice that Kernel #2 only has one loader. Each kernel
-has only one loader, which is choosen through elections. Instead, the
+has only one loader, which is chosen through elections. Instead, the
 discover controller is active in each node because It has to find
 information about other pods that may be scheduled in each node.
 There is only one pod controller on the entire cluster. The control
@@ -169,7 +169,7 @@ pane does not have an operator normally, but can configure It to run
 pods like a normal node; if this is enabled, the operator will be
 scheduled to this node too.
 
-<a name="ebpf-overveiew"></a>
+<a name="ebpf-overview"></a>
 ## Overview of eBPF
 
 eBPF programs are programs that run inside the kernel in a controlled
@@ -179,7 +179,7 @@ the hook is triggered. An eBPF program has its own [instruction
 set](https://www.ietf.org/archive/id/draft-thaler-bpf-isa-00.html),
 programs are limited to having at most 512 Bytes of stack size and 1
 million instruction, loops are not allowed and functions can have up
-to 5 argumnets and only certain functions can be called.  Note that
+to 5 arguments and only certain functions can be called.  Note that
 those (and other) limitations are changing rapidly and the kernel
 verifier is getting always smarter, allowing for softer limits.
 
@@ -190,42 +190,42 @@ up and now provide an eBPF target.
 
 A fundamental change to the eBPF ecosystem was made with the
 introduction of the Bpf Type Format (BTF)
-wich enables CO-RE (Compile Once, Run Everywhere). Using BTF will
+which enables CO-RE (Compile Once, Run Everywhere). Using BTF will
 enable the program to work on any kernel version. User space
 provides eBPF programs to the kernel via the `bpf(2)` syscall, which will
 verify that the program is correct (enforcing the previous limitations)
 and will proceed to JIT compile it.
 
 People have been using eBPF for tracing purposes. Moreover, eBPF
-programs can modify the kernel innerworkings (such as the scheduler or
+programs can modify the kernel inner workings (such as the scheduler or
 cache policy) and, in recent years, people are exploring its usage more
 broadly.
 
-<a name="kubernetes-overveiew"></a>
+<a name="kubernetes-overview"></a>
 ## Overview of Kubernetes
 
 Kubernetes is a declarative container management software. The user
 specifies the desired state of the cluster and kubernetes will
 try to update to the desired state. Applications should expect to be
 interrupted at any time and failures should be handled gracefully.
-Kubernetes can work with multiple contianer runtimes such as 
+Kubernetes can work with multiple container runtimes such as 
 containerd or podman, and interacts with the containers through their
 runtime (for example, via a containerd client). Therefore, kubernetes
 abstracts the management of single container, and focuses on the
-scheduling and setting up of containers in a phisical or logical cluster.
+scheduling and setting up of containers in a physical or logical cluster.
 
 Each unit on the cluster is called a *node*. There are two kinds of
 nodes: a worker node and the control pane. The former will run the
 user's applications and services through contianers grouped in *pods*,
 the latter forms the backbone of the kubernetes cluster and is
-responsbile for central management of the workers. It is composed of
+responsible for central management of the workers. It is composed of
 the api server (which the kubelet use to communicate with the control
 pane) etcd (a highly-available key-value store), scheduler and a
 controller manager which manages all of the above.
 
 A common pattern found in kubernetes is the Operator, which is a
 custom controller that manages some resources called *custom resources*
-and extends the behaviour of the cluster. Note that the same operator
+and extends the behavior of the cluster. Note that the same operator
 may have multiple controllers for different custom resources, as we
 will see later.
 
@@ -289,7 +289,7 @@ for this specific kernel.
 
 As a consequence, multiple discover controllers may generate multiple
 HiveData resources from the same HivePolicy. This is intended by
-design since the policy may match multiple pods hence the relationchip
+design since the policy may match multiple pods hence the relationship
 between a policy and a HiveData is *one to many*.
 
 <a name="hivepolicy-resource"></a>
@@ -396,7 +396,7 @@ operation occurs on an HivePolicy resource:
 
 To summarize, if an HivePolicy is created / updated, the reconciliation
 will check if a HiveData was already present, or create it otherwise.
-If an HivePolivy is deleted, we delegate the responsibility of deleting
+If an HivePolicy is deleted, we delegate the responsibility of deleting
 old HiveData to the HiveData reconciliation.
 
 <a name="loader-controller"></a>
@@ -420,7 +420,7 @@ reloaded (closed and loaded again).
 
 There must be one loader controller for each running kernel. This is
 necessary because the loader interacts directly with the running
-kernel. It is usless to have multiple loaders in the same kernel,
+kernel. It is useless to have multiple loaders in the same kernel,
 but at least one is necessary to load the eBPF program.
 
 To implement this, each node needs to fetch Its running kernel
@@ -466,7 +466,7 @@ The fields, all under the `spec` one, are the following:
   uniquely identify that an HiveData refers to an HivePolicy.
 - `inode-no`: The inode number of the file to trace, needed for
   eBPF tracing.
-- `dev-id`: Device id of the file to trace, nedded for eBPF tracing.
+- `dev-id`: Device id of the file to trace, needed for eBPF tracing.
   It is currently not used because of issues with some filesystems,
   namely BRTF. Read the section [hot to uniquely identify a file](#identify)
   for further details.
@@ -501,7 +501,7 @@ following:
 To check whether an actor has interacted with a file, the eBPF program
 hooks to the function `inode_permission` through a keyprobe. This
 function gets called every time the permissions of an inode are
-checked in the kernel, which happends before any operation on them. It
+checked in the kernel, which appends before any operation on them. It
 allows the eBPF program to log when a permission is checked and with
 what rights, as well as who tried to check the permissions.
 
@@ -519,8 +519,20 @@ to be compiled each time It needs to be loaded, but can be compiled
 only once and even shipped with the binaries of the application.
 
 Example log string communicated from kernelspace to userspace:
-```
-{pid:10721,tgid:10721,uid:1000,gid:1000,ino:2160719,mask:36}
+
+```json
+{
+    "pod-name": "nginx-pod",
+    "namespace": "default",
+    "ip": "10.244.2.3",
+    "path": "/secret.txt",
+    "pid": 41202,
+    "tgid": 41202,
+    "uid": 0,
+    "gid": 0,
+    "ino": 3451343,
+    "mask": 36
+} 
 ```
 
 <a name="pod-controller"></a>
@@ -528,7 +540,7 @@ Example log string communicated from kernelspace to userspace:
 
 When a pod is changed, we want to update both HiveData and the eBPF
 map. To achieve, this we need a pod controller. There are two main
-operations we are concearned about with pods: pod creation and pod
+operations we are concerned about with pods: pod creation and pod
 termination.
 - creation: upon creation, the controller should send a
   reconcile request for HivePolicy so that new HiveData will

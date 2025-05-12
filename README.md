@@ -32,7 +32,22 @@ spec:
 You can select match conditions to filter which pods to monitor for a
 specific policy. All the match fields are optional. If none are
 specified, all pods are selected. The operator will log accesses to
-standard output with meaningful information.
+standard output with meaningful information, such as:
+
+```json
+{
+    "pod-name": "nginx-pod",
+    "namespace": "default",
+    "ip": "10.244.2.3",
+    "path": "/secret.txt",
+    "pid": 41202,
+    "tgid": 41202,
+    "uid": 0,
+    "gid": 0,
+    "ino": 3451343,
+    "mask": 36
+} 
+```
 
 Please, read the [USAGE](./docs/USAGE.md) document to learn how to
 use the operator in more detail.

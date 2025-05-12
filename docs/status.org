@@ -202,7 +202,12 @@ PID, GID, rights wrx, ...) and log it.
 - State "DONE"       from "TODO"       [2025-03-24 Mon 09:12]
 The map should contain multiple inodes and should Iterate
 over them.
-** Part 2 - Testing and Deployment [0/4][0%]                       :testing:
+** Part 2 - Testing and Deployment [1/5][20%]                      :testing:
+*** TODO E2E tests
+Write end-to-end automated tests for the operator.
+*** DONE Official Docker Registry
+- State "DONE"       from "TODO"       [2025-05-12 Mon 23:47]
+Create an official container image on the docker registry.
 *** TODO Measure Performance
 Measure the performance of the application with respect to
 how many resources are used (RAM, CPU) and network traffic
@@ -213,15 +218,16 @@ Setup CI/CD automated tests on multiple architectures and kernel
 versions, as well as different kubernetes versions and cluster
 runtimes.
 Inspiration should be taken from Falco's and Tetragon's CI/CD.
-*** TODO Official Docker Registry
-Create an official container image on the docker registry.
 *** TODO Helm package
 Create an official helm chart for the application.
 
-** Optional - Refinement [0/6][0%]                              :refinement:
+** Optional - Refinement [0/4][0%]                              :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user or to a standard socket.
+
+Alternatively, the operator could notify an external service when
+there is something to log with the "GetUrl" action.
 *** TODO Allow multiple values in match fields
 When specifying a Hive Policy, the user should be able to
 specify multiple values for each match field (pod name and
@@ -233,3 +239,8 @@ Learn more about OpenTelemetry and how to interface the operator
 with OpenTelemetry.
 *** TODO Add addtional match selectors
 Add match fields like Hostname.
+*** TODO Implement abstraction over container runtime
+Different implementations are needed for each container runtime.
+It would be wise to have a common interface between all the
+container runtimes to ease the process of adding support for
+new runtimes.

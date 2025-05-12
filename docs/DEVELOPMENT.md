@@ -5,13 +5,18 @@ yourself. It explains how to create a local test cluster and build
 both the eBPF program and the kubernetes operator. To test the build,
 please read the [USAGE](./USAGE.md) document.
 
-## Setup the cluster
+If you want to develop locally, the following sections are
+helpful. However, you could skip them and jump directly to the
+deplyment if you just want to download the images from docker hub
+instead of building them.
+
+## Setup a local cluster
 
 To use an operator, you need a kubernetes cluster. This repository
-provides the script `registry-cluster.sh` which will create a cluster
-using [kind](https://github.com/kubernetes-sigs/kind) with one control
-node and one worker node. Additionally, It sets up a local docker
-registry to push the operator's image during developement.
+provides the script `registry-cluster.sh` which will create a local
+cluster using [kind](https://github.com/kubernetes-sigs/kind) with one
+control node and one worker node. Additionally, It sets up a local
+docker registry to push the operator's image during developement.
 
 Run the following command to create the cluster (needs to be run only
 once):
@@ -21,7 +26,7 @@ make create-cluster-local
 ```
 
 You can delete the cluster with `delete-cluster.sh` or with
-`make delete-cluster` when you do not want It anymore.
+`make delete-cluster-local` when you do not want It anymore.
 
 ## Generate files
 
@@ -86,6 +91,13 @@ make docker-local
 Finally, you can deploy the operator to the test cluster with:
 
 ```bash
+make deploy-local
+```
+
+If, instead of loading local docker images, you want to fetch the
+images from docker hub, you can run:
+
+```bash
 make deploy
 ```
 
@@ -105,3 +117,9 @@ make kill-pods-local
 
 This will also remove all the HiveData resources so that you start
 with a clean configuration, as if you just applied the HivePolicies.
+
+To completely remove the operator from the cluster, run:
+
+```bash
+make undeploy
+```
