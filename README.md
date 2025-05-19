@@ -58,7 +58,7 @@ The [DESIGN](./docs/DESIGN.md) document contains all the information
 about the internals of the operator.
 
 Please read the [DEVELOPMENT](./docs/DEVELOPMENT.md) document to build
-and get started with Hive's developement.
+and get started with Hive's development.
 
 The [status](./docs/status.org) contains information about the current
 status of development and future work.

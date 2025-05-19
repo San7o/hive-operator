@@ -1,0 +1,39 @@
+#cloud-config
+users:
+    - name: fedora
+      groups: user,wheel
+      # password is fedora
+      # generate the sha with
+      #   mkpasswd --method=SHA-512 <password>
+      hashed_passwd: $6$yajQ4kWSk/1SvSkR$4AUSeY7fj8tCsmTpa9q0TLu4aSdeovm3geBfMHFmHQGaWtn7bdUDJ1/s1.5mOvUPHQV6RoUMzGxvZpZhGEYVn1
+      lock_passwd: false
+      sudo: ALL=(ALL) NOPASSWD:ALL
+write_files:
+  # Enable password authentication in ssh
+  - path: /etc/ssh/sshd_config.d/20-enable-passwords.conf
+    content: |
+      PasswordAuthentication yes
+  - path: /etc/NetworkManager/system-connections/static-ens3.nmconnection
+    permissions: '0600'
+    content: |
+      [connection]
+      id=static-ens3
+      type=ethernet
+      interface-name=ens3
+      autoconnect=true
+
+      [ipv4]
+      method=manual
+      addresses=192.168.50.11/24
+      gateway=192.168.50.1
+      dns=8.8.8.8
+
+      [ipv6]
+      method=ignore
+runcmd:
+  - systemctl restart NetworkManager
+  - systemctl disable NetworkManager-wait-online.service
+  - systemctl stop NetworkManager-wait-online.service
+  - systemctl restart sshd
+  - nmcli connection up static-ens3
+

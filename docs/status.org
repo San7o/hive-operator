@@ -203,16 +203,18 @@ PID, GID, rights wrx, ...) and log it.
 The map should contain multiple inodes and should Iterate
 over them.
 ** Part 2 - Testing and Deployment [1/5][20%]                      :testing:
+*** TODO Alternative test cluster
+The local setup currently features only the creation of a cluster
+with Kind. The limitation is that It all runs on the same kernel
+so It will never happen that multiple eBPF programs are loaded
+in the cluster. To test those cases, an alternative test cluster
+should be supported using VMs. Possible solutions include K3s,
+Minikube.
 *** TODO E2E tests
 Write end-to-end automated tests for the operator.
 *** DONE Official Docker Registry
 - State "DONE"       from "TODO"       [2025-05-12 Mon 23:47]
 Create an official container image on the docker registry.
-*** TODO Measure Performance
-Measure the performance of the application with respect to
-how many resources are used (RAM, CPU) and network traffic
-load.
-A possible tool may be cAdvisor.
 *** TODO CI/CD Tests
 Setup CI/CD automated tests on multiple architectures and kernel
 versions, as well as different kubernetes versions and cluster
@@ -227,13 +229,20 @@ Instead of logging to stdout, the operator may log to a socket
 provided by the user or to a standard socket.
 
 Alternatively, the operator could notify an external service when
-there is something to log with the "GetUrl" action.
+there is something to log with the "GetUrl" action. The user API
+could look like the following in an HivePolicy:
+#+begin_src yaml
+  actions:
+    - action: Post
+      argUrl: http://ebpf.io
+#+end_src
+
 *** TODO Allow multiple values in match fields
 When specifying a Hive Policy, the user should be able to
 specify multiple values for each match field (pod name and
 namespaces). Kubernetes does not support this natively so multiple
 request for each combination of fields should be executed, greately
-increasing the time complexity.
+increasing the time complexity of the query.
 *** TODO Make the output compliant to OpenTelemetry
 Learn more about OpenTelemetry and how to interface the operator
 with OpenTelemetry.
@@ -244,3 +253,8 @@ Different implementations are needed for each container runtime.
 It would be wise to have a common interface between all the
 container runtimes to ease the process of adding support for
 new runtimes.
+*** TODO Measure Performance
+Measure the performance of the application with respect to
+how many resources are used (RAM, CPU) and network traffic
+load.
+A possible tool may be cAdvisor.
