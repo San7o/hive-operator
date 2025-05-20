@@ -23,10 +23,10 @@ if ! type qemu-system-x86_64 > /dev/null; then
     exit 1
 fi
 
-genisoimage -output $VM_DIR/seed-master.iso \
-            -volid cidata \
-            -joliet \
-            -rock $CLOUD_INIT_DIR/master/user-data $CLOUD_INIT_DIR/master/meta-data
+cloud-localds -v --network-config=$CLOUD_INIT_DIR/master/network.yaml \
+              $VM_DIR/seed-master.iso \
+              $CLOUD_INIT_DIR/master/user-data \
+              $CLOUD_INIT_DIR/master/meta-data
 
 if ! [ -f $VM_DIR/kube-master.qcow2 ]; then
     cp $FEDORA_IMAGE $VM_DIR/kube-master.qcow2

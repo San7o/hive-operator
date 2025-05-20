@@ -215,15 +215,11 @@ Write end-to-end automated tests for the operator.
 *** DONE Official Docker Registry
 - State "DONE"       from "TODO"       [2025-05-12 Mon 23:47]
 Create an official container image on the docker registry.
-*** TODO CI/CD Tests
-Setup CI/CD automated tests on multiple architectures and kernel
-versions, as well as different kubernetes versions and cluster
-runtimes.
-Inspiration should be taken from Falco's and Tetragon's CI/CD.
 *** TODO Helm package
 Create an official helm chart for the application.
-
-** Optional - Refinement [0/4][0%]                              :refinement:
+*** TODO Integrate with Koney
+Integrate Hive with Koney
+** Optional - Refinement [0/7][0%]                              :refinement:
 *** TODO Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user or to a standard socket.
@@ -258,3 +254,8 @@ Measure the performance of the application with respect to
 how many resources are used (RAM, CPU) and network traffic
 load.
 A possible tool may be cAdvisor.
+*** TODO CI/CD Tests
+Setup CI/CD automated tests on multiple architectures and kernel
+versions, as well as different kubernetes versions and cluster
+runtimes.
+Inspiration should be taken from Falco's and Tetragon's CI/CD.

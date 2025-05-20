@@ -1,0 +1,11 @@
+network:
+  version: 2
+  ethernets:
+    ens3:
+      match:
+        macaddress: '52:54:00:12:34:57'
+      addresses:
+        - 192.168.50.11/24
+      gateway4: 192.168.50.1
+      nameservers:
+        addresses: [8.8.8.8]

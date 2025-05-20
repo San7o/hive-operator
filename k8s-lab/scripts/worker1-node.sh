@@ -23,10 +23,10 @@ if ! type qemu-system-x86_64 > /dev/null; then
     exit 1
 fi
 
-genisoimage -output $VM_DIR/seed-worker1.iso \
-            -volid cidata \
-            -joliet \
-            -rock $CLOUD_INIT_DIR/worker1/user-data $CLOUD_INIT_DIR/worker1/meta-data
+cloud-localds -v --network-config=$CLOUD_INIT_DIR/worker1/network.yaml \
+              $VM_DIR/seed-worker1.iso \
+              $CLOUD_INIT_DIR/worker1/user-data \
+              $CLOUD_INIT_DIR/worker1/meta-data
 
 if ! [ -f $VM_DIR/kube-worker1.qcow2 ]; then
     cp $FEDORA_IMAGE $VM_DIR/kube-worker1.qcow2
