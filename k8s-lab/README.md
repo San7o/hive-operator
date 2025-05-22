@@ -14,7 +14,7 @@ versions or patches while maintaining a common userspace.
 
 ## Requirements
 
-The following commands mut be available on the host machine to build
+The following commands must be available on the host machine to build
 the cluster:
 
 - qemu-system-x86_64
@@ -31,7 +31,7 @@ everything you just need to run simple commands which are explained
 below.
 
 First, you need to setup the network interfaces to make the VMs talk
-to eachother and to the internet. This consists of setting up a tap
+to each other and to the internet. This consists of setting up a tap
 interface per virtual machine and a common bridge.
 
 ```bash
@@ -44,7 +44,7 @@ You need to download the fedora cloud image from their
 on [config.sh](./config.sh) with the name of the downloaded image.
 
 You need to generate the cloud-init files. Those are used to easily
-configure the virtual machines with a binch of files and the user
+configure the virtual machines with a bunch of files and the user
 "fedora" with password "fedora".
 
 ```
