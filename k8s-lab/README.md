@@ -1,20 +1,38 @@
 # Test cluster
 
 This directory contains useful scripts to create a local test
-kubernetes cluster. It uses qemu with KVM to create a master VM and
-some worker VMs connected to the host and to eachother via a tap
-interface through a bridge. Kubernetes is installed using
-[k3s](https://k3s.io/) on Fedora Cloud images.
+kubernetes cluster. The cluster is composed of local virtual machines
+running via qemu with KVM. The virtual machines are connected to the
+host network and to themselves via tap interfaces and a bridge on the
+host's system. The officially supported operating system is linux,
+more specifically [https://fedoraproject.org/cloud/](Fedora Cloud).
 
-The following commands available to build the cluster:
+Potentially, you could use any distro as a base as long as you can run
+all the software required for a kubernetes cluster, mainly a container
+runtime. In the future this could be extended to test specific kernel
+versions or patches while maintaining a common userspace.
+
+## Requirements
+
+The following commands mut be available on the host machine to build
+the cluster:
 
 - qemu-system-x86_64
-- genisoimage
+- cloud-localds
 - ip
 - tmux
+- awk
+
+## Build the cluster
+
+The following commands bootstrap a cluster with two virtual machines:
+a master kubernetes node and a worker kubernetes node. To setup
+everything you just need to run simple commands which are explained
+below.
 
 First, you need to setup the network interfaces to make the VMs talk
-to eachother and to the internet:
+to eachother and to the internet. This consists of setting up a tap
+interface per virtual machine and a common bridge.
 
 ```bash
 make setup
@@ -22,8 +40,16 @@ make setup
 
 You need to download the fedora cloud image from their
 [website](https://fedoraproject.org/cloud/) and place It in the
-`images` directory. You need to modify the entry `FEDORA_IMAGE` on
-[config.sh](./config.sh) with the name of the image.
+`images` directory. You also need to modify the entry `FEDORA_IMAGE`
+on [config.sh](./config.sh) with the name of the downloaded image.
+
+You need to generate the cloud-init files. Those are used to easily
+configure the virtual machines with a binch of files and the user
+"fedora" with password "fedora".
+
+```
+make generate
+```
 
 Finally you can deploy the cluster with:
 
@@ -31,9 +57,11 @@ Finally you can deploy the cluster with:
 make
 ```
 
-To undo the changes run:
+To undo what you just did, run:
 
 ```bash
-make clean
-make network-reset
+make clean # removes the images
+make network-reset # removes the tap and bridge interfaces
 ```
+
+Have fun!

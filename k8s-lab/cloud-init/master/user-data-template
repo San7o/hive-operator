@@ -1,4 +1,7 @@
 #cloud-config
+preserve_hostname: false
+hostname: master
+fqdn: master
 users:
     - name: fedora
       groups: user,wheel
@@ -8,10 +11,16 @@ users:
       hashed_passwd: $6$yajQ4kWSk/1SvSkR$4AUSeY7fj8tCsmTpa9q0TLu4aSdeovm3geBfMHFmHQGaWtn7bdUDJ1/s1.5mOvUPHQV6RoUMzGxvZpZhGEYVn1
       lock_passwd: false
       sudo: ALL=(ALL) NOPASSWD:ALL
+package_update: true
+runcmd:
+  - systemctl restart sshd
+  - k8s-lab master
 write_files:
-  # Enable password authentication in ssh
+  # Enable ssh password authentication
   - path: /etc/ssh/sshd_config.d/20-enable-passwords.conf
     content: |
       PasswordAuthentication yes
-runcmd:
-  - systemctl restart sshd
+  - path: /usr/local/bin/k8s-lab
+    permissions: '0754'
+    content: |
+%setup-content%
