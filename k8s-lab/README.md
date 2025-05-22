@@ -1,11 +1,11 @@
-# Test cluster
+# k8s-lab
 
 This directory contains useful scripts to create a local test
 kubernetes cluster. The cluster is composed of local virtual machines
 running via qemu with KVM. The virtual machines are connected to the
 host network and to themselves via tap interfaces and a bridge on the
 host's system. The officially supported operating system is linux,
-more specifically [https://fedoraproject.org/cloud/](Fedora Cloud).
+more specifically [Fedora Cloud](https://fedoraproject.org/cloud/).
 
 Potentially, you could use any distro as a base as long as you can run
 all the software required for a kubernetes cluster, mainly a container
