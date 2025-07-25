@@ -387,7 +387,6 @@ kill-pods: ## Kill pods in cluster
 	NAME=$$(kubectl get pods -n $$NAMESPACE -o name); \
 	kubectl delete $$NAME -n $$NAMESPACE
 	kubectl delete HivePolicy --all --all-namespaces
-	kubectl delete HiveData --all --all-namespaces
 
 INTERFACE?=
 

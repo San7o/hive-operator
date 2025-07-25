@@ -542,7 +542,6 @@ Example log string communicated from kernelspace to userspace:
     "tgid": 61164
   }
 }
-
 ```
 
 <a name="pod-controller"></a>

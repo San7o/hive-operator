@@ -21,6 +21,7 @@ spec:
   path: /secret.txt
   create: true
   mode: 444
+  callback: "http://my-callback.com/alerts"
   match:
     pod: nginx-pod
     namespace: default
@@ -31,7 +32,7 @@ spec:
 You can select match conditions to filter which pods to monitor for a
 specific policy. All the match fields are optional. If none are
 specified, all pods are selected. The operator will log accesses to
-standard output with meaningful information, such as:
+standard output with structured information, such as:
 
 ```json
 {
@@ -58,6 +59,9 @@ standard output with meaningful information, such as:
 }
 ```
 
+If you specify a `callback` in the `HivePolicy`, the data will be sent
+as json to the URL of the callback through an HTTP pull requst.
+
 Please, read the [USAGE](./docs/USAGE.md) document to learn how to
 use the operator in more detail.
 
@@ -67,7 +71,12 @@ The [DESIGN](./docs/DESIGN.md) document contains all the information
 about the internals of the operator.
 
 Please read the [DEVELOPMENT](./docs/DEVELOPMENT.md) document to build
-and get started with Hive's development.
+and get started with Hive's
+development. [EBPF-TESTING](./docs/EBPF-TESTING.md) has instructions
+to build and test the eBPF program without running the kubernetes
+operator. To run a local cluster, take a look at
+[k8s-labs](./k8s-labs/README.md) or simply use the script
+[registry-cluster.sh](./hack/registry-cluster.sh).
 
 The [status](./docs/status.org) contains information about the current
 status of development and future work.

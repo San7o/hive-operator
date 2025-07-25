@@ -19,8 +19,8 @@ kind: HivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: hive-operator
-    app.kubernetes.io/managed-by: kustomize
   name: hive-sample-policy
+  namespace: hive-operator-system
 spec:
   path: /secret.txt
   create: true
@@ -29,8 +29,7 @@ spec:
     pod: nginx-pod
     namespace: default
     label:
-    - key: security-level
-      value: high
+      security-level: high
 ```
 
 This sample policy will trace the file `/secret.txt` in the pods with
@@ -54,7 +53,7 @@ an nginx pod in [config/samples/sample-nginx-pod.yaml](../config/samples/sample-
 with the right characteristics, you can load it with apply:
 
 ```bash
-kubectl apply -f config/samples/sample-nginx-pod.yaml
+kubectl apply -f hack/k8s-manifests/sample-nginx-pod.yaml
 ```
 
 After the pod has started, you can try to access the `/secret.txt` file

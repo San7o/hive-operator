@@ -202,8 +202,8 @@ PID, GID, rights wrx, ...) and log it.
 - State "DONE"       from "TODO"       [2025-03-24 Mon 09:12]
 The map should contain multiple inodes and should Iterate
 over them.
-** Part 2 - Testing and Deployment [1/5][20%]                      :testing:
-*** TODO Alternative test cluster
+** Part 2 - Testing and Deployment [2/5][40%]                      :testing:
+*** DONE Alternative test cluster
 The local setup currently features only the creation of a cluster
 with Kind. The limitation is that It all runs on the same kernel
 so It will never happen that multiple eBPF programs are loaded
@@ -219,8 +219,8 @@ Create an official container image on the docker registry.
 Create an official helm chart for the application.
 *** TODO Integrate with Koney
 Integrate Hive with Koney
-** Optional - Refinement [0/7][0%]                              :refinement:
-*** TODO Log to an external service
+** Optional - Refinement [2/7][28%]                             :refinement:
+*** DONE Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user or to a standard socket.
 
@@ -244,7 +244,7 @@ Learn more about OpenTelemetry and how to interface the operator
 with OpenTelemetry.
 *** TODO Add addtional match selectors
 Add match fields like Hostname.
-*** TODO Implement abstraction over container runtime
+*** DONE Implement abstraction over container runtime
 Different implementations are needed for each container runtime.
 It would be wise to have a common interface between all the
 container runtimes to ease the process of adding support for

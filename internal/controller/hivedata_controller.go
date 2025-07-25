@@ -66,6 +66,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// deleted.
 	var i uint32 = 0
 	for _, hiveData := range hiveDataList.Items {
+
 		if hiveData.Spec.KernelID != KernelID {
 			continue
 		}
@@ -82,6 +83,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			if err := r.Client.Delete(ctx, &hiveData); err != nil {
 				return ctrl.Result{}, fmt.Errorf("Reconciler Error Delete HiveData: %w", err)
 			}
+			log.Info("Deleted HiveData")
 		} else {
 			if i > hivebpf.MapMaxEntries {
 				return ctrl.Result{}, fmt.Errorf("Reconcile Error Number of Traced inodes exceeds the maximum number")
@@ -90,6 +92,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with inode: %w", err)
 			}
+			log.Info("Updated eBPF map")
 			i++
 		}
 	}

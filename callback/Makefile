@@ -16,16 +16,16 @@ test:
 deploy:	
 	kubectl apply -f config/
 
-kill-pod-local:
+kill-pod:
 	sudo kubectl delete pod callback-pod
 
-.PHONY: docker-build-local docker-push-local docker-local
-docker-build-local:
+.PHONY: docker-build docker-push docker
+docker-build:
 	docker rmi callback ${IMG} &2>/dev/null || :
 	docker build -t callback .
 	docker tag callback ${IMG}
 
-docker-push-local:
+docker-push:
 	docker push ${IMG}
 
-docker-local: docker-build-local docker-push-local
+docker: docker-build docker-push
