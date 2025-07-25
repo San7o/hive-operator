@@ -27,6 +27,7 @@ spec:
       labels:
         control-plane: manager
     spec:
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsNonRoot: true
       containers:

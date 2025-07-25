@@ -134,6 +134,8 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					// Give it an unique name
 					Name:      "hive-data-" + pod.Name + "-" + pod.Namespace + "-" + strconv.FormatUint(uint64(inode), 10),
 					Namespace: "hive-operator-system",
+
+
 					Annotations: map[string]string{
 						"hive_policy_name": hivePolicy.Name,
 						"callback":         hivePolicy.Spec.Callback,
@@ -167,6 +169,11 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// necessary to handle deletion of HivePolicies.
 	// We trigger a reconciliation by updating an annotation with the
 	// current time.
+	err = r.Client.List(ctx, hiveDataList)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
+	}
+
 	if len(hiveDataList.Items) != 0 {
 		orig := hiveDataList.Items[0].DeepCopy()
 		if hiveDataList.Items[0].Annotations == nil {

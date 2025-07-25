@@ -92,7 +92,6 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with inode: %w", err)
 			}
-			log.Info("Updated eBPF map")
 			i++
 		}
 	}

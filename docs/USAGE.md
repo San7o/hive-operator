@@ -67,7 +67,7 @@ You should expect to see some logging information on the standard
 output of one of the hive pods, like this:
 
 ```bash
- 2025-04-28T09:32:48Z    INFO    New event    {"pid": 18116, "gid": 18116, "uid": 0, "gid": 0, "ino": 2736178, "mask": 36}
+2025-07-25T14:39:30Z    INFO    Access Detected    {"HiveAlert": "{\"timestamp\":\"2025-07-25T14:39:30Z\",\"hive_policy_name\":\"hive-sample-policy\",\"metadata\":{\"path\":\"/secret.txt\",\"inode\":14059098,\"mask\":36,\"kernel_id\":\"12c131ef-aec6-4d9c-ae9c-3ac871aaefe4\"},\"pod\":{\"name\":\"nginx-pod\",\"namespace\":\"default\",\"contianer\":{\"id\":\"containerd://e6e73ba6d2479702cebe6162a10b2c8ff45c533e556c08bc7d85930ebae8eeec\",\"name\":\"nginx\"}},\"process\":{\"pid\":58013,\"tgid\":58013}}"}
 ```
 
 Note that only the leader pod in the kernel where the file resides

@@ -9,7 +9,7 @@ spec:
   path: /callme.txt
   create: true
   mode: 444
-  callabck: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"
+  callback: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"
   match:
     pod: nginx-pod
     namespace: default
