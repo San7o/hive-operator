@@ -95,7 +95,7 @@ func UnloadEbpf(ctx context.Context) error {
  *  kubernetes cluster.
  */
 func ReadEbpfData() (bpfLogData, error) {
-	
+
 	var data bpfLogData
 	record, err := RingbuffReader.Read()
 	if err != nil {
@@ -118,7 +118,7 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
 	}
 
-	data, err := ReadEbpfData()  // Hangs
+	data, err := ReadEbpfData() // Hangs
 	if err != nil {
 		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
 	}

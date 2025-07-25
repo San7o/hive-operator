@@ -68,6 +68,4 @@ func main() {
 
 		log.Info("Received Data", "pid", data.Pid, "inode", data.Ino)
 	}
-
-	return
 }

@@ -8,11 +8,13 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"structs"
 
 	"github.com/cilium/ebpf"
 )
 
 type bpfLogData struct {
+	_    structs.HostLayout
 	Pid  int32
 	Tgid uint32
 	Uid  uint32

@@ -135,7 +135,6 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					Name:      "hive-data-" + pod.Name + "-" + pod.Namespace + "-" + strconv.FormatUint(uint64(inode), 10),
 					Namespace: "hive-operator-system",
 
-
 					Annotations: map[string]string{
 						"hive_policy_name": hivePolicy.Name,
 						"callback":         hivePolicy.Spec.Callback,
