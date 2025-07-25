@@ -75,7 +75,6 @@ func GetContainerData(ctx context.Context, pod corev1.Pod, hivePolicy hivev1alph
 			containerData.ContainerName = containerStatus.Name
 			return containerData, nil
 		}
-
 	}
 
 	return ContainerData{}, nil

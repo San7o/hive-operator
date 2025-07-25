@@ -227,14 +227,14 @@ func main() {
 
 	go func() {
 		if err := hivePolicyMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "problem running HivePolicy manager")
+			setupLog.Error(err, "Error running HivePolicy manager")
 			os.Exit(1)
 		}
 	}()
 
 	go func() {
 		if err := hivePodMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "problem running HivePod manager")
+			setupLog.Error(err, "Error running HivePod manager")
 			os.Exit(1)
 		}
 	}()
@@ -244,13 +244,13 @@ func main() {
 	// Unload the eBPF program when leadership is lost
 	go func() {
 		<-hiveDataMgrCtx.Done() // Wait until leadership is lost
-		setupLog.Info("Hive manager lost leadership!")
+		setupLog.Info("HiveData manager lost leadership")
 
 		hivebpf.UnloadEbpf(context.Background())
 	}()
 
 	if err := hiveDataMgr.Start(hiveDataMgrCtx); err != nil {
-		setupLog.Error(err, "problem running HiveData manager")
+		setupLog.Error(err, "Error running HiveData manager")
 		os.Exit(1)
 	}
 

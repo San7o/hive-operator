@@ -394,7 +394,7 @@ INTERFACE?=
 test-build-ebpf: ## Build the ebpf-local program
 	go fmt ./test/ebpf-local
 	ARCH=$(shell uname -m) go generate ./internal/controller/ebpf
-	go build -o ./bin/ebpf-local ./test/ebpf-local
+	go build -buildvcs=false -o ./bin/ebpf-local ./test/ebpf-local
 
 .PHONY: test-run-ebpf
 test-run-ebpf: ## Run the ebpf-local program

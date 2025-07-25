@@ -89,23 +89,38 @@ func UnloadEbpf(ctx context.Context) error {
 	return nil
 }
 
+/*
+ *  Read the data from the Ringbuffer, hangs until data is receied or
+ *  returns an error. This function can be used without a running
+ *  kubernetes cluster.
+ */
+func ReadEbpfData() (bpfLogData, error) {
+	
+	var data bpfLogData
+	record, err := RingbuffReader.Read()
+	if err != nil {
+		if errors.Is(err, ringbuf.ErrClosed) {
+			return bpfLogData{}, fmt.Errorf("ReadAlert Error Buffer closed.")
+		}
+	}
+
+	err = binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &data)
+	if err != nil {
+		return bpfLogData{}, fmt.Errorf("ReadAlert Error Parse ringbuf data")
+	}
+
+	return data, nil
+}
+
 func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, error) {
 
 	if RingbuffReader == nil {
 		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
 	}
 
-	var data bpfLogData
-	record, err := RingbuffReader.Read()
+	data, err := ReadEbpfData()  // Hangs
 	if err != nil {
-		if errors.Is(err, ringbuf.ErrClosed) {
-			return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Buffer closed.")
-		}
-	}
-
-	err = binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &data)
-	if err != nil {
-		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Parse ringbuf data")
+		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
 	}
 
 	hiveDataList := &hivev1alpha1.HiveDataList{}

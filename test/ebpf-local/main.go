@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 
 	controller "github.com/San7o/hive-operator/internal/controller"
 	ebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
@@ -23,12 +24,21 @@ func main() {
 		InterfaceName = os.Args[1]
 	}
 
-	ctrl.SetLogger(zap.New())
+	opts := zap.Options{
+		Development: true, // Enables console encoder and disables sampling
+	}
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	ctx := context.Background()
 	log := log.FromContext(ctx)
 
-	reconciler := controller.HivePolicyReconciler{}
+	// Set the KernelID
+	kernelIDBytes, err := os.ReadFile(controller.KernelIDPath)
+	if err != nil {
+		log.Error(err, "Cannot read kernel boot ID at "+controller.KernelIDPath)
+	}
+	controller.KernelID = string(kernelIDBytes)
+	controller.KernelID = strings.TrimSpace(controller.KernelID)
 
 	if err := ebpf.LoadEbpf(ctx); err != nil {
 		log.Error(err, "Error loading eBPF program")
@@ -36,8 +46,28 @@ func main() {
 	}
 	defer ebpf.UnloadEbpf(ctx)
 
+	ino, err := GetInode("LICENSE.md")
+	if err != nil {
+		log.Error(err, "Error Get Inode")
+	}
+
+	var key uint32 = 0
+	err = ebpf.UpdateTracedInodes(key, ino)
+	if err != nil {
+		log.Error(err, "Error Update map")
+	}
+
 	log.Info("Logging data...")
-	controller.Output(reconciler.UncachedClient)
+
+	// Read and print loop
+	for {
+		data, err := ebpf.ReadEbpfData() // Hangs
+		if err != nil {
+			log.Error(err, "Error Read Ebpf data")
+		}
+
+		log.Info("Received Data", "pid", data.Pid, "inode", data.Ino)
+	}
 
 	return
 }
