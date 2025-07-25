@@ -1,6 +1,9 @@
 # VERSION defines the project version for the bundle.
 VERSION ?= 0.0.1
 
+ENV?=local
+include .env-${ENV}
+
 # CHANNELS define the bundle channels used in the bundle.  Add a new
 # line here if you would like to change its default config. (E.g
 # CHANNELS = "candidate,fast,stable") To re-generate a bundle for
@@ -44,6 +47,9 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 
+# Docker registry image
+IMG ?= localhost:5001/hive-k8s-operator:latest
+
 # USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
 # You can enable this value if you would like to use SHA Based Digests
 # To enable set flag to true
@@ -56,9 +62,6 @@ endif
 # on the system is used.  This is useful for CI or a project to
 # utilize a specific version of the operator-sdk toolkit.
 OPERATOR_SDK_VERSION ?= v1.39.1
-# Image URL to use all building/pushing image targets
-LOCAL_IMG ?= localhost:5001/manager:latest
-IMG ?= giovann103/hive-k8s-operator:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to
 # be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.31.0
@@ -141,7 +144,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 
 .PHONY: generate-ebpf
 generate-ebpf:
-	ARCH=$(shell uname -m) go generate ./internal/controller
+	ARCH=$(shell uname -m) go generate ./internal/controller/ebpf
 
 ##@ Build
 
@@ -152,6 +155,12 @@ build: manifests generate generate-ebpf fmt vet ## Build manager binary.
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/main.go
+
+.PHONY: docker-build
+docker-build: ## Build the operator docker image
+	docker rmi hive-k8s-operator ${IMG} &2>/dev/null || :
+	docker build -t hive-k8s-operator .
+	docker tag hive-k8s-operator ${IMG}
 
 # If you wish to build the manager image targeting other platforms you
 # can use the --platform flag.  (i.e. docker build --platform
@@ -177,22 +186,22 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # - a valid value via IMG=<myregistry/image:<tag>> then the export
 # - will fail) # To adequately provide solutions that are compatible
 # - with multiple platforms, you should consider using this option.
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
-.PHONY: docker-buildx
-docker-buildx: ## Build and push docker image for the manager for cross-platform support
-	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
-	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-	- $(CONTAINER_TOOL) buildx create --name hive-operator-builder
-	$(CONTAINER_TOOL) buildx use hive-operator-builder
-	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
-	- $(CONTAINER_TOOL) buildx rm hive-operator-builder
-	rm Dockerfile.cross
+#PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
+#.PHONY: docker-buildx
+#docker-buildx: ## Build and push docker image for the manager for cross-platform support
+#	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
+#	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
+#	- $(CONTAINER_TOOL) buildx create --name hive-operator-builder
+#	$(CONTAINER_TOOL) buildx use hive-operator-builder
+#	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
+#	- $(CONTAINER_TOOL) buildx rm hive-operator-builder
+#	rm Dockerfile.cross
 
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default > dist/install.yaml
+	cd config/manager && $(KUSTOMIZE) edit set image hive-k8s-operator=${IMG}
+	$(KUSTOMIZE) build config/default > dist/install-${ENV}.yaml
 
 ##@ Deployment
 
@@ -210,17 +219,21 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image hive-k8s-operator=${IMG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
-
-.PHONY: deploy-local
-deploy-local: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager-local && $(KUSTOMIZE) edit set image controller=${LOCAL_IMG}
-	$(KUSTOMIZE) build config/default-local | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: docker-push
+docker-push: ## Push the operator docker image in registry
+	docker push ${IMG}
+
+.PHONY: docker
+docker: ## Build and push the docke image
+	@make docker-build
+	@make docker-push
 
 ##@ Dependencies
 
@@ -299,7 +312,7 @@ endif
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image hive-k8s-operator=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	$(OPERATOR_SDK) bundle validate ./bundle
 
@@ -357,51 +370,46 @@ catalog-build: opm ## Build a catalog image.
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
 
-# Local development functions
+##@ Local development functions
 
 .PHONY: create-cluster-local
 create-cluster-local: ## Create a new local cluster with kind
-	sudo ./hack/registry-cluster.sh
+	./hack/registry-cluster.sh
 
 .PHONY: delete-cluster-local
 delete-cluster-local: ## Delete the local cluster with kind
-	sudo kubectl config delete-cluster kind-hive || :
-	sudo kind delete cluster --name hive
+	kubectl config delete-cluster kind-hive || :
+	kind delete cluster --name hive
 
-.PHONY: docker-build-local
-docker-build-local: ## Build the operator local docker image
-	sudo docker rmi manager localhost:5001/manager:latest &2>/dev/null || :
-	sudo docker build -t manager .
-	sudo docker tag manager localhost:5001/manager:latest
-
-.PHONY: docker-push-local
-docker-push-local: ## Push the operator docker image in local registry
-	sudo docker push localhost:5001/manager:latest
-
-.PHONY: docker-local
-docker-local:
-	@make docker-build-local
-	@make docker-push-local
-
-.PHONY: kill-pods-local
-kill-pods-local: ## Kill pods in local cluster
+.PHONY: kill-pods
+kill-pods: ## Kill pods in cluster
 	@NAMESPACE="hive-operator-system"; \
 	NAME=$$(kubectl get pods -n $$NAMESPACE -o name); \
-	sudo kubectl delete $$NAME -n $$NAMESPACE
+	kubectl delete $$NAME -n $$NAMESPACE
+	kubectl delete HivePolicy --all --all-namespaces
 	kubectl delete HiveData --all --all-namespaces
 
-# Docker online functions
+INTERFACE?=
 
-.PHONY: docker-build
-docker-build: ## Build the operator docker image
-	sudo docker build -t hive-k8s-operator .
-	sudo docker tag hive-k8s-operator giovann103/hive-k8s-operator:latest
+.PHONY: test-ebpf
+test-build-ebpf: ## Build the ebpf-local program
+	go fmt ./test/ebpf-local
+	ARCH=$(shell uname -m) go generate ./internal/controller/ebpf
+	go build -o ./bin/ebpf-local ./test/ebpf-local
 
-.PHONY: docker-push
-docker-push: ## Push the operator docker image in online registry
-	sudo docker push giovann103/hive-k8s-operator:latest
+.PHONY: test-run-ebpf
+test-run-ebpf: ## Run the ebpf-local program
+	./bin/ebpf-local ${INTERFACE}
 
-.PHONY: docker
-docker:
-	@make docker-build
-	@make docker-push
+.PHONY: test-ebpf
+test-ebpf: ## Build and run the ebpf-local program
+	make test-build-ebpf
+	make test-run-ebpf
+
+.PHONY: test-tmux
+test-tmux: ## Run a tmux session to debug the eBPF program
+	./hack/test-tmux.sh
+
+.PHONY: objdump
+objdump: ## Dump eBPF bytecode
+	llvm-objdump -d -S internal/controller/ebpf/bpf_bpfeb.o

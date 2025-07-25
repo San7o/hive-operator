@@ -36,6 +36,8 @@ import (
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 	"github.com/San7o/hive-operator/internal/controller"
 	hive "github.com/San7o/hive-operator/internal/controller"
+	hivecontainer "github.com/San7o/hive-operator/internal/controller/container"
+	hivebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -244,7 +246,7 @@ func main() {
 		<-hiveDataMgrCtx.Done() // Wait until leadership is lost
 		setupLog.Info("Hive manager lost leadership!")
 
-		hive.UnloadBpf(context.Background())
+		hivebpf.UnloadEbpf(context.Background())
 	}()
 
 	if err := hiveDataMgr.Start(hiveDataMgrCtx); err != nil {
@@ -253,12 +255,11 @@ func main() {
 	}
 
 	// Cleanup
-	if hive.ContainerdClient != nil {
-		hive.ContainerdClient.Close()
+	if err := hivecontainer.CloseConnections(); err != nil {
+		setupLog.Error(err, "Error closing connections")
 	}
-	if hive.RingbuffReader != nil {
-		hive.RingbuffReader.Close()
+	if err := hivebpf.UnloadEbpf(context.Background()); err != nil {
+		setupLog.Error(err, "Error unloading eBPF programs")
 	}
-	hive.Objs.Close()
-	hive.Kprobe.Close()
+	return
 }

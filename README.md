@@ -15,8 +15,8 @@ kind: HivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: hive-operator
-    app.kubernetes.io/managed-by: kustomize
   name: hive-sample-policy
+  namespace: hive-operator-system
 spec:
   path: /secret.txt
   create: true
@@ -24,9 +24,8 @@ spec:
   match:
     pod: nginx-pod
     namespace: default
-    label:
-    - key: security-level
-      value: high
+    labels:
+      security-level: high
 ```
 
 You can select match conditions to filter which pods to monitor for a
@@ -36,17 +35,27 @@ standard output with meaningful information, such as:
 
 ```json
 {
-    "pod-name": "nginx-pod",
-    "namespace": "default",
-    "ip": "10.244.2.3",
+  "timestamp": "2025-07-25T08:14:22Z",
+  "hive_policy_name": "hive-sample-policy",
+  "metadata": {
     "path": "/secret.txt",
-    "pid": 41202,
-    "tgid": 41202,
-    "uid": 0,
-    "gid": 0,
-    "ino": 3451343,
-    "mask": 36
-} 
+    "inode": 13667586,
+    "mask": 34,
+    "kernel_id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71"
+  },
+  "pod": {
+    "name": "nginx-pod",
+    "namespace": "default",
+    "contianer": {
+      "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
+      "name": "nginx"
+    }
+  },
+  "process": {
+    "pid": 61116,
+    "tgid": 61164
+  }
+}
 ```
 
 Please, read the [USAGE](./docs/USAGE.md) document to learn how to

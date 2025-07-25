@@ -40,6 +40,10 @@ elif [ "$1" = "delete" ]; then
     exit 0
 elif [ "$1" = "token" ]; then
     TOKEN=$(sudo kubeadm token list | awk 'NR==2 {print $1}')
+    if [ "$TOKEN" = "" ]; then
+        TOKEN=$(sudo kubeadm token generate)
+        sudo kubeadm token create $TOKEN
+    fi
     CA_HASH=$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | sha256sum | awk '{print $1}')
     if [ -z "$CA_HASH" ]; then
         echo "Failed to compute CA cert hash!"
@@ -73,7 +77,7 @@ echo "Disabling SELinux"
 sudo setenforce 0
 
 echo "Downloading dependencies"
-sudo dnf install -y kubernetes$KUBERNETES_VERSION_MAJOR.$KUBERNETES_VERSION_MINOR-kubeadm vim containerd docker
+sudo dnf install -y kubernetes$KUBERNETES_VERSION_MAJOR.$KUBERNETES_VERSION_MINOR-kubeadm vim containerd docker git
 
 echo "Setting up network"
 sudo modprobe br_netfilter

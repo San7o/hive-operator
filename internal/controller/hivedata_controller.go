@@ -14,23 +14,15 @@ package controller
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
-	"github.com/cilium/ebpf"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logger "sigs.k8s.io/controller-runtime/pkg/log"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
-)
-
-const (
-	MapMaxEntries = 1024
-)
-
-var (
-	Loaded bool = false
+	hivebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
 )
 
 type HiveDataReconciler struct {
@@ -44,31 +36,27 @@ type HiveDataReconciler struct {
 // +kubebuilder:rbac:groups=hive.com,resources=hivedata/finalizers,verbs=update
 
 func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	log := logger.FromContext(ctx)
 	log.Info("HiveData reconcile triggered.")
 
-	if !Loaded {
+	if !hivebpf.Loaded {
 		log.Info("Loading eBPF program")
-		if err := LoadBpf(ctx); err != nil {
-			log.Error(nil, "Error loading eBPF program")
-			return ctrl.Result{}, err
+		if err := hivebpf.LoadEbpf(ctx); err != nil {
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error Load eBPF program: %w", err)
 		}
-		Loaded = true
-		go LogData(context.Background(), r.UncachedClient)
+		go Output(r.UncachedClient)
 	}
 
 	hivePolicyList := &hivev1alpha1.HivePolicyList{}
 	err := r.Client.List(ctx, hivePolicyList)
 	if err != nil {
-		log.Error(err, "Failed to get Hive Policy resource")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get Hive Policy resource: %w", err)
 	}
 
 	hiveDataList := &hivev1alpha1.HiveDataList{}
 	err = r.Client.List(ctx, hiveDataList)
 	if err != nil {
-		log.Error(err, "Failed to get Hive Data resource")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get Hive Data resource: %w", err)
 	}
 
 	// Check if each HiveData (referring to this kernel id) does have a
@@ -84,54 +72,31 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 		found := false
 		for _, hivePolicy := range hivePolicyList.Items {
-			if (hiveData.Spec.Path == hivePolicy.Spec.Path) &&
-				(hivePolicy.Spec.Match.PodName == "" ||
-					hiveData.Spec.Match.PodName == hivePolicy.Spec.Match.PodName) &&
-				(hivePolicy.Spec.Match.Namespace == "" ||
-					hiveData.Spec.Match.Namespace == hivePolicy.Spec.Match.Namespace) &&
-				(hivePolicy.Spec.Match.IP == "" ||
-					hiveData.Spec.Match.IP == hivePolicy.Spec.Match.IP) &&
-				len(hivePolicy.Spec.Match.Label) == len(hivePolicy.Spec.Match.Label) {
-				sameLabels := true
-				for i := 0; i < len(hivePolicy.Spec.Match.Label); i++ {
-					if hivePolicy.Spec.Match.Label[i].Key != hivePolicy.Spec.Match.Label[i].Key ||
-						hivePolicy.Spec.Match.Label[i].Value != hivePolicy.Spec.Match.Label[i].Value {
-						sameLabels = false
-						break
-					}
-				}
-
-				if sameLabels {
-					found = true
-				}
+			if HiveDataPolicyCmp(hiveData, hivePolicy) {
+				found = true
 				break
 			}
 		}
 
 		if !found {
 			if err := r.Client.Delete(ctx, &hiveData); err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{}, fmt.Errorf("Reconciler Error Delete HiveData: %w", err)
 			}
 		} else {
-			if i > MapMaxEntries {
-				return ctrl.Result{}, errors.New("Number of Traced inodes exceeds the maximum number")
+			if i > hivebpf.MapMaxEntries {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Number of Traced inodes exceeds the maximum number")
 			}
-			err = Objs.TracedInodes.Update(i, uint64(hiveData.Spec.InodeNo), ebpf.UpdateAny)
+			err = hivebpf.UpdateTracedInodes(i, uint64(hiveData.Spec.InodeNo))
 			if err != nil {
-				log.Error(err, "Error Updating map with inode")
-				return ctrl.Result{}, err
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with inode: %w", err)
 			}
 			i++
 		}
 	}
 	// Fill the rest of the eBPF map with zeros so that we do not leave
 	// old values that where there before.
-	for ; i < MapMaxEntries; i++ {
-		err = Objs.TracedInodes.Update(i, uint64(0), ebpf.UpdateAny)
-		if err != nil {
-			log.Error(err, "Error Updating map with empty value")
-			return ctrl.Result{}, err
-		}
+	if err = hivebpf.ResetMap(i); err != nil {
+		return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with empty values: %w", err)
 	}
 
 	return ctrl.Result{}, nil

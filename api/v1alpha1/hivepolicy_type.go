@@ -21,6 +21,8 @@ type HivePolicySpec struct {
 	Path string `json:"path,omitempty"`
 	// Whether to create the file or not if It cannot be found
 	Create bool `json:"create,omitempty"`
+	// Send an HTTP POST request to this endpoint if specified
+	Callback string `json:"callback,omitempty"`
 	// The content of the file if It was created. This field
 	// is used only if Create is set to true
 	Mode uint32 `json:"mode,omitempty"`
@@ -36,12 +38,7 @@ type HivePolicyMatch struct {
 	// Filter pods by IP
 	IP string `json:"ip,omitempty"`
 	// Filter pods per label
-	Label []LabelType `json:"label,omitempty"`
-}
-
-type LabelType struct {
-	Key   string `json:"key,omitempty"`
-	Value string `json:"value,otmiempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // +kubebuilder:object:root=true

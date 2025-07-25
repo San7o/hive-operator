@@ -37,6 +37,9 @@ spec:
             type: object
           spec:
             properties:
+              callback:
+                description: Send an HTTP POST request to this endpoint if specified
+                type: string
               create:
                 description: Whether to create the file or not if It cannot be found
                 type: boolean
@@ -46,18 +49,11 @@ spec:
                   ip:
                     description: Filter pods by IP
                     type: string
-                  label:
+                  labels:
+                    additionalProperties:
+                      type: string
                     description: Filter pods per label
-                    items:
-                      properties:
-                        key:
-                          type: string
-                        value:
-                          type: string
-                      required:
-                      - value
-                      type: object
-                    type: array
+                    type: object
                   namespace:
                     description: Filter pods per namespace
                     type: string
