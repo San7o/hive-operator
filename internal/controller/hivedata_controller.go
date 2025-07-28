@@ -47,14 +47,8 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		go Output(r.UncachedClient)
 	}
 
-	hivePolicyList := &hivev1alpha1.HivePolicyList{}
-	err := r.Client.List(ctx, hivePolicyList)
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get Hive Policy resource: %w", err)
-	}
-
 	hiveDataList := &hivev1alpha1.HiveDataList{}
-	err = r.Client.List(ctx, hiveDataList)
+	err := r.Client.List(ctx, hiveDataList)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get Hive Data resource: %w", err)
 	}
@@ -71,30 +65,39 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			continue
 		}
 
-		found := false
-		for _, hivePolicy := range hivePolicyList.Items {
-			if HiveDataPolicyCmp(hiveData, hivePolicy) {
-				found = true
-				break
-			}
+		labels := client.MatchingLabels{
+			"policy-id": hiveData.Labels["policy-id"],
+		}
+		hivePolicyList := &hivev1alpha1.HivePolicyList{}
+		err = r.Client.List(ctx, hivePolicyList, labels)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HivePolicy resource: %w", err)
 		}
 
-		if !found {
+		if len(hivePolicyList.Items) == 0 {
 			if err := r.Client.Delete(ctx, &hiveData); err != nil {
 				return ctrl.Result{}, fmt.Errorf("Reconciler Error Delete HiveData: %w", err)
 			}
 			log.Info("Deleted HiveData")
-		} else {
-			if i > hivebpf.MapMaxEntries {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Number of Traced inodes exceeds the maximum number")
-			}
-			err = hivebpf.UpdateTracedInodes(i, uint64(hiveData.Spec.InodeNo))
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with inode: %w", err)
-			}
-			i++
+
+			continue
 		}
+
+		if len(hivePolicyList.Items) > 1 {
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error multiple Policies with the same ID")
+		}
+
+		if i > hivebpf.MapMaxEntries {
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error Number of Traced inodes exceeds the maximum number")
+		}
+
+		err = hivebpf.UpdateTracedInodes(i, uint64(hiveData.Spec.InodeNo))
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with inode: %w", err)
+		}
+		i++
 	}
+
 	// Fill the rest of the eBPF map with zeros so that we do not leave
 	// old values that where there before.
 	if err = hivebpf.ResetTracedInodes(i); err != nil {

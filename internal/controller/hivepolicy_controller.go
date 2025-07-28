@@ -15,7 +15,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -70,12 +69,6 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HivePolicy resource: %w", err)
 	}
 
-	hiveDataList := &hivev1alpha1.HiveDataList{}
-	err = r.Client.List(ctx, hiveDataList)
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
-	}
-
 	// Loop over the HivePolicies and check if all the corresponsing
 	// HiveData exist. In case they does not, a new HiveData is created.
 	for _, hivePolicy := range hivePolicyList.Items {
@@ -100,6 +93,18 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		for _, pod := range podList.Items {
+
+			// TODO: iterate over containers
+
+			labels := client.MatchingLabels{
+				"policy-id": hivePolicy.Labels["policy-id"],
+			}
+			hiveDataList := &hivev1alpha1.HiveDataList{}
+			err = r.Client.List(ctx, hiveDataList, labels)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
+			}
+
 			found := false
 			for _, hiveData := range hiveDataList.Items {
 				if HiveDataPolicyCmp(hiveData, hivePolicy) &&
@@ -127,12 +132,17 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 			inode := containerData.Ino
 
+			policyID, err := PolicyHashID(hivePolicy)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error calculating policy ID: %w", err)
+			}
+
 			// Here we are crating a new HiveData since an already existing
 			// one for this Pod and this HivePolicy has not been found
 			hiveData := &hivev1alpha1.HiveData{
 				ObjectMeta: metav1.ObjectMeta{
 					// Give it an unique name
-					Name:      strconv.FormatUint(uint64(inode), 10) + "-hive-data-" + pod.Name + "-" + pod.Namespace,
+					Name:      NewHiveDataName(inode, pod),
 					Namespace: hivev1alpha1.Namespace,
 					Annotations: map[string]string{
 						"hive_policy_name": hivePolicy.Name,
@@ -144,6 +154,9 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						"container_id":     containerData.ID,
 						"container_name":   containerData.Name,
 						"node_name":        pod.Spec.NodeName,
+					},
+					Labels: map[string]string{
+						"policy-id": policyID,
 					},
 				},
 				Spec: hivev1alpha1.HiveDataSpec{
@@ -160,6 +173,15 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{}, fmt.Errorf("Reconcile Error Create HiveData resource: %w", err)
 			}
 			log.Info("Created new HiveData resource.")
+
+			orig := hivePolicy.DeepCopy()
+			hivePolicy.ObjectMeta.Labels = map[string]string{
+				"policy-id": policyID,
+			}
+			err = r.Client.Patch(ctx, &hivePolicy, client.MergeFrom(orig))
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Update PolicyID in HivePolicy: %w", err)
+			}
 		}
 	}
 
@@ -168,6 +190,7 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// necessary to handle deletion of HivePolicies.
 	// We trigger a reconciliation by updating an annotation with the
 	// current time.
+	hiveDataList := &hivev1alpha1.HiveDataList{}
 	err = r.Client.List(ctx, hiveDataList)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
@@ -179,7 +202,8 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			hiveDataList.Items[0].Annotations = map[string]string{}
 		}
 		hiveDataList.Items[0].Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
-		if err := r.Patch(ctx, &hiveDataList.Items[0], client.MergeFrom(orig)); err != nil {
+		err = r.Patch(ctx, &hiveDataList.Items[0], client.MergeFrom(orig))
+		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("Reconcile Error Patch HiveData: %w", err)
 		}
 	}
