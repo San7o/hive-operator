@@ -36,7 +36,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # catalog-push' will build and push both
 # hive.com/hive-operator-bundle:$VERSION and
 # hive.com/hive-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= hive.com/hive-operator
+IMAGE_TAG_BASE ?= localhost:5001/hive-k8s-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.  You can use
 # it as an arg. (E.g make bundle-build
@@ -64,7 +64,7 @@ endif
 OPERATOR_SDK_VERSION ?= v1.39.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to
 # be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.31.0
+ENVTEST_K8S_VERSION = 1.33.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless
 # GOBIN is set)
