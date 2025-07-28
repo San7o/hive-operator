@@ -25,7 +25,7 @@ spec:
   match:
     pod: nginx-pod
     namespace: default
-    labels:
+    matchLabels:
       security-level: high
 ```
 
@@ -51,6 +51,9 @@ standard output with structured information, such as:
       "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
       "name": "nginx"
     }
+  },
+  "node": {
+    "name": "hive-worker2"
   },
   "process": {
     "pid": 61116,

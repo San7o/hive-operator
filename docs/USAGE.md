@@ -28,7 +28,7 @@ spec:
   match:
     pod: nginx-pod
     namespace: default
-    label:
+    matchLabels:
       security-level: high
 ```
 

@@ -90,7 +90,7 @@ func UnloadEbpf(ctx context.Context) error {
 }
 
 /*
- *  Read the data from the Ringbuffer, hangs until data is receied or
+ *  Read the data from the Ringbuffer, hangs until data is received or
  *  returns an error. This function can be used without a running
  *  kubernetes cluster.
  */
@@ -150,6 +150,9 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 						Name: hiveData.Annotations["container_name"],
 					},
 					Ip: hiveData.Annotations["ip"],
+				},
+				Node: hivev1alpha1.NodeMetadata{
+					Name: hiveData.Annotations["node_name"],
 				},
 				Process: hivev1alpha1.ProcessMetadata{
 					Pid:  data.Pid,

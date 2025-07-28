@@ -16,9 +16,9 @@ type Dev = uint64
 type Pid = uint32
 
 type ContainerData struct {
-	Ino           Ino
-	ContainerID   string
-	ContainerName string
+	Ino  Ino
+	ID   string
+	Name ContainerName
 	// If true, ContainerData should be requested again later
 	ShouldRequeue bool
 	// False if an inode was not found, used for improved error messages
@@ -71,8 +71,8 @@ func GetContainerData(ctx context.Context, pod corev1.Pod, hivePolicy hivev1alph
 
 		containerData, err := runtime.GetContainerData(ctx, pod, runtimeId, hivePolicy)
 		if err == nil {
-			containerData.ContainerID = containerStatus.ContainerID
-			containerData.ContainerName = containerStatus.Name
+			containerData.ID = containerStatus.ContainerID
+			containerData.Name = containerStatus.Name
 			return containerData, nil
 		}
 	}

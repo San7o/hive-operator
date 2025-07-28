@@ -97,7 +97,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	// Fill the rest of the eBPF map with zeros so that we do not leave
 	// old values that where there before.
-	if err = hivebpf.ResetMap(i); err != nil {
+	if err = hivebpf.ResetTracedInodes(i); err != nil {
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Update map with empty values: %w", err)
 	}
 

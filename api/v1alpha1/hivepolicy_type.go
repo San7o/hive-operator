@@ -38,7 +38,7 @@ type HivePolicyMatch struct {
 	// Filter pods by IP
 	IP string `json:"ip,omitempty"`
 	// Filter pods per label
-	Labels map[string]string `json:"labels,omitempty"`
+	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -20,6 +20,12 @@ type PodMetadata struct {
 	Container ContainerMetadata `json:"contianer,omitempty"`
 }
 
+// Information about the node
+type NodeMetadata struct {
+	// Name of the node
+	Name string `json:"name,omitempty"`
+}
+
 // Information related to the process that accessed the file
 type ProcessMetadata struct {
 	// Process ID
@@ -62,6 +68,8 @@ type HiveAlert struct {
 	Metadata HiveAlertMetadata `json:"metadata,omitempty"`
 	// Information about the pod where the file lives
 	Pod PodMetadata `json:"pod,omitempty"`
+	// Information about the node
+	Node NodeMetadata `json:"node,omitempty"`
 	// Information about the process that accessed the file
 	Process ProcessMetadata `json:"process,omitempty"`
 }

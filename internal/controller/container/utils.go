@@ -19,8 +19,8 @@ func SplitContainerRuntimeID(input ContainerName) (ContainerName, ContainerID, e
 }
 
 func IsContainerRuntimeSupported(runtime string) bool {
-	for ContainerName, _ := range ContainerRuntimes {
-		if runtime == ContainerName {
+	for containerName, _ := range ContainerRuntimes {
+		if runtime == containerName {
 			return true
 		}
 	}

@@ -22,7 +22,7 @@ func UpdateTracedInodes(index uint32, value uint64) error {
 /*
  * Fills a map with zeroes from index to MapMaxEntries.
  */
-func ResetMap(index uint32) error {
+func ResetTracedInodes(index uint32) error {
 
 	for ; index < MapMaxEntries; index++ {
 		err := UpdateTracedInodes(index, uint64(0))

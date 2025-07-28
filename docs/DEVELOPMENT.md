@@ -45,7 +45,7 @@ images and tells the operator where to pull them. You can add an entry
 to your custom environment .env-custom like so:
 
 ```
-IMG=registry/by-bautiful-name:latest
+IMG=registry/my-bautiful-name:latest
 ```
 
 To select which environment to use, append `ENV=<ENV-NAME>` after your
@@ -55,7 +55,7 @@ make commands, for example:
 make deploy ENV=custom
 ```
 
-The default environment is `local`, in this case you can omit the `ENV
+The default environment is `local`, in this case you can omit the `ENV`
 from the make command to use the local environment. You can use
 environments on all make commands.
 

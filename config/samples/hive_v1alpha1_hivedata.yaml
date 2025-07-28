@@ -11,6 +11,7 @@ metadata:
     path: /secret.txt
     pod_ip: 10.244.2.2
     pod_name: nginx-pod
+    node_hostname: nginx-pod
   creationTimestamp: "2025-07-25T08:06:12Z"
   generation: 1
   name: hive-data-nginx-pod-default-13667586

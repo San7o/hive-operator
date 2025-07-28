@@ -54,7 +54,7 @@ type HivePolicyReconciler struct {
 
 // The HivePolicy reconciliation is responsible for the following:
 //   - For each HivePolicy, fetch files' information such as the inode
-//     number from the matched contianers.
+//     number from the matched container.
 //   - create HiveData resources with the previously fetched information
 //     if not already present.
 func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -81,7 +81,7 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	for _, hivePolicy := range hivePolicyList.Items {
 
 		labelMap := make(client.MatchingLabels)
-		labelMap = hivePolicy.Spec.Match.Labels
+		labelMap = hivePolicy.Spec.Match.MatchLabels
 		matchingFields := client.MatchingFields{}
 		if len(hivePolicy.Spec.Match.PodName) != 0 {
 			matchingFields["metadata.name"] = hivePolicy.Spec.Match.PodName
@@ -132,9 +132,8 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			hiveData := &hivev1alpha1.HiveData{
 				ObjectMeta: metav1.ObjectMeta{
 					// Give it an unique name
-					Name:      "hive-data-" + pod.Name + "-" + pod.Namespace + "-" + strconv.FormatUint(uint64(inode), 10),
-					Namespace: "hive-operator-system",
-
+					Name:      strconv.FormatUint(uint64(inode), 10) + "-hive-data-" + pod.Name + "-" + pod.Namespace,
+					Namespace: hivev1alpha1.Namespace,
 					Annotations: map[string]string{
 						"hive_policy_name": hivePolicy.Name,
 						"callback":         hivePolicy.Spec.Callback,
@@ -142,8 +141,9 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						"namespace":        pod.Namespace,
 						"pod_ip":           pod.Status.PodIPs[0].IP,
 						"path":             hivePolicy.Spec.Path,
-						"container_id":     containerData.ContainerID,
-						"container_name":   containerData.ContainerName,
+						"container_id":     containerData.ID,
+						"container_name":   containerData.Name,
+						"node_name":        pod.Spec.NodeName,
 					},
 				},
 				Spec: hivev1alpha1.HiveDataSpec{
@@ -151,7 +151,7 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					KernelID: KernelID,
 				},
 			}
-			for label, value := range hivePolicy.Spec.Match.Labels {
+			for label, value := range hivePolicy.Spec.Match.MatchLabels {
 				hiveData.Annotations["match-label-"+label] = value
 			}
 

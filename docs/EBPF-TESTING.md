@@ -1,4 +1,4 @@
-# Ebpf Testing
+# eBPF Testing
 
 In this document we discuss how to test the eBPF program. We assume
 that you have the required dependencies, if not please check the
@@ -16,7 +16,7 @@ make commands:
 - `test-ebpf`: build and run the ebpf-local program
 
 You often need some kind of server to send network traffic to. You can
-use the `callback/` server which will echo the requests he receives
+use the `callback/` server which will echo the requests they receive
 and is accessible via `http://localhost:8090/callback`.
 
 To run both the eBPF program and the callback service, you can create

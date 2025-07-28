@@ -8,5 +8,5 @@ metadata:
 spec:
   path: /etc/shadow
   match:
-    labels:
+    matchLabels:
       security-level: high 

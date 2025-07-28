@@ -314,7 +314,7 @@ spec:
     pod: nginx-pod
     namespace: default
     ip: 192.168.0.3
-    label:
+    matchLabels:
       security-level: high
 ```
 
@@ -333,7 +333,7 @@ UNIX permissions given to the file to be created via the `mode` field.
 
 #### Callback
 
-If present, the opeartor will send json-encoded data to the callback
+If present, the operator will send json-encoded data to the callback
 via an HTTP post request.
 
 <a name="hivepolicy-resource-match"></a>
@@ -345,7 +345,7 @@ under the `match` field and are the following:
 - `pod`: the name of the pod
 - `namespace`: the namespace of the pod
 - `ip`: the ipv4 of the pod
-- `label`: a list of labels and values
+- `matchLabels`: a list of labels and values
 
 <a name="hivepolicy-reconciliation"></a>
 ### HivePolicy Reconciliation
@@ -436,7 +436,7 @@ running kernel.
 
 The HiveData resource is used to communicate information between the
 discover and the loader controller. The relationship between an HivePolicy
-and an HiveData is one to many, where each HiveData must have an HiveResource.
+and an HiveData is one to many, where each HiveData must have an HivePolicy.
 
 The loader uses information from this resource to instruct the eBPF
 program to filter certain inodes.
@@ -456,6 +456,7 @@ metadata:
     path: /secret.txt
     pod_ip: 10.244.2.2
     pod_name: nginx-pod
+    node_hostname: nginx
   creationTimestamp: "2025-07-25T08:06:12Z"
   generation: 1
   name: hive-data-nginx-pod-default-13667586
@@ -536,6 +537,9 @@ Example log string communicated from kernelspace to userspace:
       "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
       "name": "nginx"
     }
+  },
+  "node": {
+    "name": "hive-worker2"
   },
   "process": {
     "pid": 61116,

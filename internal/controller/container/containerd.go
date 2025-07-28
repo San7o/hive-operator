@@ -93,7 +93,7 @@ func (self *Containerd) GetContainerData(ctx context.Context, pod corev1.Pod, id
 /*
  *  Get the inode of a file, given the path and the pid of the
  *  container where the file lives. Creates the file with mode
- *  permissions if create is set to true,
+ *  permissions if create is set to true.
  */
 func getInode(pid Pid, path string, create bool, mode uint32) (Ino, error) {
 	pidStr := strconv.FormatUint(uint64(pid), 10)
