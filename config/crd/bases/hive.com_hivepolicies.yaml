@@ -46,6 +46,9 @@ spec:
               match:
                 description: Filters the pods inside this namespace
                 properties:
+                  container-name:
+                    description: Filter container by name
+                    type: string
                   ip:
                     description: Filter pods by IP
                     type: string

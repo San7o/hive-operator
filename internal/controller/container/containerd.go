@@ -8,7 +8,6 @@ import (
 
 	containerd "github.com/containerd/containerd"
 	containerdCio "github.com/containerd/containerd/cio"
-	corev1 "k8s.io/api/core/v1"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
@@ -61,7 +60,7 @@ func (self *Containerd) IsConnected() bool {
 	return self.isConnected
 }
 
-func (self *Containerd) GetContainerData(ctx context.Context, pod corev1.Pod, id string, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error) {
+func (self *Containerd) GetContainerData(ctx context.Context, id string, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error) {
 
 	attach := containerdCio.NewAttach()
 

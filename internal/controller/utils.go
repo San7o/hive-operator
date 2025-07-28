@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	container "github.com/San7o/hive-operator/internal/controller/container"
 )
 
 func PolicyHashID(hivePolicy hivev1alpha1.HivePolicy) (string, error) {
@@ -27,8 +28,10 @@ func PolicyHashID(hivePolicy hivev1alpha1.HivePolicy) (string, error) {
 	return shaPolicy[:63], nil
 }
 
-func NewHiveDataName(inode uint64, pod corev1.Pod) string {
-	return strconv.FormatUint(inode, 10) + "-hive-data-" + pod.Name + "-" + pod.Namespace
+func NewHiveDataName(inode uint64, containerStatus corev1.ContainerStatus) string {
+	
+	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)	
+	return strconv.FormatUint(inode, 10) + "-hive-data-" + containerID
 }
 
 func HiveDataPolicyCmp(hiveData hivev1alpha1.HiveData, hivePolicy hivev1alpha1.HivePolicy) bool {
@@ -36,12 +39,15 @@ func HiveDataPolicyCmp(hiveData hivev1alpha1.HiveData, hivePolicy hivev1alpha1.H
 	return hiveData.ObjectMeta.Labels["policy-id"] == hivePolicy.ObjectMeta.Labels["policy-id"]
 }
 
-func HiveDataPodCmp(hiveData hivev1alpha1.HiveData, pod corev1.Pod) bool {
+func HiveDataContainerCmp(hiveData hivev1alpha1.HiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
 
 	if hiveData.Annotations["pod_name"] != pod.Name {
 		return false
 	}
 	if hiveData.Annotations["namespace"] != pod.Namespace {
+		return false
+	}
+	if hiveData.Annotations["container_name"] != containerStatus.Name {
 		return false
 	}
 

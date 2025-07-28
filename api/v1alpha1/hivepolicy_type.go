@@ -33,6 +33,8 @@ type HivePolicySpec struct {
 type HivePolicyMatch struct {
 	// Filter pod by name
 	PodName string `json:"pod,omitempty"`
+	// Filter container by name
+	ContainerName string `json:"container-name,omitempty"`
 	// Filter pods per namespace
 	Namespace string `json:"namespace,omitempty"`
 	// Filter pods by IP

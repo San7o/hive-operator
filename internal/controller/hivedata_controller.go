@@ -65,6 +65,7 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			continue
 		}
 
+		// Get the HivePolicy associated with this HiveData
 		labels := client.MatchingLabels{
 			"policy-id": hiveData.Labels["policy-id"],
 		}

@@ -29,7 +29,7 @@ type Runtime interface {
 	IsConnected() bool
 	Connect(ctx context.Context) error
 	Disconnect() error
-	GetContainerData(ctx context.Context, pod corev1.Pod, id string, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error)
+	GetContainerData(ctx context.Context, id ContainerID, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error)
 }
 
 var (
@@ -42,39 +42,33 @@ func init() {
 	}
 }
 
-func GetContainerData(ctx context.Context, pod corev1.Pod, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error) {
+func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatus, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error) {
 
-	if pod.Status.Phase != corev1.PodRunning {
+	if !containerStatus.Ready {
 		return ContainerData{ShouldRequeue: true}, nil
 	}
 
-	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if !containerStatus.Ready {
-			return ContainerData{ShouldRequeue: true}, nil
-		}
+	runtimeName, containerId, err := SplitContainerRuntimeID(containerStatus.ContainerID)
+	if err != nil {
+		return ContainerData{}, err
+	}
+	supported := IsContainerRuntimeSupported(runtimeName)
+	if !supported {
+		return ContainerData{}, fmt.Errorf("GetContainerData Error: Container runtime %s is not suported.", runtimeName)
+	}
+	runtime := ContainerRuntimes[runtimeName]
 
-		runtimeName, runtimeId, err := SplitContainerRuntimeID(containerStatus.ContainerID)
-		if err != nil {
-			return ContainerData{}, err
+	if !runtime.IsConnected() {
+		if err := runtime.Connect(ctx); err != nil {
+			return ContainerData{}, fmt.Errorf("GetContainerData Error Connect: %w", err)
 		}
-		supported := IsContainerRuntimeSupported(runtimeName)
-		if !supported {
-			return ContainerData{}, fmt.Errorf("GetContainerData Error: Container runtime %s is not suported.", runtimeName)
-		}
-		runtime := ContainerRuntimes[runtimeName]
+	}
 
-		if !runtime.IsConnected() {
-			if err := runtime.Connect(ctx); err != nil {
-				return ContainerData{}, fmt.Errorf("GetContainerData Error Connect: %w", err)
-			}
-		}
-
-		containerData, err := runtime.GetContainerData(ctx, pod, runtimeId, hivePolicy)
-		if err == nil {
-			containerData.ID = containerStatus.ContainerID
-			containerData.Name = containerStatus.Name
-			return containerData, nil
-		}
+	containerData, err := runtime.GetContainerData(ctx, containerId, hivePolicy)
+	if err == nil {
+		containerData.ID = containerStatus.ContainerID
+		containerData.Name = containerStatus.Name
+		return containerData, nil
 	}
 
 	return ContainerData{}, nil

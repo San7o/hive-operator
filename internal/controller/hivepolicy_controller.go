@@ -73,6 +73,17 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// HiveData exist. In case they does not, a new HiveData is created.
 	for _, hivePolicy := range hivePolicyList.Items {
 
+		// Get HiveData resources associated with this HivePolicy
+		labels := client.MatchingLabels{
+			"policy-id": hivePolicy.Labels["policy-id"],
+		}
+		hiveDataList := &hivev1alpha1.HiveDataList{}
+		err = r.Client.List(ctx, hiveDataList, labels)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
+		}
+
+		// Get Pods that match this HivePolicy
 		labelMap := make(client.MatchingLabels)
 		labelMap = hivePolicy.Spec.Match.MatchLabels
 		matchingFields := client.MatchingFields{}
@@ -85,7 +96,6 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if len(hivePolicy.Spec.Match.IP) != 0 {
 			matchingFields["metadata.podIP"] = hivePolicy.Spec.Match.IP
 		}
-
 		podList := &corev1.PodList{}
 		err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
 		if err != nil {
@@ -94,93 +104,94 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		for _, pod := range podList.Items {
 
-			// TODO: iterate over containers
+			for _, containerStatus := range pod.Status.ContainerStatuses {
 
-			labels := client.MatchingLabels{
-				"policy-id": hivePolicy.Labels["policy-id"],
-			}
-			hiveDataList := &hivev1alpha1.HiveDataList{}
-			err = r.Client.List(ctx, hiveDataList, labels)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
-			}
-
-			found := false
-			for _, hiveData := range hiveDataList.Items {
-				if HiveDataPolicyCmp(hiveData, hivePolicy) &&
-					HiveDataPodCmp(hiveData, pod) {
-					found = true
-					break
+				// HivePolicy match check
+				if hivePolicy.Spec.Match.ContainerName != "" &&
+					hivePolicy.Spec.Match.ContainerName != containerStatus.Name {
+					continue
 				}
-			}
 
-			if found {
-				continue
-			}
+				found := false
+				for _, hiveData := range hiveDataList.Items {
+					if HiveDataContainerCmp(hiveData, pod, containerStatus) {
+						found = true
+						break
+					}
+				}
 
-			containerData, err := container.GetContainerData(ctx, pod, hivePolicy)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
-			}
-			if containerData.ShouldRequeue {
-				return ctrl.Result{Requeue: true}, nil
-			}
-			if !containerData.IsFound {
-				// DEBUG
-				//log.Info("Inode of " + hivePolicy.Spec.Path + " in matched pod " + pod.Name + " not found.")
-				continue
-			}
-			inode := containerData.Ino
+				if found {
+					continue
+				}
 
-			policyID, err := PolicyHashID(hivePolicy)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error calculating policy ID: %w", err)
-			}
+				if pod.Status.Phase != corev1.PodRunning {
+					return ctrl.Result{Requeue: true}, nil
+				}
 
-			// Here we are crating a new HiveData since an already existing
-			// one for this Pod and this HivePolicy has not been found
-			hiveData := &hivev1alpha1.HiveData{
-				ObjectMeta: metav1.ObjectMeta{
-					// Give it an unique name
-					Name:      NewHiveDataName(inode, pod),
-					Namespace: hivev1alpha1.Namespace,
-					Annotations: map[string]string{
-						"hive_policy_name": hivePolicy.Name,
-						"callback":         hivePolicy.Spec.Callback,
-						"pod_name":         pod.Name,
-						"namespace":        pod.Namespace,
-						"pod_ip":           pod.Status.PodIPs[0].IP,
-						"path":             hivePolicy.Spec.Path,
-						"container_id":     containerData.ID,
-						"container_name":   containerData.Name,
-						"node_name":        pod.Spec.NodeName,
+				containerData, err := container.GetContainerData(ctx, containerStatus, hivePolicy)
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
+				}
+				if containerData.ShouldRequeue {
+					return ctrl.Result{Requeue: true}, nil
+				}
+				if !containerData.IsFound { // Inode was not found
+					// DEBUG
+					//log.Info("Inode of " + hivePolicy.Spec.Path + " in matched pod " + pod.Name + " not found.")
+					continue
+				}
+				inode := containerData.Ino
+
+				policyID, err := PolicyHashID(hivePolicy)
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error calculating policy ID: %w", err)
+				}
+
+				// Here we are crating a new HiveData since an already existing
+				// one for this Pod and this HivePolicy has not been found
+				hiveData := &hivev1alpha1.HiveData{
+					ObjectMeta: metav1.ObjectMeta{
+						// Give it an unique name
+						Name:      NewHiveDataName(inode, containerStatus),
+						Namespace: hivev1alpha1.Namespace,
+						Annotations: map[string]string{
+							"hive_policy_name": hivePolicy.Name,
+							"callback":         hivePolicy.Spec.Callback,
+							"pod_name":         pod.Name,
+							"namespace":        pod.Namespace,
+							"pod_ip":           pod.Status.PodIPs[0].IP,
+							"path":             hivePolicy.Spec.Path,
+							"container_id":     containerData.ID,
+							"container_name":   containerData.Name,
+							"node_name":        pod.Spec.NodeName,
+						},
+						Labels: map[string]string{
+							"policy-id": policyID,
+						},
 					},
-					Labels: map[string]string{
-						"policy-id": policyID,
+					Spec: hivev1alpha1.HiveDataSpec{
+						InodeNo:  containerData.Ino,
+						KernelID: KernelID,
 					},
-				},
-				Spec: hivev1alpha1.HiveDataSpec{
-					InodeNo:  containerData.Ino,
-					KernelID: KernelID,
-				},
-			}
-			for label, value := range hivePolicy.Spec.Match.MatchLabels {
-				hiveData.Annotations["match-label-"+label] = value
-			}
+				}
+				for label, value := range hivePolicy.Spec.Match.MatchLabels {
+					hiveData.Annotations["match-label-"+label] = value
+				}
 
-			err = r.Client.Create(ctx, hiveData)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Create HiveData resource: %w", err)
-			}
-			log.Info("Created new HiveData resource.")
+				err = r.Client.Create(ctx, hiveData)
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Create HiveData resource: %w", err)
+				}
+				log.Info("Created new HiveData resource.")
 
-			orig := hivePolicy.DeepCopy()
-			hivePolicy.ObjectMeta.Labels = map[string]string{
-				"policy-id": policyID,
-			}
-			err = r.Client.Patch(ctx, &hivePolicy, client.MergeFrom(orig))
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Update PolicyID in HivePolicy: %w", err)
+				orig := hivePolicy.DeepCopy()
+				hivePolicy.ObjectMeta.Labels = map[string]string{
+					"policy-id": policyID,
+				}
+				err = r.Client.Patch(ctx, &hivePolicy, client.MergeFrom(orig))
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Update PolicyID in HivePolicy: %w", err)
+				}
 			}
 		}
 	}
