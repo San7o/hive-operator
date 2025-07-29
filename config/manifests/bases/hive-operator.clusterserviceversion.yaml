@@ -9,7 +9,7 @@ metadata:
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions: {}
-  description: Hive is an eBPF-based file access monitoring Kubernetes operator.
+  description: Hive is an eBPF-powered file access monitoring Kubernetes operator.
   displayName: hive
   icon:
   - base64data: ""

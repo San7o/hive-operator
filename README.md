@@ -1,6 +1,6 @@
 # hive-operator
 
-Hive is an eBPF-based file access monitoring Kubernetes operator.
+Hive is an eBPF-powered file access monitoring Kubernetes operator.
 
 # Basic Usage
 
