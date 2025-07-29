@@ -136,6 +136,16 @@ make deploy
 You can now proceed by reading the [USAGE](./USAGE.md) document which
 will explain how to use the operator.
 
+## Testing
+
+To run the end to end test, first make sure that you have a cluster
+running with the operator deployed, and that there is not `HivePolicy`
+present. Then, simply run:
+
+```
+make test
+```
+
 ## Useful commands
 
 When building a new docker image, you want the hive pods to update to

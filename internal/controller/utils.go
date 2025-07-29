@@ -29,8 +29,8 @@ func PolicyHashID(hivePolicy hivev1alpha1.HivePolicy) (string, error) {
 }
 
 func NewHiveDataName(inode uint64, containerStatus corev1.ContainerStatus) string {
-	
-	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)	
+
+	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)
 	return strconv.FormatUint(inode, 10) + "-hive-data-" + containerID
 }
 
