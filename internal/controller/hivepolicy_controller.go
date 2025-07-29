@@ -42,9 +42,9 @@ type HivePolicyReconciler struct {
 	Scheme         *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=hive.com,resources=hivepolicies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=hive.com,resources=hivepolicies/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=hive.com,resources=hivepolicies/finalizers,verbs=update
+// +kubebuilder:rbac:groups=hive-operator.com,resources=hivepolicies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=hive-operator.com,resources=hivepolicies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=hive-operator.com,resources=hivepolicies/finalizers,verbs=update
 
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get

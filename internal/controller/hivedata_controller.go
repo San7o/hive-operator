@@ -31,9 +31,9 @@ type HiveDataReconciler struct {
 	Scheme         *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=hive.com,resources=hivedata,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=hive.com,resources=hivedata/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=hive.com,resources=hivedata/finalizers,verbs=update
+// +kubebuilder:rbac:groups=hive-operator.com,resources=hivedata,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=hive-operator.com,resources=hivedata/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=hive-operator.com,resources=hivedata/finalizers,verbs=update
 
 func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logger.FromContext(ctx)

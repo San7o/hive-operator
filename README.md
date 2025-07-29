@@ -10,7 +10,7 @@ Specify a path to monitor by using a custom resource with the following
 format:
 
 ```yaml
-apiVersion: hive.com/v1alpha1
+apiVersion: hive-operator.com/v1alpha1
 kind: HivePolicy
 metadata:
   labels:

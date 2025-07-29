@@ -8,7 +8,7 @@ metadata:
   name: hive-operator-hivedata-editor-role
 rules:
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata/status
   verbs:

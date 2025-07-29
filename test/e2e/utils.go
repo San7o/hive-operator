@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
@@ -55,7 +55,7 @@ func CleanHivePolicies(ctx context.Context, c client.Client) error {
 }
 
 func CleanTestPods(ctx context.Context, c client.Client) error {
-	
+
 	err := c.Delete(ctx, testPod)
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("Error Delete Test Pod %s: %w", testPod.Name, err)
@@ -64,9 +64,8 @@ func CleanTestPods(ctx context.Context, c client.Client) error {
 	return nil
 }
 
-
 func CreateTestNamespace(ctx context.Context, c client.Client) error {
-	
+
 	err := c.Create(ctx, testNamespace)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return fmt.Errorf("Error Create test namespace %s: %w", testNamespace.Name, err)
@@ -75,9 +74,8 @@ func CreateTestNamespace(ctx context.Context, c client.Client) error {
 	return nil
 }
 
-
 func DeleteTestNamespace(ctx context.Context, c client.Client) error {
-	
+
 	err := c.Delete(ctx, testNamespace)
 	if err != nil {
 		return fmt.Errorf("Error Delete test namespace %s: %w", testNamespace.Name, err)

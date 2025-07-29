@@ -20,28 +20,31 @@ import (
 	"context"
 	"fmt"
 	"time"
-	
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
-	
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
 
 // Namespace for testing
 const namespaceName = "hive-test"
+
 // Namespace used by the operator
 const operatorNamespace = "hive-operator-system"
+
 // Maximum time for the operator to reconcile ruccessfully
 const reconcileTimeout = 1 * time.Second
+
 // Maximum time spent waiting for creation / deletion of pods
 const timeout = 30 * time.Second
 
 var (
-	Client client.Client
-	ctx    context.Context
+	Client          client.Client
+	ctx             context.Context
 	InitialHiveData int
 )
 
@@ -51,29 +54,29 @@ var testNamespace = &corev1.Namespace{
 	},
 }
 
-var	hiveTestPolicy = &hivev1alpha1.HivePolicy{
+var hiveTestPolicy = &hivev1alpha1.HivePolicy{
 	ObjectMeta: metav1.ObjectMeta{
-		Name: "hive-policy-test1",
+		Name:      "hive-policy-test1",
 		Namespace: namespaceName,
 	},
 	Spec: hivev1alpha1.HivePolicySpec{
-		Path: "/test",
+		Path:   "/test",
 		Create: true,
 		Match: hivev1alpha1.HivePolicyMatch{
-			PodName: "test-pod",
+			PodName:   "test-pod",
 			Namespace: "hive-test",
 		},
 	},
 }
-		
-var	testPod = &corev1.Pod{
+
+var testPod = &corev1.Pod{
 	ObjectMeta: metav1.ObjectMeta{
-		Name: "test-pod",
+		Name:      "test-pod",
 		Namespace: namespaceName,
 	},
 	Spec: corev1.PodSpec{
 		Containers: []corev1.Container{{
-			Name: "test-pod",
+			Name:  "test-pod",
 			Image: "nginx:latest",
 			Ports: []corev1.ContainerPort{{
 				ContainerPort: 80,
@@ -108,14 +111,14 @@ var _ = Describe("Hive operator", Ordered, func() {
 	})
 
 	Context("Operator", func() {
-		
+
 		It("Should not have any HivePolicy", func() {
 
 			By("Getting HivePolicy")
 			var hivePolicyList hivev1alpha1.HivePolicyList
 			err := Client.List(ctx, &hivePolicyList, client.InNamespace(namespaceName))
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			if len(hivePolicyList.Items) != 0 {
 				Expect(fmt.Errorf("HivePolicy present")).NotTo(HaveOccurred())
 			}
@@ -126,7 +129,7 @@ var _ = Describe("Hive operator", Ordered, func() {
 			var hiveDataList hivev1alpha1.HiveDataList
 			err := Client.List(ctx, &hiveDataList, client.InNamespace(operatorNamespace))
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			if len(hiveDataList.Items) != 0 {
 				Expect(fmt.Errorf("HiveData present")).NotTo(HaveOccurred())
 			}
@@ -144,7 +147,7 @@ var _ = Describe("Hive operator", Ordered, func() {
 			var hivePolicyList hivev1alpha1.HivePolicyList
 			err := Client.List(ctx, &hivePolicyList, client.InNamespace(namespaceName))
 			Expect(err).NotTo(HaveOccurred())
-				
+
 			if len(hivePolicyList.Items) != 1 {
 				Expect(fmt.Errorf("HivePolicy not present")).NotTo(HaveOccurred())
 			}
@@ -170,20 +173,20 @@ var _ = Describe("Hive operator", Ordered, func() {
 			key := client.ObjectKeyFromObject(testPod)
 			deadline := time.Now().Add(timeout)
 			for time.Now().Before(deadline) {
-        var p corev1.Pod
-        if err := Client.Get(ctx, key, &p); err != nil {
+				var p corev1.Pod
+				if err := Client.Get(ctx, key, &p); err != nil {
 					Expect(fmt.Errorf("Get Pod Pod: %w", err)).NotTo(HaveOccurred())
-        }
+				}
 
-        if p.Status.Phase == corev1.PodRunning {
+				if p.Status.Phase == corev1.PodRunning {
 					break
-        }
+				}
 
-        if p.Status.Phase == corev1.PodFailed || p.Status.Phase == corev1.PodSucceeded {
+				if p.Status.Phase == corev1.PodFailed || p.Status.Phase == corev1.PodSucceeded {
 					Expect(fmt.Errorf("Pod Terminated: %s", p.Status.Phase)).NotTo(HaveOccurred())
-        }
+				}
 
-        time.Sleep(1 * time.Second)
+				time.Sleep(1 * time.Second)
 			}
 
 			// Give the operator some time to react

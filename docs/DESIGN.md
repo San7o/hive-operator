@@ -298,7 +298,7 @@ between a policy and a HiveData is *one to many*.
 A HivePolicy resource looks like this:
 
 ```yaml
-apiVersion: hive.com/v1alpha1
+apiVersion: hive-operator.com/v1alpha1
 kind: HivePolicy
 metadata:
   labels:
@@ -443,7 +443,7 @@ program to filter certain inodes.
 
 The schema of the resource looks like the following:
 ```bash
-apiVersion: hive.com/v1alpha1
+apiVersion: hive-operator.com/v1alpha1
 kind: HiveData
 metadata:
   annotations:

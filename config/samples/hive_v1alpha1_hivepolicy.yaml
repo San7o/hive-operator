@@ -1,4 +1,4 @@
-apiVersion: hive.com/v1alpha1
+apiVersion: hive-operator.com/v1alpha1
 kind: HivePolicy
 metadata:
   labels:

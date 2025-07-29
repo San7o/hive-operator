@@ -38,5 +38,5 @@ spec:
     name: Giovanni
   maturity: alpha
   provider:
-    name: hive.com
+    name: hive-operator.com
   version: 0.0.0

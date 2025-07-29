@@ -14,7 +14,7 @@ An example HivePolicy is located in [config/samples/hive_v1alpha1_hivepolicy.yam
 More examples can be found in the same directory.
 
 ```yaml
-apiVersion: hive.com/v1alpha1
+apiVersion: hive-operator.com/v1alpha1
 kind: HivePolicy
 metadata:
   labels:

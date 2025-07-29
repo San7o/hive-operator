@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: hivepolicies.hive.com
+  name: hivepolicies.hive-operator.com
 spec:
-  group: hive.com
+  group: hive-operator.com
   names:
     kind: HivePolicy
     listKind: HivePolicyList

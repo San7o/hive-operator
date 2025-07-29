@@ -5,7 +5,7 @@ metadata:
     alm-examples: |-
       [
         {
-          "apiVersion": "hive.com/v1alpha1",
+          "apiVersion": "hive-operator.com/v1alpha1",
           "kind": "HiveData",
           "metadata": {
             "annotations": {
@@ -33,7 +33,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "hive.com/v1alpha1",
+          "apiVersion": "hive-operator.com/v1alpha1",
           "kind": "HivePolicy",
           "metadata": {
             "labels": {
@@ -56,7 +56,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "hive.com/v1alpha1",
+          "apiVersion": "hive-operator.com/v1alpha1",
           "kind": "HivePolicy",
           "metadata": {
             "labels": {
@@ -73,7 +73,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "hive.com/v1alpha1",
+          "apiVersion": "hive-operator.com/v1alpha1",
           "kind": "HivePolicy",
           "metadata": {
             "labels": {
@@ -92,7 +92,7 @@ metadata:
           }
         },
         {
-          "apiVersion": "hive.com/v1alpha1",
+          "apiVersion": "hive-operator.com/v1alpha1",
           "kind": "HivePolicy",
           "metadata": {
             "labels": {
@@ -119,10 +119,10 @@ spec:
   customresourcedefinitions:
     owned:
     - kind: HiveData
-      name: hivedata.hive.com
+      name: hivedata.hive-operator.com
       version: v1alpha1
     - kind: HivePolicy
-      name: hivepolicies.hive.com
+      name: hivepolicies.hive-operator.com
       version: v1alpha1
   description: Hive is an eBPF-based file access monitoring Kubernetes operator.
   displayName: hive
@@ -153,5 +153,5 @@ spec:
     name: Giovanni
   maturity: alpha
   provider:
-    name: hive.com
+    name: hive-operator.com
   version: 0.0.1

@@ -12,9 +12,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: hivedata.hive.com
+  name: hivedata.hive-operator.com
 spec:
-  group: hive.com
+  group: hive-operator.com
   names:
     kind: HiveData
     listKind: HiveDataList
@@ -65,9 +65,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: hivepolicies.hive.com
+  name: hivepolicies.hive-operator.com
 spec:
-  group: hive.com
+  group: hive-operator.com
   names:
     kind: HivePolicy
     listKind: HivePolicyList
@@ -107,10 +107,13 @@ spec:
               match:
                 description: Filters the pods inside this namespace
                 properties:
+                  container-name:
+                    description: Filter container by name
+                    type: string
                   ip:
                     description: Filter pods by IP
                     type: string
-                  labels:
+                  matchLabels:
                     additionalProperties:
                       type: string
                     description: Filter pods per label
@@ -197,7 +200,7 @@ metadata:
   name: hive-operator-hive-editor-role
 rules:
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hives
   verbs:
@@ -209,7 +212,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hives/status
   verbs:
@@ -224,7 +227,7 @@ metadata:
   name: hive-operator-hive-viewer-role
 rules:
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hives
   verbs:
@@ -232,7 +235,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hives/status
   verbs:
@@ -247,7 +250,7 @@ metadata:
   name: hive-operator-hivedata-editor-role
 rules:
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata
   verbs:
@@ -259,7 +262,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata/status
   verbs:
@@ -274,7 +277,7 @@ metadata:
   name: hive-operator-hivedata-viewer-role
 rules:
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata
   verbs:
@@ -282,7 +285,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata/status
   verbs:
@@ -317,7 +320,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata
   - hivepolicies
@@ -330,14 +333,14 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata/finalizers
   - hivepolicies/finalizers
   verbs:
   - update
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hivedata/status
   - hivepolicies/status
