@@ -15,17 +15,17 @@ make commands:
 - `test-run-ebpf`: run the ebpf-local program
 - `test-ebpf`: build and run the ebpf-local program
 
-You often need some kind of server to send network traffic to. You can
-use the `callback/` server which will echo the requests they receive
-and is accessible via `http://localhost:8090/callback`.
+If you want to receive all the alerts in a single place, you can use
+setup a callback service from `callback/` by running `make docker` and
+`make deploy`. Then, you can configure your policies to send a
+callback to
+`http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest`.
 
-To run both the eBPF program and the callback service, you can create
-a tmux session with:
+For convenience, you can create a tmux session with:
 
 ```
 make test-tmux
 ```
 
-This will create a session with three panes split horizontally: one
-with the eBPF program, one with the callback server, and one with a
-bash shell.
+This will create a session with two panes split horizontally: one with
+the eBPF program and one with a bash shell.
