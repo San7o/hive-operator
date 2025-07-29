@@ -2,12 +2,10 @@
 
 Hive is an eBPF-based file access monitoring Kubernetes operator.
 
-Currently, only pods using containerd runtime are supported.
+# Basic Usage
 
-# Usage
-
-Specify a path to monitor by using a custom resource with the following
-format:
+You can specify a path to monitor and in which containers by
+specifying an `HivePolicy`, for example:
 
 ```yaml
 apiVersion: hive-operator.com/v1alpha1
@@ -29,10 +27,13 @@ spec:
       security-level: high
 ```
 
-You can select match conditions to filter which pods to monitor for a
-specific policy. All the match fields are optional. If none are
-specified, all pods are selected. The operator will log accesses to
-standard output with structured information, such as:
+The conditions under the `match` field will be matched via a logical
+AND. All the match fields are optional; If none are specified, then
+all pods are selected.
+
+When a file get accessed, the operator will generate an `HiveAlert`
+and will print the information to standard output in json format. The
+following is an example alert:
 
 ```json
 {
@@ -62,8 +63,8 @@ standard output with structured information, such as:
 }
 ```
 
-If you specify a `callback` in the `HivePolicy`, the data will be sent
-as json to the URL of the callback through an HTTP pull requst.
+If you specify a `callback` in the `HivePolicy`, then the data will be
+sent to the URL of the callback through an HTTP POST request.
 
 Please, read the [USAGE](./docs/USAGE.md) document to learn how to
 use the operator in more detail.
@@ -83,4 +84,9 @@ operator. To run a local cluster, take a look at
 
 The [status](./docs/status.org) contains information about the current
 status of development and future work.
-	
+
+## Current Limitations
+
+Currently the only container runtime supported is containerd. The code
+already uses an abstraction over container runtimes to easily
+integrate more runtimes.
