@@ -27,6 +27,7 @@ spec:
       labels:
         control-plane: manager
     spec:
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsNonRoot: true
       containers:
@@ -36,7 +37,7 @@ spec:
           - --hive-policy-health-probe-bind-address=:8081
           - --hive-data-health-probe-bind-address=:8082
           - --hive-pod-health-probe-bind-address=:8083
-        image: giovann103/hive-k8s-operator:latest
+        image: hive-k8s-operator
         name: hive-k8s-operator
         securityContext:
           runAsNonRoot: false

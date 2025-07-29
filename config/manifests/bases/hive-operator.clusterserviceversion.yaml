@@ -1,0 +1,42 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: hive-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: {}
+  description: Hive is an eBPF-based file access monitoring Kubernetes operator.
+  displayName: hive
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - ebpf
+  - monitoring
+  links:
+  - name: Hive Operator
+    url: https://hive-operator.domain
+  maintainers:
+  - email: santigio2003@gmail.com
+    name: Giovanni
+  maturity: alpha
+  provider:
+    name: hive-operator.com
+  version: 0.0.0

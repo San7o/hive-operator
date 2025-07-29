@@ -28,6 +28,37 @@ make create-cluster-local
 You can delete the cluster with `delete-cluster.sh` or with
 `make delete-cluster-local` when you do not want It anymore.
 
+## Dev Environments
+
+For convenience, this project uses different environments to manage
+building and deploying. By default, there are two different
+environments: `local` and `remote`.
+
+You can easily add a custom environment by creating a file called
+`.env-<ENV-NAME>` where `<ENV-NAME>` is a name of your choice. This
+file will be included in the Makefile before running any command, so
+you can change the variables used by the Makefile from the env file
+without changing the Makefile.
+
+For example, the `IMG` variable tells the Makefile where to push
+images and tells the operator where to pull them. You can add an entry
+to your custom environment .env-custom like so:
+
+```
+IMG=registry/my-bautiful-name:latest
+```
+
+To select which environment to use, append `ENV=<ENV-NAME>` after your
+make commands, for example:
+
+```
+make deploy ENV=custom
+```
+
+The default environment is `local`, in this case you can omit the `ENV`
+from the make command to use the local environment. You can use
+environments on all make commands.
+
 ## Generate files
 
 The operator uses generators to create various config files such as
@@ -55,6 +86,13 @@ dependencies in your system:
 - Linux kernel headers
 - a recent go compiler
 
+On Ubuntu, you can run the following command to install the required
+dependencies:
+
+```bash
+apt-get install make clang llvm libbpf-dev golang linux-headers-$(uname -r)
+```
+
 Once you have the dependencies, run:
 
 ```bash
@@ -64,38 +102,32 @@ make generate-ebpf
 ## Build the docker contianer
 
 Note that you may need sudo priviledges for the following commands
-based on your system.
+depending on your permissions.
 
 To build everything inside a docker container, first **make sure that
-generated files are updated**, then build the docker image with:
+generated files are updated** (section above), then build the docker
+image with:
 
 ```bash
-make docker-build-local
+make docker-build
 ```
 
 You can push it to a test local docker repository if you generated
 the cluster with `registry-cluster.sh`:
 
 ```bash
-make docker-push-local
+make docker-push
 ```
 
 To do both of the above in a single command, run:
 
 ```bash
-make docker-local
+make docker
 ```
 
 ## Deploy the operator
 
-Finally, you can deploy the operator to the test cluster with:
-
-```bash
-make deploy-local
-```
-
-If, instead of loading local docker images, you want to fetch the
-images from docker hub, you can run:
+Finally, you can deploy the operator to the cluster with:
 
 ```bash
 make deploy
@@ -103,6 +135,16 @@ make deploy
 
 You can now proceed by reading the [USAGE](./USAGE.md) document which
 will explain how to use the operator.
+
+## Testing
+
+To run the end to end test, first make sure that you have a cluster
+running with the operator deployed, and that there is not `HivePolicy`
+present. Then, simply run:
+
+```
+make test
+```
 
 ## Useful commands
 
@@ -112,11 +154,11 @@ version of the image in the local test docker repository, to do so you
 just need to kill them. You can use the following command:
 
 ```bash
-make kill-pods-local
+make kill-pods
 ```
 
-This will also remove all the HiveData resources so that you start
-with a clean configuration, as if you just applied the HivePolicies.
+This will also remove all the` HiveData` resources so that you start
+with a clean configuration, as if you just applied the `HivePolicies`.
 
 To completely remove the operator from the cluster, run:
 

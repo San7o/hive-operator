@@ -1,5 +1,9 @@
 ## Append samples of your project ##
 resources:
-- hive_v1alpha1_hive.yaml
+- hive_v1alpha1_hivepolicy2.yaml
+- hive_v1alpha1_hivepolicy3.yaml
+- hive_v1alpha1_hivepolicy4.yaml
+- hive_v1alpha1_hivepolicy.yaml 
 - hive_v1alpha1_hivedata.yaml
+
 # +kubebuilder:scaffold:manifestskustomizesamples

@@ -36,6 +36,8 @@ import (
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 	"github.com/San7o/hive-operator/internal/controller"
 	hive "github.com/San7o/hive-operator/internal/controller"
+	hivecontainer "github.com/San7o/hive-operator/internal/controller/container"
+	hivebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -225,14 +227,14 @@ func main() {
 
 	go func() {
 		if err := hivePolicyMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "problem running HivePolicy manager")
+			setupLog.Error(err, "Error running HivePolicy manager")
 			os.Exit(1)
 		}
 	}()
 
 	go func() {
 		if err := hivePodMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "problem running HivePod manager")
+			setupLog.Error(err, "Error running HivePod manager")
 			os.Exit(1)
 		}
 	}()
@@ -242,23 +244,22 @@ func main() {
 	// Unload the eBPF program when leadership is lost
 	go func() {
 		<-hiveDataMgrCtx.Done() // Wait until leadership is lost
-		setupLog.Info("Hive manager lost leadership!")
+		setupLog.Info("HiveData manager lost leadership")
 
-		hive.UnloadBpf(context.Background())
+		hivebpf.UnloadEbpf(context.Background())
 	}()
 
 	if err := hiveDataMgr.Start(hiveDataMgrCtx); err != nil {
-		setupLog.Error(err, "problem running HiveData manager")
+		setupLog.Error(err, "Error running HiveData manager")
 		os.Exit(1)
 	}
 
 	// Cleanup
-	if hive.ContainerdClient != nil {
-		hive.ContainerdClient.Close()
+	if err := hivecontainer.CloseConnections(); err != nil {
+		setupLog.Error(err, "Error closing connections")
 	}
-	if hive.RingbuffReader != nil {
-		hive.RingbuffReader.Close()
+	if err := hivebpf.UnloadEbpf(context.Background()); err != nil {
+		setupLog.Error(err, "Error unloading eBPF programs")
 	}
-	hive.Objs.Close()
-	hive.Kprobe.Close()
+	return
 }

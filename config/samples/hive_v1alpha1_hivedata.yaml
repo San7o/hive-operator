@@ -1,19 +1,23 @@
-apiVersion: hive.com/v1alpha1
+apiVersion: hive-operator.com/v1alpha1
 kind: HiveData
 metadata:
-  labels:
-    app.kubernetes.io/name: hive-operator
-    app.kubernetes.io/managed-by: kustomize
-  name: hive-sample-data
-spec:
-  dev-id: 87
-  inode-no: 2865504
-  kernel-id: dc4250f6-f06e-4ea3-86eb-f7a2d8ee01de
-  path: /secret.txt
-  match:
-    ip: 10.244.1.2
+  annotations:
+    callback: ""
+    container_id: containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e
+    container_name: nginx
+    hive_policy_name: hive-sample-policy
+    match-label-security-level: high
     namespace: default
-    pod: nginx-pod
-    label:
-    - key: security-level
-      value: high
+    path: /secret.txt
+    pod_ip: 10.244.2.2
+    pod_name: nginx-pod
+    node_hostname: nginx-pod
+  creationTimestamp: "2025-07-25T08:06:12Z"
+  generation: 1
+  name: hive-data-nginx-pod-default-13667586
+  namespace: hive-operator-system
+  resourceVersion: "23395"
+  uid: 788bcb67-a9de-480d-a179-e40234116459
+spec:
+  inode-no: 13667586
+  kernel-id: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71

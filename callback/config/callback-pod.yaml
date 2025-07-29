@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: callback-deployment
+  namespace: hive-operator-system
+  labels:
+    app.kubernetes.io/name: callback-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: callback-pod
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: callback-pod
+    spec:
+      containers:
+      - name: callback-pod
+        image: localhost:5001/callback:latest
+        ports:
+        - containerPort: 8090
+          name: http-web-svc

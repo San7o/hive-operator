@@ -28,5 +28,5 @@ import (
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
 	_, _ = fmt.Fprintf(GinkgoWriter, "Starting hive-operator suite\n")
-	RunSpecs(t, "e2e suite")
+	RunSpecs(t, "Hive Operator E2E Suite")
 }

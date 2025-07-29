@@ -14,6 +14,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -47,14 +48,12 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 	hiveDataList := &hivev1alpha1.HiveDataList{}
 	err := r.Client.List(ctx, hiveDataList)
 	if err != nil {
-		log.Error(err, "Failed to get Hive Data resource")
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
 	}
 	podList := &corev1.PodList{}
 	err = r.Client.List(ctx, podList)
 	if err != nil {
-		log.Error(err, "Failed to get Pod List resource")
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get PodList resource: %w", err)
 	}
 
 	for _, hiveData := range hiveDataList.Items {
@@ -65,8 +64,8 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		}
 		found := false
 		for _, pod := range podList.Items {
-			if hiveData.Spec.Match.PodName == pod.Name &&
-				hiveData.Spec.Match.Namespace == pod.Namespace &&
+			if hiveData.Annotations["pod_name"] == pod.Name &&
+				hiveData.Annotations["namespace"] == pod.Namespace &&
 				// If the pod has terminated or has failed, we want to
 				// remove the HiveData so that it will be regenerated
 				// later duing the reconciliation of HivePolicy. This
@@ -81,8 +80,7 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 
 		if !found {
 			if err := r.Client.Delete(ctx, &hiveData); err != nil {
-				log.Error(err, "Error deleting HiveData after pod event")
-				return reconcile.Result{}, nil
+				return reconcile.Result{}, fmt.Errorf("Reconcile Error Deleting HiveData after pod event: %w", err)
 			}
 		}
 	}
@@ -93,8 +91,7 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 	hivePolicyList := &hivev1alpha1.HivePolicyList{}
 	err = r.Client.List(ctx, hivePolicyList)
 	if err != nil {
-		log.Error(err, "Failed to get Hive Policy resource")
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get Hive Policy resource: %w", err)
 	}
 	if len(hivePolicyList.Items) != 0 {
 		orig := hivePolicyList.Items[0].DeepCopy()
@@ -103,7 +100,7 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		}
 		hivePolicyList.Items[0].Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
 		if err = r.Patch(ctx, &hivePolicyList.Items[0], client.MergeFrom(orig)); err != nil {
-			return reconcile.Result{}, nil
+			return reconcile.Result{}, fmt.Errorf("Reconcile Error Patch: %w", err)
 		}
 	}
 	return reconcile.Result{}, nil

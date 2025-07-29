@@ -8,7 +8,7 @@ metadata:
   name: hive-viewer-role
 rules:
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hives
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - hive.com
+  - hive-operator.com
   resources:
   - hives/status
   verbs:

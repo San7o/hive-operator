@@ -1,0 +1,515 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-k8s-operator
+    control-plane: manager
+  name: hive-operator-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  name: hivedata.hive-operator.com
+spec:
+  group: hive-operator.com
+  names:
+    kind: HiveData
+    listKind: HiveDataList
+    plural: hivedata
+    singular: hivedata
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: HiveDataSpec defines the desired state of HiveData
+            properties:
+              inode-no:
+                description: The inode number of the file
+                format: int64
+                type: integer
+              kernel-id:
+                description: A string to uniquely identify a running kernel
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  name: hivepolicies.hive-operator.com
+spec:
+  group: hive-operator.com
+  names:
+    kind: HivePolicy
+    listKind: HivePolicyList
+    plural: hivepolicies
+    singular: hivepolicy
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              callback:
+                description: Send an HTTP POST request to this endpoint if specified
+                type: string
+              create:
+                description: Whether to create the file or not if It cannot be found
+                type: boolean
+              match:
+                description: Filters the pods inside this namespace
+                properties:
+                  container-name:
+                    description: Filter container by name
+                    type: string
+                  ip:
+                    description: Filter pods by IP
+                    type: string
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: Filter pods per label
+                    type: object
+                  namespace:
+                    description: Filter pods per namespace
+                    type: string
+                  pod:
+                    description: Filter pod by name
+                    type: string
+                type: object
+              mode:
+                description: |-
+                  The content of the file if It was created. This field
+                  is used only if Create is set to true
+                format: int32
+                type: integer
+              path:
+                description: Specifies which path to check
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-manager
+  namespace: hive-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-leader-election-role
+  namespace: hive-operator-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-hive-editor-role
+rules:
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hives
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hives/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-hive-viewer-role
+rules:
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hives
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hives/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-hivedata-editor-role
+rules:
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-hivedata-viewer-role
+rules:
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hive-operator-manager-role
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - deployments/status
+  - pods/status
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata
+  - hivepolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata/finalizers
+  - hivepolicies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - hive-operator.com
+  resources:
+  - hivedata/status
+  - hivepolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hive-operator-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hive-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-leader-election-rolebinding
+  namespace: hive-operator-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: hive-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: hive-operator-manager
+  namespace: hive-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+  name: hive-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hive-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: hive-operator-manager
+  namespace: hive-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hive-operator-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hive-operator-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: hive-operator-manager
+  namespace: hive-operator-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+    control-plane: manager
+  name: hive-operator-manager-metrics-service
+  namespace: hive-operator-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    control-plane: manager
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: hive-operator
+    control-plane: manager
+  name: hive-operator-manager
+  namespace: hive-operator-system
+spec:
+  selector:
+    matchLabels:
+      control-plane: manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: manager
+    spec:
+      containers:
+      - args:
+        - --hive-policy-health-probe-bind-address=:8081
+        - --hive-data-health-probe-bind-address=:8082
+        - --hive-pod-health-probe-bind-address=:8083
+        command:
+        - /manager
+        image: giovann103/hive-k8s-operator:latest
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: hive-k8s-operator
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          privileged: true
+          runAsNonRoot: false
+        volumeMounts:
+        - mountPath: /run/containerd/containerd.sock
+          name: containerd-sock
+          readOnly: false
+        - mountPath: /host/proc
+          name: proc
+          readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: hive-operator-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
+        name: containerd-sock
+      - hostPath:
+          path: /proc
+          type: Directory
+        name: proc
