@@ -29,10 +29,10 @@ spec:
 
 The conditions under the `match` field will be matched via a logical
 AND. All the match fields are optional; If none are specified, then
-all pods are selected.
+all containers are selected.
 
-When a file get accessed, the operator will generate an `HiveAlert`
-and will print the information to standard output in json format. The
+When a file gets accessed, the operator will generate an `HiveAlert`
+and print the information to standard output in json format. The
 following is an example alert:
 
 ```json
