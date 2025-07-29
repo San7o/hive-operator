@@ -2,8 +2,8 @@
 
 In this document we discuss how to test the eBPF program. We assume
 that you have the required dependencies, if not please check the
-[setup](./SETUP.md) document so that you are able to compile the
-program.
+[DEVELOPMENT](./DEVELOPMENT.md) document so that you are able to
+compile the program.
 
 The code of the eBPF program lives in the `ebpf/` directory of the
 project. A go loader is implemented in `test/ebpf-local/` which will
