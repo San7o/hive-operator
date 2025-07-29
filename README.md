@@ -5,7 +5,7 @@ Hive is an eBPF-powered file access monitoring Kubernetes operator.
 # Basic Usage
 
 You can specify a path to monitor and in which containers by
-specifying an `HivePolicy`, for example:
+creating an `HivePolicy`. The following is an example policy:
 
 ```yaml
 apiVersion: hive-operator.com/v1alpha1
