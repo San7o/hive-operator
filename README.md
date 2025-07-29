@@ -79,7 +79,7 @@ and get started with Hive's
 development. [EBPF-TESTING](./docs/EBPF-TESTING.md) has instructions
 to build and test the eBPF program without running the kubernetes
 operator. To run a local cluster, take a look at
-[k8s-labs](./k8s-labs/README.md) or simply use the script
+[k8s-lab](./k8s-lab/README.md) or simply use the script
 [registry-cluster.sh](./hack/registry-cluster.sh).
 
 The [status](./docs/status.org) contains information about the current
