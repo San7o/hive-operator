@@ -38,7 +38,9 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "hive-policy-test1",
 			Namespace: testNamespaceName,
+			Finalizers: []string{hivev1alpha1.HivePolicyFinalizerName},
 		},
+		
 		Spec: hivev1alpha1.HivePolicySpec{
 			Path:   "/test",
 			Create: true,
@@ -64,7 +66,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 			}},
 		},
 	}
-	
+
 	BeforeAll(func() {
 		err = CleanHivePolicies(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
@@ -198,7 +200,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 			}
 		})
 		It("Should delete Hivedata after deletion of HivePolicy", func() {
-			
+
 			By("Deleting the HivePolicy")
 			err = Client.Delete(ctx, hiveTestPolicy)
 			Expect(err).NotTo(HaveOccurred())

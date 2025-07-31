@@ -306,6 +306,8 @@ kind: HivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: hive-operator
+  finalizers:
+    - hive-operator.com/finalizer
   name: hive-sample-policy
   namespace: hive-operator-system
 spec:

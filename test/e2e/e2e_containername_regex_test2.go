@@ -28,6 +28,7 @@ import (
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
+
 var _ = Describe("ContainerName Regex 2", Ordered, func() {
 	var err error
 
@@ -35,13 +36,14 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "hive-policy-test-regex2",
 			Namespace: testNamespaceName,
+			Finalizers: []string{hivev1alpha1.HivePolicyFinalizerName},
 		},
 		Spec: hivev1alpha1.HivePolicySpec{
 			Path:   "/regex2",
 			Create: true,
 			Match: hivev1alpha1.HivePolicyMatch{
-				PodName:   "test-pod",
-				Namespace: "hive-test",
+				PodName:       "test-pod",
+				Namespace:     "hive-test",
 				ContainerName: "test-nope.*",
 			},
 		},
@@ -62,7 +64,7 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 			}},
 		},
 	}
-	
+
 	BeforeAll(func() {
 		err = CleanHivePolicies(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
@@ -169,7 +171,7 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 			}
 		})
 		It("Should delete hivePolicy after deletion of HivePolicy", func() {
-			
+
 			By("Deleting the HivePolicy")
 			err = Client.Delete(ctx, hiveTestPolicy)
 			Expect(err).NotTo(HaveOccurred())

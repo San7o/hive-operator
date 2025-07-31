@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	corev1 "k8s.io/api/core/v1"
-	
+
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
 

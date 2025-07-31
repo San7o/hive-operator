@@ -16,6 +16,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	HivePolicyFinalizerName = "hive-operator.com/finalizer"
+)
+
 type HivePolicySpec struct {
 	// Specifies which path to check
 	Path string `json:"path,omitempty"`

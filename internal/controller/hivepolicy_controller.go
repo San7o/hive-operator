@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
@@ -29,7 +30,7 @@ import (
 )
 
 const (
-	KernelIDPath = "/proc/sys/kernel/random/boot_id"
+	KernelIDPath            = "/proc/sys/kernel/random/boot_id"
 )
 
 var (
@@ -60,6 +61,9 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	log := log.FromContext(ctx)
 	var err error = nil
+	// deleted is set to true when an HivePolicy is in deletion. This is
+	// used to trigger a reconcile on HiveData
+	var deleted bool = false
 
 	log.Info("HivePolicy reconcile triggered.")
 
@@ -72,6 +76,18 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// Loop over the HivePolicies and check if all the corresponsing
 	// HiveData exist. In case they does not, a new HiveData is created.
 	for _, hivePolicy := range hivePolicyList.Items {
+
+		// Check if this policy is being deleted
+		if !hivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
+			if controllerutil.ContainsFinalizer(&hivePolicy, hivev1alpha1.HivePolicyFinalizerName) {
+				deleted = true
+				controllerutil.RemoveFinalizer(&hivePolicy, hivev1alpha1.HivePolicyFinalizerName)
+				if err := r.Update(ctx, &hivePolicy); err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Update finalizer: %w", err)
+				}
+			}
+			continue // skip
+		}
 
 		// Get HiveData resources associated with this HivePolicy
 		labels := client.MatchingLabels{
@@ -198,10 +214,12 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	// TODO: remove this and use finalizers
+	if !deleted {
+		return ctrl.Result{}, nil
+	}
+
 	// Force a reconciliation for HiveData, which will delete any
-	// HiveData that does not belong anymore to a HivePolicy. This is
-	// necessary to handle deletion of HivePolicies.
+	// HiveData that does not belong anymore to a HivePolicy.
 	// We trigger a reconciliation by updating an annotation with the
 	// current time.
 	hiveDataList := &hivev1alpha1.HiveDataList{}
