@@ -14,20 +14,21 @@ metadata:
   labels:
     app.kubernetes.io/name: hive-operator
   finalizers:
-  - hive-operator.com/finalizer
+    - hive-operator.com/finalizer
   name: hive-sample-policy
   namespace: hive-operator-system
 spec:
-  path: /secret.txt
-  create: true
-  mode: 444
-  callback: "http://my-callback.com/alerts"
-  match:
-    pod: nginx-pod
-    namespace: default
-    container-name: ".*"
-    matchLabels:
-      security-level: high
+  traps:
+    - path: /secret.txt
+      create: true
+      mode: 444
+      callback: "http://my-callback.com/alerts"
+      match:
+        pod: nginx-pod
+        namespace: default
+        container-name: ".*"
+        matchLabels:
+          security-level: high
 ```
 
 The conditions under the `match` field will be matched via a logical

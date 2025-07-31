@@ -8,7 +8,8 @@ metadata:
   name: hive-sample-policy3
   namespace: hive-operator-system
 spec:
-  path: /etc/shadow
-  match:
-    matchLabels:
-      security-level: high 
+  traps:
+    - path: /etc/shadow
+      match:
+        matchLabels:
+          security-level: high 

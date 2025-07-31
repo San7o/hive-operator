@@ -30,7 +30,8 @@ import (
 )
 
 const (
-	KernelIDPath            = "/proc/sys/kernel/random/boot_id"
+	KernelIDPath = "/proc/sys/kernel/random/boot_id"
+	TrapIdLabel  = "trap-id"
 )
 
 var (
@@ -89,126 +90,118 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			continue // skip
 		}
 
-		// Get HiveData resources associated with this HivePolicy
-		labels := client.MatchingLabels{
-			"policy-id": hivePolicy.Labels["policy-id"],
-		}
-		hiveDataList := &hivev1alpha1.HiveDataList{}
-		err = r.Client.List(ctx, hiveDataList, labels)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
-		}
+		for _, hiveTrap := range hivePolicy.Spec.Traps {
 
-		// Get Pods that match this HivePolicy
-		labelMap := make(client.MatchingLabels)
-		labelMap = hivePolicy.Spec.Match.MatchLabels
-		matchingFields := client.MatchingFields{}
-		if len(hivePolicy.Spec.Match.PodName) != 0 {
-			matchingFields["metadata.name"] = hivePolicy.Spec.Match.PodName
-		}
-		if len(hivePolicy.Spec.Match.Namespace) != 0 {
-			matchingFields["metadata.namespace"] = hivePolicy.Spec.Match.Namespace
-		}
-		if len(hivePolicy.Spec.Match.IP) != 0 {
-			matchingFields["metadata.podIP"] = hivePolicy.Spec.Match.IP
-		}
-		podList := &corev1.PodList{}
-		err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to list pods: %w", err)
-		}
+			// Get HiveData resources associated with this Trap
+			trapID, err := HiveTrapHashID(hiveTrap)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Generate TrapID: %w", err)
+			}
+			labels := client.MatchingLabels{
+				TrapIdLabel: trapID,
+			}
+			hiveDataList := &hivev1alpha1.HiveDataList{}
+			err = r.Client.List(ctx, hiveDataList, labels)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
+			}
 
-		for _, pod := range podList.Items {
+			// Get Pods that match this HiveTrap
+			labelMap := make(client.MatchingLabels)
+			labelMap = hiveTrap.Match.MatchLabels
+			matchingFields := client.MatchingFields{}
+			if len(hiveTrap.Match.PodName) != 0 {
+				matchingFields["metadata.name"] = hiveTrap.Match.PodName
+			}
+			if len(hiveTrap.Match.Namespace) != 0 {
+				matchingFields["metadata.namespace"] = hiveTrap.Match.Namespace
+			}
+			if len(hiveTrap.Match.IP) != 0 {
+				matchingFields["metadata.podIP"] = hiveTrap.Match.IP
+			}
+			podList := &corev1.PodList{}
+			err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to list pods: %w", err)
+			}
 
-			for _, containerStatus := range pod.Status.ContainerStatuses {
+			for _, pod := range podList.Items {
 
-				match, err := RegexMatch(hivePolicy.Spec.Match.ContainerName, containerStatus.Name)
-				if err != nil {
-					return ctrl.Result{}, err
-				}
-				if !match {
-					continue
-				}
+				for _, containerStatus := range pod.Status.ContainerStatuses {
 
-				found := false
-				for _, hiveData := range hiveDataList.Items {
-					if HiveDataContainerCmp(hiveData, pod, containerStatus) {
-						found = true
-						break
+					match, err := RegexMatch(hiveTrap.Match.ContainerName, containerStatus.Name)
+					if err != nil {
+						return ctrl.Result{}, err
 					}
-				}
+					if !match {
+						continue
+					}
 
-				if found {
-					continue
-				}
+					found := false
+					for _, hiveData := range hiveDataList.Items {
+						if HiveDataContainerCmp(hiveData, pod, containerStatus) {
+							found = true
+							break
+						}
+					}
 
-				if pod.Status.Phase != corev1.PodRunning {
-					return ctrl.Result{Requeue: true}, nil
-				}
+					if found {
+						continue
+					}
 
-				containerData, err := container.GetContainerData(ctx, containerStatus, hivePolicy)
-				if err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
-				}
-				if containerData.ShouldRequeue {
-					return ctrl.Result{Requeue: true}, nil
-				}
-				if !containerData.IsFound { // Inode was not found
-					// DEBUG
-					//log.Info("Inode of " + hivePolicy.Spec.Path + " in matched pod " + pod.Name + " not found.")
-					continue
-				}
-				inode := containerData.Ino
+					if pod.Status.Phase != corev1.PodRunning {
+						return ctrl.Result{Requeue: true}, nil
+					}
 
-				policyID, err := PolicyHashID(hivePolicy)
-				if err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error calculating policy ID: %w", err)
-				}
+					containerData, err := container.GetContainerData(ctx, containerStatus, hiveTrap)
+					if err != nil {
+						return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
+					}
+					if containerData.ShouldRequeue {
+						return ctrl.Result{Requeue: true}, nil
+					}
+					if !containerData.IsFound { // Inode was not found
+						// DEBUG
+						//log.Info("Inode of " + hiveTrap.Path + " in matched pod " + pod.Name + " not found.")
+						continue
+					}
+					inode := containerData.Ino
 
-				// Here we are crating a new HiveData since an already existing
-				// one for this Pod and this HivePolicy has not been found
-				hiveData := &hivev1alpha1.HiveData{
-					ObjectMeta: metav1.ObjectMeta{
-						// Give it an unique name
-						Name:      NewHiveDataName(inode, containerStatus),
-						Namespace: hivev1alpha1.Namespace,
-						Annotations: map[string]string{
-							"hive_policy_name": hivePolicy.Name,
-							"callback":         hivePolicy.Spec.Callback,
-							"pod_name":         pod.Name,
-							"namespace":        pod.Namespace,
-							"pod_ip":           pod.Status.PodIPs[0].IP,
-							"path":             hivePolicy.Spec.Path,
-							"container_id":     containerData.ID,
-							"container_name":   containerData.Name,
-							"node_name":        pod.Spec.NodeName,
+					// Here we are crating a new HiveData since an already existing
+					// one for this Pod and this HivePolicy has not been found
+					hiveData := &hivev1alpha1.HiveData{
+						ObjectMeta: metav1.ObjectMeta{
+							// Give it an unique name
+							Name:      NewHiveDataName(inode, containerStatus),
+							Namespace: hivev1alpha1.Namespace,
+							// Annotations are used as information for the HiveAlert
+							Annotations: map[string]string{
+								"hive_policy_name": hivePolicy.Name,
+								"callback":         hiveTrap.Callback,
+								"pod_name":         pod.Name,
+								"namespace":        pod.Namespace,
+								"pod_ip":           pod.Status.PodIPs[0].IP,
+								"path":             hiveTrap.Path,
+								"container_id":     containerData.ID,
+								"container_name":   containerData.Name,
+								"node_name":        pod.Spec.NodeName,
+							},
+							Labels: map[string]string{
+								// The trap-id is used to link this HiveData to this trap
+								TrapIdLabel: trapID,
+							},
 						},
-						Labels: map[string]string{
-							"policy-id": policyID,
+						Spec: hivev1alpha1.HiveDataSpec{
+							InodeNo:  containerData.Ino,
+							KernelID: KernelID,
 						},
-					},
-					Spec: hivev1alpha1.HiveDataSpec{
-						InodeNo:  containerData.Ino,
-						KernelID: KernelID,
-					},
-				}
-				for label, value := range hivePolicy.Spec.Match.MatchLabels {
-					hiveData.Annotations["match-label-"+label] = value
-				}
+					}
 
-				err = r.Client.Create(ctx, hiveData)
-				if err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Create HiveData resource: %w", err)
-				}
-				log.Info("Created new HiveData resource.")
-
-				orig := hivePolicy.DeepCopy()
-				hivePolicy.ObjectMeta.Labels = map[string]string{
-					"policy-id": policyID,
-				}
-				err = r.Client.Patch(ctx, &hivePolicy, client.MergeFrom(orig))
-				if err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Update PolicyID in HivePolicy: %w", err)
+					err = r.Client.Create(ctx, hiveData)
+					if err != nil {
+						return ctrl.Result{}, fmt.Errorf("Reconcile Error Create HiveData resource: %w", err)
+					}
+					log.Info("Created new HiveData resource.")
 				}
 			}
 		}

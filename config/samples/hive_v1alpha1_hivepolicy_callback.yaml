@@ -8,10 +8,11 @@ metadata:
   name: hive-sample-policy-callback
   namespace: hive-operator-system
 spec:
-  path: /callme.txt
-  create: true
-  mode: 444
-  callback: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"
-  match:
-    pod: nginx-pod
-    namespace: default
+  traps:
+    - path: /callme.txt
+      create: true
+      mode: 444
+      callback: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"
+      match:
+        pod: nginx-pod
+        namespace: default

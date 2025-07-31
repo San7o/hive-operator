@@ -24,14 +24,15 @@ metadata:
   name: hive-sample-policy
   namespace: hive-operator-system
 spec:
-  path: /secret.txt
-  create: true
-  mode: 444
-  match:
-    pod: nginx-pod
-    namespace: default
-    matchLabels:
-      security-level: high
+  traps:
+    - path: /secret.txt
+      create: true
+      mode: 444
+      match:
+        pod: nginx-pod
+        namespace: default
+        matchLabels:
+          security-level: high
 ```
 
 This sample policy will trace the file `/secret.txt` in the pods with

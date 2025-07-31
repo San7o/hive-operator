@@ -8,9 +8,10 @@ metadata:
   name: hive-sample-policy-regex
   namespace: hive-operator-system
 spec:
-  path: /regex.txt
-  create: true
-  mode: 444
-  match:
-    namespace: default
-    container-name: ".*"
+  traps:
+    - path: /regex.txt
+      create: true
+      mode: 444
+      match:
+        namespace: default
+        container-name: ".*"

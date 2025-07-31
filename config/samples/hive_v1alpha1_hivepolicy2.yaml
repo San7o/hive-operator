@@ -8,6 +8,7 @@ metadata:
   name: hive-sample-policy2
   namespace: hive-operator-system
 spec:
-  path: /etc/passwd
-  match:
-    namespace: default
+  traps:
+    - path: /etc/passwd
+      match:
+        namespace: default

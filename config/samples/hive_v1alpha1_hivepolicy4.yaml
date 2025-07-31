@@ -8,5 +8,6 @@ metadata:
   name: hive-sample-policy4
   namespace: hive-operator-system
 spec:
-  path: /test.txt
-  create: true
+  traps:
+    - path: /test.txt
+      create: true

@@ -1,3 +1,15 @@
+/*
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
+
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+*/
+
+// SPDX-License-Identifier: GPL-2.0-only
+
 package controller
 
 import (
@@ -7,7 +19,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -15,15 +26,15 @@ import (
 	container "github.com/San7o/hive-operator/internal/controller/container"
 )
 
-func PolicyHashID(hivePolicy hivev1alpha1.HivePolicy) (string, error) {
+func HiveTrapHashID(hiveTrap hivev1alpha1.HiveTrap) (string, error) {
 
-	jsonPolicy, err := json.Marshal(hivePolicy.Spec.Match)
+	jsonPolicy, err := json.Marshal(hiveTrap)
 	if err != nil {
-		return "", fmt.Errorf("PolicyHashID Error Json Marshal: %w", err)
+		return "", fmt.Errorf("TrapHashID Error Json Marshal: %w", err)
 	}
 
 	sha := sha256.New()
-	sha.Write(append(jsonPolicy, []byte(hivePolicy.Spec.Path)...))
+	sha.Write(jsonPolicy)
 	shaPolicy := hex.EncodeToString(sha.Sum(nil))
 
 	return shaPolicy[:63], nil
@@ -49,9 +60,13 @@ func RegexMatch(regex string, containerName string) (bool, error) {
 	return compiledRegex.Match([]byte(containerName)), nil
 }
 
-func HiveDataPolicyCmp(hiveData hivev1alpha1.HiveData, hivePolicy hivev1alpha1.HivePolicy) bool {
+func HiveDataTrapCmp(hiveData hivev1alpha1.HiveData, hiveTrap hivev1alpha1.HiveTrap) (bool, error) {
 
-	return hiveData.ObjectMeta.Labels["policy-id"] == hivePolicy.ObjectMeta.Labels["policy-id"]
+	trapID, err := HiveTrapHashID(hiveTrap)
+	if err != nil {
+		return false, fmt.Errorf("HiveDataTrapCmp Error Hash ID: %w", err)
+	}
+	return hiveData.ObjectMeta.Labels[TrapIdLabel] == trapID, nil
 }
 
 func HiveDataContainerCmp(hiveData hivev1alpha1.HiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
@@ -65,17 +80,9 @@ func HiveDataContainerCmp(hiveData hivev1alpha1.HiveData, pod corev1.Pod, contai
 	if hiveData.Annotations["container_name"] != containerStatus.Name {
 		return false
 	}
-
-	sameLabels := true
-	for label, value := range hiveData.Annotations {
-		if strings.HasPrefix(label, "match-label-") {
-			podValue, ok := pod.Labels[strings.TrimLeft(label, "match-label-")]
-			if !ok || value != podValue {
-				sameLabels = false
-				break
-			}
-		}
+	if hiveData.Annotations["container_id"] != containerStatus.ContainerID {
+		return false
 	}
 
-	return sameLabels
+	return true
 }

@@ -1,3 +1,15 @@
+/*
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
+
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+*/
+
+// SPDX-License-Identifier: GPL-2.0-only
+
 package container
 
 import (
@@ -60,7 +72,7 @@ func (self *Containerd) IsConnected() bool {
 	return self.isConnected
 }
 
-func (self *Containerd) GetContainerData(ctx context.Context, id string, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error) {
+func (self *Containerd) GetContainerData(ctx context.Context, id string, hiveTrap hivev1alpha1.HiveTrap) (ContainerData, error) {
 
 	attach := containerdCio.NewAttach()
 
@@ -77,7 +89,7 @@ func (self *Containerd) GetContainerData(ctx context.Context, id string, hivePol
 			}
 
 			inode, err := getInode(task.Pid(),
-				hivePolicy.Spec.Path, hivePolicy.Spec.Create, hivePolicy.Spec.Mode)
+				hiveTrap.Path, hiveTrap.Create, hiveTrap.Mode)
 			if err != nil {
 				return ContainerData{}, err
 			}

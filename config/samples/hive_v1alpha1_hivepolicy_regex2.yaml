@@ -8,10 +8,11 @@ metadata:
   name: hive-sample-policy-regex2
   namespace: hive-operator-system
 spec:
-  path: /regex2.txt
-  create: true
-  mode: 444
-  match:
-    pod: nginx-pod
-    namespace: default
-    container-name: "123.*"
+  traps:
+    - path: /regex2.txt
+      create: true
+      mode: 444
+      match:
+        pod: nginx-pod
+        namespace: default
+        container-name: "123.*"
