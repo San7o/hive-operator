@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -32,6 +33,20 @@ func NewHiveDataName(inode uint64, containerStatus corev1.ContainerStatus) strin
 
 	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)
 	return strconv.FormatUint(inode, 10) + "-hive-data-" + containerID
+}
+
+func RegexMatch(regex string, containerName string) (bool, error) {
+
+	if regex == "" {
+		return true, nil
+	}
+
+	compiledRegex, err := regexp.Compile(regex)
+	if err != nil {
+		return false, fmt.Errorf("RegexMatch Error compiling regex: %w", err)
+	}
+
+	return compiledRegex.Match([]byte(containerName)), nil
 }
 
 func HiveDataPolicyCmp(hiveData hivev1alpha1.HiveData, hivePolicy hivev1alpha1.HivePolicy) bool {

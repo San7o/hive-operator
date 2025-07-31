@@ -9,7 +9,8 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-
+	corev1 "k8s.io/api/core/v1"
+	
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
 
@@ -40,7 +41,7 @@ func NewClient() (client.Client, error) {
 func CleanHivePolicies(ctx context.Context, c client.Client) error {
 
 	var hivePolicyList hivev1alpha1.HivePolicyList
-	if err := c.List(ctx, &hivePolicyList, client.InNamespace(namespaceName)); err != nil {
+	if err := c.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName)); err != nil {
 		return err
 	}
 
@@ -54,11 +55,13 @@ func CleanHivePolicies(ctx context.Context, c client.Client) error {
 	return nil
 }
 
-func CleanTestPods(ctx context.Context, c client.Client) error {
+func CleanTestPods(ctx context.Context, c client.Client, pods []corev1.Pod) error {
 
-	err := c.Delete(ctx, testPod)
-	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("Error Delete Test Pod %s: %w", testPod.Name, err)
+	for _, pod := range pods {
+		err := c.Delete(ctx, &pod)
+		if err != nil && !errors.IsNotFound(err) {
+			return fmt.Errorf("Error Delete Test Pod %s: %w", pod.Name, err)
+		}
 	}
 
 	return nil

@@ -17,8 +17,9 @@ limitations under the License.
 package e2e
 
 import (
-	"context"
 	"fmt"
+	"os/exec"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -30,83 +31,51 @@ import (
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
 
-// Namespace for testing
-const namespaceName = "hive-test"
-
-// Namespace used by the operator
-const operatorNamespace = "hive-operator-system"
-
-// Maximum time for the operator to reconcile ruccessfully
-const reconcileTimeout = 1 * time.Second
-
-// Maximum time spent waiting for creation / deletion of pods
-const timeout = 30 * time.Second
-
-var (
-	Client          client.Client
-	ctx             context.Context
-	InitialHiveData int
-)
-
-var testNamespace = &corev1.Namespace{
-	ObjectMeta: metav1.ObjectMeta{
-		Name: namespaceName,
-	},
-}
-
-var hiveTestPolicy = &hivev1alpha1.HivePolicy{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "hive-policy-test1",
-		Namespace: namespaceName,
-	},
-	Spec: hivev1alpha1.HivePolicySpec{
-		Path:   "/test",
-		Create: true,
-		Match: hivev1alpha1.HivePolicyMatch{
-			PodName:   "test-pod",
-			Namespace: "hive-test",
-		},
-	},
-}
-
-var testPod = &corev1.Pod{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "test-pod",
-		Namespace: namespaceName,
-	},
-	Spec: corev1.PodSpec{
-		Containers: []corev1.Container{{
-			Name:  "test-pod",
-			Image: "nginx:latest",
-			Ports: []corev1.ContainerPort{{
-				ContainerPort: 80,
-			}},
-		}},
-	},
-}
-
-var _ = Describe("Hive operator", Ordered, func() {
+var _ = Describe("HiveAlert Simple", Ordered, func() {
 	var err error
 
-	BeforeAll(func() {
-		ctx = context.Background()
-		Client, err = NewClient()
-		Expect(err).NotTo(HaveOccurred())
+	var hiveTestPolicy = &hivev1alpha1.HivePolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "hive-policy-test1",
+			Namespace: testNamespaceName,
+		},
+		Spec: hivev1alpha1.HivePolicySpec{
+			Path:   "/test",
+			Create: true,
+			Match: hivev1alpha1.HivePolicyMatch{
+				PodName:   "test-pod",
+				Namespace: "hive-test",
+			},
+		},
+	}
 
-		err = CreateTestNamespace(ctx, Client)
-		Expect(err).NotTo(HaveOccurred())
+	var testPod = corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod",
+			Namespace: testNamespaceName,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name:  "test-pod",
+				Image: "nginx:latest",
+				Ports: []corev1.ContainerPort{{
+					ContainerPort: 80,
+				}},
+			}},
+		},
+	}
+	
+	BeforeAll(func() {
 		err = CleanHivePolicies(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
-		err = CleanTestPods(ctx, Client)
+		err = CleanTestPods(ctx, Client, []corev1.Pod{testPod})
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	AfterAll(func() {
-		err = CleanTestPods(ctx, Client)
+		err = CleanTestPods(ctx, Client, []corev1.Pod{testPod})
 		Expect(err).NotTo(HaveOccurred())
 		err = CleanHivePolicies(ctx, Client)
-		Expect(err).NotTo(HaveOccurred())
-		err = DeleteTestNamespace(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -116,7 +85,7 @@ var _ = Describe("Hive operator", Ordered, func() {
 
 			By("Getting HivePolicy")
 			var hivePolicyList hivev1alpha1.HivePolicyList
-			err := Client.List(ctx, &hivePolicyList, client.InNamespace(namespaceName))
+			err := Client.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
 			if len(hivePolicyList.Items) != 0 {
@@ -145,7 +114,7 @@ var _ = Describe("Hive operator", Ordered, func() {
 
 			By("Getting HivePolicy")
 			var hivePolicyList hivev1alpha1.HivePolicyList
-			err := Client.List(ctx, &hivePolicyList, client.InNamespace(namespaceName))
+			err := Client.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
 			if len(hivePolicyList.Items) != 1 {
@@ -164,13 +133,13 @@ var _ = Describe("Hive operator", Ordered, func() {
 		It("Should create an HiveData when a new pod matches the policy", func() {
 
 			By("Creating test pod")
-			err = Client.Create(ctx, testPod)
+			err = Client.Create(ctx, &testPod)
 			if err != nil {
 				Expect(fmt.Errorf("Creating Test Pod: %w", err)).NotTo(HaveOccurred())
 			}
 
 			By("Waiting for pod cration")
-			key := client.ObjectKeyFromObject(testPod)
+			key := client.ObjectKeyFromObject(&testPod)
 			deadline := time.Now().Add(timeout)
 			for time.Now().Before(deadline) {
 				var p corev1.Pod
@@ -198,7 +167,51 @@ var _ = Describe("Hive operator", Ordered, func() {
 				Expect(fmt.Errorf("List HiveData: %w", err)).NotTo(HaveOccurred())
 			}
 			if len(hiveDataList.Items) != 1 {
-				Expect(fmt.Errorf("HiveData should be present")).NotTo(HaveOccurred())
+				Expect(fmt.Errorf("One HiveData should be present, found %d", len(hiveDataList.Items))).NotTo(HaveOccurred())
+			}
+		})
+
+		sinceTime := time.Now()
+
+		It("Should have created the file in the matched pod", func() {
+			cmd := exec.Command("kubectl", "exec", "-n", testNamespaceName, testPod.Name, "--", "cat", hiveTestPolicy.Spec.Path)
+			fmt.Printf("Executing: %s", cmd.String())
+			Expect(cmd.Run()).NotTo(HaveOccurred())
+		})
+		It("Should have generated an HiveAlert", func() {
+
+			maxIt := 10
+			it := 0
+			for ; it < maxIt; it++ {
+				cmd := exec.Command("kubectl", "logs", "-n", operatorNamespace, "-l", "control-plane=manager", "--tail", "1000", "--since-time", sinceTime.Format(time.RFC3339))
+				fmt.Printf("Executing: %s\n", cmd.String())
+				out, err := cmd.Output()
+				Expect(err).NotTo(HaveOccurred())
+				if strings.Contains(string(out), "HiveAlert") {
+					break
+				}
+
+				time.Sleep(1 * time.Second)
+			}
+			if it == maxIt {
+				Expect(fmt.Errorf("Should have received an alert")).NotTo(HaveOccurred())
+			}
+		})
+		It("Should delete Hivedata after deletion of HivePolicy", func() {
+			
+			By("Deleting the HivePolicy")
+			err = Client.Delete(ctx, hiveTestPolicy)
+			Expect(err).NotTo(HaveOccurred())
+
+			time.Sleep(reconcileTimeout)
+
+			By("Getting the HiveData")
+			var hiveDataList hivev1alpha1.HiveDataList
+			err := Client.List(ctx, &hiveDataList, client.InNamespace(operatorNamespace))
+			Expect(err).NotTo(HaveOccurred())
+
+			if len(hiveDataList.Items) != 0 {
+				Expect(fmt.Errorf("HiveData present")).NotTo(HaveOccurred())
 			}
 		})
 	})

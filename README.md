@@ -23,6 +23,7 @@ spec:
   match:
     pod: nginx-pod
     namespace: default
+    container-name: "*"
     matchLabels:
       security-level: high
 ```
@@ -66,8 +67,9 @@ following is an example alert:
 If you specify a `callback` in the `HivePolicy`, then the data will be
 sent to the URL of the callback through an HTTP POST request.
 
-Please, read the [USAGE](./docs/USAGE.md) document to learn how to
-use the operator in more detail.
+Please, read the [USAGE](./docs/USAGE.md) document to learn how to use
+the operator in more detail. You can find more examples in
+[config/samples](./config/samples/).
 
 # Development
 

@@ -66,6 +66,7 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		for _, pod := range podList.Items {
 			if hiveData.Annotations["pod_name"] == pod.Name &&
 				hiveData.Annotations["namespace"] == pod.Namespace &&
+				hiveData.Annotations["pod_ip"] == pod.Status.PodIPs[0].IP &&
 				// If the pod has terminated or has failed, we want to
 				// remove the HiveData so that it will be regenerated
 				// later duing the reconciliation of HivePolicy. This

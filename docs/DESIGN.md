@@ -317,6 +317,7 @@ spec:
     pod: nginx-pod
     namespace: default
     ip: 192.168.0.3
+    container-name: "*"
     matchLabels:
       security-level: high
 ```
@@ -348,7 +349,7 @@ under the `match` field and are the following:
 
 - `pod`: the name of the pod
 - `namespace`: the namespace of the pod
-- `container-name`: the name of a container
+- `container-name`: a regex to match the name of containers
 - `ip`: the ipv4 of the pod
 - `matchLabels`: a list of labels and values
 

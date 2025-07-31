@@ -99,16 +99,18 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		podList := &corev1.PodList{}
 		err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to list pods: %w", err)
 		}
 
 		for _, pod := range podList.Items {
 
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 
-				// HivePolicy match check
-				if hivePolicy.Spec.Match.ContainerName != "" &&
-					hivePolicy.Spec.Match.ContainerName != containerStatus.Name {
+				match, err := RegexMatch(hivePolicy.Spec.Match.ContainerName, containerStatus.Name)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+				if !match {
 					continue
 				}
 
@@ -196,6 +198,7 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
+	// TODO: remove this and use finalizers
 	// Force a reconciliation for HiveData, which will delete any
 	// HiveData that does not belong anymore to a HivePolicy. This is
 	// necessary to handle deletion of HivePolicies.

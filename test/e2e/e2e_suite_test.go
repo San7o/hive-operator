@@ -19,6 +19,7 @@ package e2e
 import (
 	"fmt"
 	"testing"
+	"context"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -27,6 +28,28 @@ import (
 // Run e2e tests using the Ginkgo runner.
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
+	
+	// Configure Ginkgo to run sequentially
+	suiteConfig, reporterConfig := GinkgoConfiguration()
+	suiteConfig.ParallelTotal = 1 // force sequential
+	suiteConfig.RandomizeAllSpecs = false
+	
 	_, _ = fmt.Fprintf(GinkgoWriter, "Starting hive-operator suite\n")
-	RunSpecs(t, "Hive Operator E2E Suite")
+	RunSpecs(t, "Hive Operator E2E Suite", suiteConfig, reporterConfig)
 }
+
+var _ = BeforeSuite(func() {
+	var err error
+
+	ctx = context.Background()
+	Client, err = NewClient()
+	Expect(err).NotTo(HaveOccurred())
+
+	err = CreateTestNamespace(ctx, Client)
+	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = AfterSuite(func() {
+	err := DeleteTestNamespace(ctx, Client)
+	Expect(err).NotTo(HaveOccurred())
+})
