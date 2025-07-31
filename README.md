@@ -23,7 +23,7 @@ spec:
   match:
     pod: nginx-pod
     namespace: default
-    container-name: "*"
+    container-name: ".*"
     matchLabels:
       security-level: high
 ```

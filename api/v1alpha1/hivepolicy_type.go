@@ -33,7 +33,8 @@ type HivePolicySpec struct {
 type HivePolicyMatch struct {
 	// Filter pod by name
 	PodName string `json:"pod,omitempty"`
-	// Filter container by name
+	// Filter container by name, can be a regex with syntax described at
+	// https://golang.org/s/re2syntax
 	ContainerName string `json:"container-name,omitempty"`
 	// Filter pods per namespace
 	Namespace string `json:"namespace,omitempty"`

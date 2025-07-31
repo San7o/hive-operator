@@ -317,7 +317,7 @@ spec:
     pod: nginx-pod
     namespace: default
     ip: 192.168.0.3
-    container-name: "*"
+    container-name: ".*"
     matchLabels:
       security-level: high
 ```

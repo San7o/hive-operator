@@ -47,7 +47,9 @@ spec:
                 description: Filters the pods inside this namespace
                 properties:
                   container-name:
-                    description: Filter container by name
+                    description: |-
+                      Filter container by name, can be a regex with syntax described at
+                      https://golang.org/s/re2syntax
                     type: string
                   ip:
                     description: Filter pods by IP
