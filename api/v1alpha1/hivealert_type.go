@@ -29,7 +29,7 @@ type PodMetadata struct {
 	// Pod ip
 	Ip string `json:"ip,omitempty"`
 	// Information about the container
-	Container ContainerMetadata `json:"contianer,omitempty"`
+	Container ContainerMetadata `json:"container,omitempty"`
 }
 
 // Information about the node

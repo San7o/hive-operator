@@ -52,7 +52,7 @@ following is an example alert:
   "pod": {
     "name": "nginx-pod",
     "namespace": "default",
-    "contianer": {
+    "container": {
       "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
       "name": "nginx"
     }
