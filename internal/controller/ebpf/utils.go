@@ -45,3 +45,14 @@ func ResetTracedInodes(index uint32) error {
 
 	return nil
 }
+
+func int8ArrayToString(arr [16]int8) string {
+    b := make([]byte, 0, len(arr))
+    for _, c := range arr {
+        if c == 0 {
+            break
+        }
+        b = append(b, byte(c))
+    }
+    return string(b)
+}

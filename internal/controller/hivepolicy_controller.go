@@ -170,6 +170,10 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					// Here we are crating a new HiveData since an already existing
 					// one for this Pod and this HivePolicy has not been found
 					hiveData := &hivev1alpha1.HiveData{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "HiveData",
+							APIVersion: "hive-operator.com/v1alpha1",
+						},
 						ObjectMeta: metav1.ObjectMeta{
 							// Give it an unique name
 							Name:      NewHiveDataName(inode, containerStatus),
@@ -197,11 +201,11 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						},
 					}
 
-					err = r.Client.Create(ctx, hiveData)
+					err = r.Client.Patch(ctx, hiveData, client.Apply, client.ForceOwnership, client.FieldOwner("hivepolicy-controller"))
 					if err != nil {
-						return ctrl.Result{}, fmt.Errorf("Reconcile Error Create HiveData resource: %w", err)
+						return ctrl.Result{}, fmt.Errorf("Reconcile Error Patch HiveData resource: %w", err)
 					}
-					log.Info("Created new HiveData resource.")
+					log.Info("Created / Updated HiveData resource.")
 				}
 			}
 		}

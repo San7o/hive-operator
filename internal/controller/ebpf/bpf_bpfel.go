@@ -21,6 +21,7 @@ type bpfLogData struct {
 	Gid  uint32
 	Ino  uint64
 	Mask int32
+	Comm [16]int8
 	_    [4]byte
 }
 

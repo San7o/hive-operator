@@ -21,12 +21,13 @@ kprobe_output(long unsigned int inode, int mask)
   __u64 pid_tgid = bpf_get_current_pid_tgid();
   __u64 uid_gid = bpf_get_current_uid_gid();
 
-  data.pid = pid_tgid >> 32;
-  data.tgid = (gid_t) pid_tgid;
-  data.uid = uid_gid >> 32;
-  data.gid = (gid_t) uid_gid;
+  data.tgid = pid_tgid >> 32;
+  data.pid = (gid_t) pid_tgid;
+  data.gid = uid_gid >> 32;
+  data.uid = (gid_t) uid_gid;
   data.ino = inode;
   data.mask = mask;
+  bpf_get_current_comm(data.comm, TASK_COMM_LEN);
 		
   bpf_ringbuf_output(&rb, &data, sizeof(struct log_data), 0);
 }

@@ -137,7 +137,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: generate-ebpf
-generate-ebpf:
+generate-ebpf: ## Build the eBPF program and generate go skeleton
 	ARCH=$(shell uname -m) go generate ./internal/controller/ebpf
 
 ##@ Build

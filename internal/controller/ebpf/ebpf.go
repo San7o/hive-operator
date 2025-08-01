@@ -143,7 +143,6 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 
 	for _, hiveData := range hiveDataList.Items {
 		if hiveData.Spec.InodeNo == data.Ino {
-
 			out := hivev1alpha1.HiveAlert{
 				Timestamp:      time.Now().Format(time.RFC3339),
 				HivePolicyName: hiveData.Annotations["hive_policy_name"],
@@ -167,10 +166,11 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 					Name: hiveData.Annotations["node_name"],
 				},
 				Process: hivev1alpha1.ProcessMetadata{
-					Pid:  data.Pid,
-					Tgid: data.Tgid,
-					Uid:  data.Uid,
-					Gid:  data.Gid,
+					Pid:    data.Pid,
+					Tgid:   data.Tgid,
+					Uid:    data.Uid,
+					Gid:    data.Gid,
+					Name:   int8ArrayToString(data.Comm),
 				},
 			}
 

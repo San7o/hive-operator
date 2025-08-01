@@ -41,19 +41,15 @@ type NodeMetadata struct {
 // Information related to the process that accessed the file
 type ProcessMetadata struct {
 	// Process ID
-	Pid int32 `json:"pid,omitempty"`
+	Pid int32 `json:"pid"`
 	// Thread group ID
-	Tgid uint32 `json:"tgid,omitempty"`
+	Tgid uint32 `json:"tgid"`
 	// User ID
-	Uid uint32 `json:"uid,omitempty"`
+	Uid uint32 `json:"uid"`
 	// Group ID
-	Gid uint32 `json:"gid,omitempty"`
-	// Current Working Directory
-	Cwd string `json:"cwd,omitempty"` // TODO
-	// Binary executable
-	Binary string `json:"binary,omitempty"` // TODO
-	// Arguments to binary
-	Arguments string `json:"arguments,omitempty"` // TODO
+	Gid uint32 `json:"gid"`
+	// Process comm name
+	Name string `json:"name,omitempty"`
 }
 
 // Additional information

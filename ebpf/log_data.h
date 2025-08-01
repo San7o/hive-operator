@@ -7,12 +7,13 @@
 #include "vmlinux.h"
 
 struct log_data {
-	pid_t pid;             /* process id */
-	gid_t tgid;            /* thread group id */
-	uid_t uid;             /* user id */
-	gid_t gid;             /* group id */
-	long unsigned int ino; /* inode number */
-	int mask;              /* Octal representation of file permissions */
+	pid_t pid;                /* process id */
+	gid_t tgid;               /* thread group id */
+	uid_t uid;                /* user id */
+	gid_t gid;                /* group id */
+	long unsigned int ino;    /* inode number */
+	int mask;                 /* Octal representation of file permissions */
+  char comm[TASK_COMM_LEN]; /* name of the executable of the task */
 };
 
 #endif // _HIVE_DATA_H_

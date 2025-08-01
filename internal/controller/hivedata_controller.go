@@ -74,6 +74,11 @@ func (r *HiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 		found := false
 		for _, hivePolicy := range hivePolicyList.Items {
+
+			if !hivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
+				continue
+			}
+
 			for _, hiveTrap := range hivePolicy.Spec.Traps {
 				found, err = HiveDataTrapCmp(hiveData, hiveTrap)
 				if err != nil {
