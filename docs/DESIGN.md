@@ -364,7 +364,7 @@ At least one match block with one match item must be present.
 
 Examples:
 
-```
+```yaml
 matchAny:
 - pod: nginx-pod
   namespace: default
@@ -373,7 +373,7 @@ matchAny:
 The above selects all the containers in pods with name `nginx-pod` AND
 those that are in the `default` namespace.
 
-```
+```yaml
 matchAny:
 - pod: nginx-pod
 - namespace: default
@@ -477,7 +477,7 @@ program to filter certain inodes.
 
 The schema of the resource looks like the following:
 
-```bash
+```yaml
 apiVersion: hive-operator.com/v1alpha1
 kind: HiveData
 metadata:
