@@ -31,10 +31,12 @@ spec:
         security-level: high
 ```
 
-The match items under the `matchAny` field will be matched via a
-logical OR, and each field in a match group is matched with a logical
-AND. All the match fields are optional, but there must be at least
-one match item unser `matchAny`.
+This sets up a trap on the path `/secret.txt` in the matched
+containers, creating it with `mode` permissions if it does not
+exist. The match groups under the `matchAny` field will be matched via
+a logical OR, and each field in a match group is matched with a
+logical AND. All the match fields are optional, but there must be at
+least one match group under `matchAny`.
 
 When a file gets accessed, the operator will generate an `HiveAlert`
 and print the information to standard output in json format. The
