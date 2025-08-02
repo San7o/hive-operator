@@ -19,21 +19,22 @@ metadata:
   namespace: hive-operator-system
 spec:
   traps:
-    - path: /secret.txt
-      create: true
-      mode: 444
-      callback: "http://my-callback.com/alerts"
-      match:
-        pod: nginx-pod
-        namespace: default
-        container-name: ".*"
-        matchLabels:
-          security-level: high
+  - path: /secret.txt
+    create: true
+    mode: 444
+    callback: "http://my-callback.com/alerts"
+    matchAny:
+    - pod: nginx-pod
+      namespace: default
+      container-name: ".*"
+      matchLabels:
+        security-level: high
 ```
 
-The conditions under the `match` field will be matched via a logical
-AND. All the match fields are optional; If none are specified, then
-all containers are selected.
+The match items under the `matchAny` field will be matched via a
+logical OR, and each field in a match group is matched with a logical
+AND. All the match fields are optional, but there must be at least
+one match item unser `matchAny`.
 
 When a file gets accessed, the operator will generate an `HiveAlert`
 and print the information to standard output in json format. The
@@ -41,28 +42,32 @@ following is an example alert:
 
 ```json
 {
-  "timestamp": "2025-07-25T08:14:22Z",
+  "timestamp": "2025-08-02T16:51:19Z",
   "hive_policy_name": "hive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
-    "inode": 13667586,
-    "mask": 34,
-    "kernel_id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71"
+    "inode": 16256084,
+    "mask": 36,
+    "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
   },
   "pod": {
     "name": "nginx-pod",
     "namespace": "default",
     "container": {
-      "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
+      "id": "containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c",
       "name": "nginx"
     }
   },
   "node": {
-    "name": "hive-worker2"
+    "name": "hive-worker"
   },
   "process": {
-    "pid": 61116,
-    "tgid": 61164
+    "pid": 176928,
+    "tgid": 176928,
+    "uid": 0,
+    "gid": 0,
+    "binary": "cat",
+    "cwd": "/"
   }
 }
 ```

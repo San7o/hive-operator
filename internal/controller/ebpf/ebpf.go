@@ -157,7 +157,7 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 			// since procfs of a node is not the same as the host if the
 			// node is a container on the host (for example, for clusters
 			// created using Kind)
-			cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.RealHostProcMountpoint,  data.Pid))
+			cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.RealHostProcMountpoint, data.Pid))
 			if err != nil {
 				cwd, _ = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
 				// error is handled gracefully

@@ -92,120 +92,135 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		for _, hiveTrap := range hivePolicy.Spec.Traps {
 
-			// Get HiveData resources associated with this Trap
-			trapID, err := HiveTrapHashID(hiveTrap)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Generate TrapID: %w", err)
-			}
-			labels := client.MatchingLabels{
-				TrapIdLabel: trapID,
-			}
-			hiveDataList := &hivev1alpha1.HiveDataList{}
-			err = r.Client.List(ctx, hiveDataList, labels)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
-			}
+			// Saves which containers are already matched by this trap so
+			// that they do not get matched twice and have two different
+			// HiveAlerts from the same trap
+			matchedContainers := map[string]bool{}
 
-			// Get Pods that match this HiveTrap
-			labelMap := make(client.MatchingLabels)
-			labelMap = hiveTrap.Match.MatchLabels
-			matchingFields := client.MatchingFields{}
-			if len(hiveTrap.Match.PodName) != 0 {
-				matchingFields["metadata.name"] = hiveTrap.Match.PodName
-			}
-			if len(hiveTrap.Match.Namespace) != 0 {
-				matchingFields["metadata.namespace"] = hiveTrap.Match.Namespace
-			}
-			if len(hiveTrap.Match.IP) != 0 {
-				matchingFields["metadata.podIP"] = hiveTrap.Match.IP
-			}
-			podList := &corev1.PodList{}
-			err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to list pods: %w", err)
-			}
+			for _, hiveTrapMatch := range hiveTrap.MatchAny {
 
-			for _, pod := range podList.Items {
+				// Get HiveData resources associated with this Trap
+				trapID, err := HiveTrapHashID(hiveTrap)
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Generate TrapID: %w", err)
+				}
+				labels := client.MatchingLabels{
+					TrapIdLabel: trapID,
+				}
+				hiveDataList := &hivev1alpha1.HiveDataList{}
+				err = r.Client.List(ctx, hiveDataList, labels)
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
+				}
 
-				for _, containerStatus := range pod.Status.ContainerStatuses {
+				// Get Pods that match this HiveTrap
+				labelMap := make(client.MatchingLabels)
+				labelMap = hiveTrapMatch.MatchLabels
+				matchingFields := client.MatchingFields{}
+				if len(hiveTrapMatch.PodName) != 0 {
+					matchingFields["metadata.name"] = hiveTrapMatch.PodName
+				}
+				if len(hiveTrapMatch.Namespace) != 0 {
+					matchingFields["metadata.namespace"] = hiveTrapMatch.Namespace
+				}
+				if len(hiveTrapMatch.IP) != 0 {
+					matchingFields["metadata.podIP"] = hiveTrapMatch.IP
+				}
+				podList := &corev1.PodList{}
+				err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
+				if err != nil {
+					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to list pods: %w", err)
+				}
 
-					match, err := RegexMatch(hiveTrap.Match.ContainerName, containerStatus.Name)
-					if err != nil {
-						return ctrl.Result{}, err
-					}
-					if !match {
-						continue
-					}
+				for _, pod := range podList.Items {
 
-					found := false
-					for _, hiveData := range hiveDataList.Items {
-						if HiveDataContainerCmp(hiveData, pod, containerStatus) {
-							found = true
-							break
+					for _, containerStatus := range pod.Status.ContainerStatuses {
+
+						match, err := RegexMatch(hiveTrapMatch.ContainerName, containerStatus.Name)
+						if err != nil {
+							return ctrl.Result{}, err
 						}
-					}
+						if !match {
+							continue
+						}
 
-					if found {
-						continue
-					}
+						found := false
+						for _, hiveData := range hiveDataList.Items {
+							if HiveDataContainerCmp(hiveData, pod, containerStatus) {
+								found = true
+								break
+							}
+						}
 
-					if pod.Status.Phase != corev1.PodRunning {
-						return ctrl.Result{Requeue: true}, nil
-					}
+						if found {
+							continue
+						}
 
-					containerData, err := container.GetContainerData(ctx, containerStatus, hiveTrap)
-					if err != nil {
-						return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
-					}
-					if containerData.ShouldRequeue {
-						return ctrl.Result{Requeue: true}, nil
-					}
-					if !containerData.IsFound { // Inode was not found
-						// DEBUG
-						//log.Info("Inode of " + hiveTrap.Path + " in matched pod " + pod.Name + " not found.")
-						continue
-					}
-					inode := containerData.Ino
+						if pod.Status.Phase != corev1.PodRunning {
+							return ctrl.Result{Requeue: true}, nil
+						}
 
-					// Here we are crating a new HiveData since an already existing
-					// one for this Pod and this HivePolicy has not been found
-					hiveData := &hivev1alpha1.HiveData{
-						TypeMeta: metav1.TypeMeta{
-							Kind:       "HiveData",
-							APIVersion: "hive-operator.com/v1alpha1",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							// Give it an unique name
-							Name:      NewHiveDataName(inode, containerStatus),
-							Namespace: hivev1alpha1.Namespace,
-							// Annotations are used as information for the HiveAlert
-							Annotations: map[string]string{
-								"hive_policy_name": hivePolicy.Name,
-								"callback":         hiveTrap.Callback,
-								"pod_name":         pod.Name,
-								"namespace":        pod.Namespace,
-								"pod_ip":           pod.Status.PodIPs[0].IP,
-								"path":             hiveTrap.Path,
-								"container_id":     containerData.ID,
-								"container_name":   containerData.Name,
-								"node_name":        pod.Spec.NodeName,
+						matchID := pod.Name + pod.Namespace + containerStatus.ContainerID
+						if _, ok := matchedContainers[matchID]; ok {
+							// This container was already registered
+							continue
+						}
+						matchedContainers[matchID] = true
+
+						containerData, err := container.GetContainerData(ctx, containerStatus, hiveTrap)
+						if err != nil {
+							return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
+						}
+						if containerData.ShouldRequeue {
+							return ctrl.Result{Requeue: true}, nil
+						}
+						if !containerData.IsFound { // Inode was not found
+							// DEBUG
+							//log.Info("Inode of " + hiveTrap.Path + " in matched pod " + pod.Name + " not found.")
+							continue
+						}
+						inode := containerData.Ino
+
+						// Here we are crating a new HiveData since an already existing
+						// one for this Pod and this HivePolicy has not been found
+						hiveData := &hivev1alpha1.HiveData{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "HiveData",
+								APIVersion: "hive-operator.com/v1alpha1",
 							},
-							Labels: map[string]string{
-								// The trap-id is used to link this HiveData to this trap
-								TrapIdLabel: trapID,
+							ObjectMeta: metav1.ObjectMeta{
+								// Give it an unique name
+								Name:      NewHiveDataName(inode, containerStatus),
+								Namespace: hivev1alpha1.Namespace,
+								// Annotations are used as information for the HiveAlert
+								Annotations: map[string]string{
+									"hive_policy_name": hivePolicy.Name,
+									"callback":         hiveTrap.Callback,
+									"pod_name":         pod.Name,
+									"namespace":        pod.Namespace,
+									"pod_ip":           pod.Status.PodIPs[0].IP,
+									"path":             hiveTrap.Path,
+									"container_id":     containerData.ID,
+									"container_name":   containerData.Name,
+									"node_name":        pod.Spec.NodeName,
+								},
+								Labels: map[string]string{
+									// The trap-id is used to link this HiveData to this trap
+									TrapIdLabel: trapID,
+								},
 							},
-						},
-						Spec: hivev1alpha1.HiveDataSpec{
-							InodeNo:  containerData.Ino,
-							KernelID: KernelID,
-						},
-					}
+							Spec: hivev1alpha1.HiveDataSpec{
+								InodeNo:  containerData.Ino,
+								KernelID: KernelID,
+							},
+						}
 
-					err = r.Client.Patch(ctx, hiveData, client.Apply, client.ForceOwnership, client.FieldOwner("hivepolicy-controller"))
-					if err != nil {
-						return ctrl.Result{}, fmt.Errorf("Reconcile Error Patch HiveData resource: %w", err)
+						err = r.Client.Patch(ctx, hiveData, client.Apply, client.ForceOwnership, client.FieldOwner("hivepolicy-controller"))
+						if err != nil {
+							return ctrl.Result{}, fmt.Errorf("Reconcile Error Patch HiveData resource: %w", err)
+						}
+						log.Info("Created / Updated HiveData resource.")
 					}
-					log.Info("Created / Updated HiveData resource.")
 				}
 			}
 		}

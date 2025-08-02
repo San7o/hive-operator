@@ -26,7 +26,7 @@ the application operates.
     - [HivePolicy Resource](#hivepolicy-resource)
       - [Path](#hivepolicy-resource-path)
       - [Create](#hivepolicy-resource-create)
-      - [Match](#hivepolicy-resource-match)
+      - [MatchAny](#hivepolicy-resource-matchany)
     - [HivePolicy Reconciliation](#hivepolicy-reconciliation)
   - [Loader Controller](#loader-controller)
     - [Number of loader controllers](#number-of-loader-controller)
@@ -317,8 +317,8 @@ spec:
       create: true
       mode: 444
       callback: "http://my-callback.com/alerts"
-      match:
-        pod: nginx-pod
+      matchAny:
+      - pod: nginx-pod
         namespace: default
         ip: 192.168.0.3
         container-name: ".*"
@@ -347,18 +347,40 @@ UNIX permissions given to the file to be created via the `mode` field.
 If present, the operator will send json-encoded data to the callback
 via an HTTP POST request.
 
-<a name="hivepolicy-resource-match"></a>
-#### Match
+<a name="hivepolicy-resource-matchany"></a>
+#### MatchAny
 
-The operator should assume that all the pods are selected unless
-optional filters are specified.  The optional filters are specified
-under the `match` field and are the following:
+The `matchAny` field contains a list of match blocks which will be
+matched with a logical OR. Each match block contains one or more match
+items matched with a logical AND, which include:
 
 - `pod`: the name of the pod
 - `namespace`: the namespace of the pod
 - `container-name`: a regex to match the name of containers
 - `ip`: the ipv4 of the pod
 - `matchLabels`: a list of labels and values
+
+At least one match block with one match item must be present.
+
+Examples:
+
+```
+matchAny:
+- pod: nginx-pod
+  namespace: default
+```
+
+The above selects all the containers in pods with name `nginx-pod` AND
+those that are in the `default` namespace.
+
+```
+matchAny:
+- pod: nginx-pod
+- namespace: default
+```
+
+The above matches all containers that are in pods named `nginx-pod` OR
+all the containers that are in the `default` namespace.
 
 <a name="hivepolicy-reconciliation"></a>
 ### HivePolicy Reconciliation
@@ -540,28 +562,32 @@ to generate an `HiveAlert`. An example alert is the following:
 
 ```
 {
-  "timestamp": "2025-07-25T08:14:22Z",
+  "timestamp": "2025-08-02T16:51:19Z",
   "hive_policy_name": "hive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
-    "inode": 13667586,
-    "mask": 34,
-    "kernel_id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71"
+    "inode": 16256084,
+    "mask": 36,
+    "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
   },
   "pod": {
     "name": "nginx-pod",
     "namespace": "default",
-    "contianer": {
-      "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
+    "container": {
+      "id": "containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c",
       "name": "nginx"
     }
   },
   "node": {
-    "name": "hive-worker2"
+    "name": "hive-worker"
   },
   "process": {
-    "pid": 61116,
-    "tgid": 61164
+    "pid": 176928,
+    "tgid": 176928,
+    "uid": 0,
+    "gid": 0,
+    "binary": "cat",
+    "cwd": "/"
   }
 }
 ```

@@ -51,7 +51,7 @@ type ProcessMetadata struct {
 	// Process binary
 	Binary string `json:"binary,omitempty"`
 	// Current Working Directory
-	Cwd string `json:"cwd,omitempty"`
+	Cwd string `json:"cwd"`
 }
 
 // Additional information

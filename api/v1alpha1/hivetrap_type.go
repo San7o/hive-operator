@@ -17,15 +17,15 @@ type HiveTrap struct {
 	Path string `json:"path,omitempty"`
 	// Whether to create the file or not if It cannot be found
 	Create bool `json:"create,omitempty"`
+	// The permissions of the file to be created if create is set to ture
+	Mode uint32 `json:"mode,omitempty"`
 	// Send an HTTP POST request to this endpoint if specified
 	Callback string `json:"callback,omitempty"`
-	// The content of the file if It was created. This field
-	// is used only if Create is set to true
-	Mode uint32 `json:"mode,omitempty"`
-	// Filters the pods inside this namespace
-	Match HiveTrapMatch `json:"match,omitempty"`
+	// Match any of the following items (logical OR)
+	MatchAny []HiveTrapMatch `json:"matchAny,omitempty"`
 }
 
+// Match all the following optional filds (logical AND)
 type HiveTrapMatch struct {
 	// Filter pod by name
 	PodName string `json:"pod,omitempty"`

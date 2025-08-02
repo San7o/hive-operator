@@ -10,6 +10,6 @@ metadata:
 spec:
   traps:
     - path: /etc/shadow
-      match:
-        matchLabels:
-          security-level: high 
+      matchAny:
+        - matchLabels:
+            security-level: high 

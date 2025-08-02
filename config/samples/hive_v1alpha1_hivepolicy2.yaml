@@ -10,5 +10,5 @@ metadata:
 spec:
   traps:
     - path: /etc/passwd
-      match:
-        namespace: default
+      matchAny:
+        - namespace: default

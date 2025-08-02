@@ -12,6 +12,6 @@ spec:
     - path: /regex.txt
       create: true
       mode: 444
-      match:
-        namespace: default
-        container-name: ".*"
+      matchAny:
+        - namespace: default
+          container-name: ".*"

@@ -13,6 +13,6 @@ spec:
       create: true
       mode: 444
       callback: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"
-      match:
-        pod: nginx-pod
-        namespace: default
+      matchAny:
+        - pod: nginx-pod
+          namespace: default

@@ -42,9 +42,11 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 				{
 					Path:   "/test",
 					Create: true,
-					Match: hivev1alpha1.HiveTrapMatch{
-						PodName:   "test-pod",
-						Namespace: "hive-test",
+					MatchAny: []hivev1alpha1.HiveTrapMatch{
+						hivev1alpha1.HiveTrapMatch{
+							PodName:   "test-pod",
+							Namespace: "hive-test",
+						},
 					},
 				},
 			},
@@ -94,6 +96,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 				Expect(fmt.Errorf("HivePolicy present")).NotTo(HaveOccurred())
 			}
 		})
+
 		It("Should not have any HiveData", func() {
 
 			By("Getting HiveData")
@@ -105,6 +108,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 				Expect(fmt.Errorf("HiveData present")).NotTo(HaveOccurred())
 			}
 		})
+
 		It("Should succesfully create an HivePolicy", func() {
 
 			By("Creating HivePolicy")
@@ -132,6 +136,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 				Expect(fmt.Errorf("HiveData should not be present")).NotTo(HaveOccurred())
 			}
 		})
+
 		It("Should create an HiveData when a new pod matches the policy", func() {
 
 			By("Creating test pod")
@@ -180,6 +185,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 			fmt.Printf("Executing: %s", cmd.String())
 			Expect(cmd.Run()).NotTo(HaveOccurred())
 		})
+
 		It("Should have generated an HiveAlert", func() {
 
 			maxIt := 10
@@ -199,6 +205,7 @@ var _ = Describe("HiveAlert Simple", Ordered, func() {
 				Expect(fmt.Errorf("Should have received an alert")).NotTo(HaveOccurred())
 			}
 		})
+
 		It("Should delete Hivedata after deletion of HivePolicy", func() {
 
 			By("Deleting the HivePolicy")

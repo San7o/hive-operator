@@ -24,7 +24,7 @@ import (
 const (
 	// The mountpoint inside the operator's container of the node's
 	// procfs
-	ProcMountpoint    = "/host/proc"
+	ProcMountpoint = "/host/proc"
 	// If the node is a container (for example, this happens with
 	// clusters created with Kind), the actual host's procfs is assumed
 	// to be mounted here
