@@ -74,6 +74,14 @@ Please, read the [USAGE](./docs/USAGE.md) document to learn how to use
 the operator in more detail. You can find more examples in
 [config/samples](./config/samples/).
 
+## Quick deploy
+
+To deploy the operator, simply run:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml
+```
+
 # Development
 
 The [DESIGN](./docs/DESIGN.md) document contains all the information

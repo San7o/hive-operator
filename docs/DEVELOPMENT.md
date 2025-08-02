@@ -7,7 +7,7 @@ please read the [USAGE](./USAGE.md) document.
 
 If you want to develop locally, the following sections are
 helpful. However, you could skip them and jump directly to the
-deplyment if you just want to download the images from docker hub
+deployment if you just want to download the images from docker hub
 instead of building them.
 
 ## Setup a local cluster
@@ -16,7 +16,16 @@ To use an operator, you need a kubernetes cluster. This repository
 provides the script `registry-cluster.sh` which will create a local
 cluster using [kind](https://github.com/kubernetes-sigs/kind) with one
 control node and one worker node. Additionally, It sets up a local
-docker registry to push the operator's image during developement.
+docker registry to push the operator's image during development.
+
+If you are using Kind, or any other method where the node runs inside
+a container, you need to mount `/proc` inside the node's container in
+`/host/real/proc`. The script above already does this. This is needed
+because the eBPF program runs in the host's kernel and the operator
+needs to access the host's procfs to generate the `HiveAlert`. If you
+do not do this, the operator will gracefully report a message and some
+fields in the alert will remain empty (namely, `cwd`). If you are
+using virtual machines or hypervisors, this is not needed.
 
 Run the following command to create the cluster (needs to be run only
 once):
@@ -101,7 +110,7 @@ make generate-ebpf
 
 ## Build the docker contianer
 
-Note that you may need sudo priviledges for the following commands
+Note that you may need sudo privileges for the following commands
 depending on your permissions.
 
 To build everything inside a docker container, first **make sure that

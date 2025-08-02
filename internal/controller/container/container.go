@@ -21,6 +21,16 @@ import (
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
 
+const (
+	// The mountpoint inside the operator's container of the node's
+	// procfs
+	ProcMountpoint    = "/host/proc"
+	// If the node is a container (for example, this happens with
+	// clusters created with Kind), the actual host's procfs is assumed
+	// to be mounted here
+	RealHostProcMountpoint = "/host/real/proc"
+)
+
 type ContainerName = string
 type ContainerID = string
 type Ino = uint64

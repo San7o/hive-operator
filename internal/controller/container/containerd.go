@@ -26,7 +26,6 @@ import (
 
 const (
 	containerdAddress = "/run/containerd/containerd.sock"
-	procMountpoint    = "/host/proc"
 	separator         = "/"
 	namespace         = "k8s.io"
 )
@@ -108,7 +107,7 @@ func (self *Containerd) GetContainerData(ctx context.Context, id string, hiveTra
  */
 func getInode(pid Pid, path string, create bool, mode uint32) (Ino, error) {
 	pidStr := strconv.FormatUint(uint64(pid), 10)
-	target := procMountpoint + separator + pidStr +
+	target := ProcMountpoint + separator + pidStr +
 		separator + "root" + separator + path
 	var stat syscall.Stat_t
 

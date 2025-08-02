@@ -48,8 +48,10 @@ type ProcessMetadata struct {
 	Uid uint32 `json:"uid"`
 	// Group ID
 	Gid uint32 `json:"gid"`
-	// Process comm name
-	Name string `json:"name,omitempty"`
+	// Process binary
+	Binary string `json:"binary,omitempty"`
+	// Current Working Directory
+	Cwd string `json:"cwd,omitempty"`
 }
 
 // Additional information

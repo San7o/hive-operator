@@ -57,18 +57,24 @@ nodes:
     containerPath: /etc/localtime
   - hostPath: /etc/timezone
     containerPath: /etc/timezone
+  - hostPath: /proc
+    containerPath: /host/real/proc
 - role: worker
   extraMounts:
     - hostPath: /etc/localtime
       containerPath: /etc/localtime
     - hostPath: /etc/timezone
       containerPath: /etc/timezone
+    - hostPath: /proc
+      containerPath: /host/real/proc
 - role: worker
   extraMounts:
     - hostPath: /etc/localtime
       containerPath: /etc/localtime
     - hostPath: /etc/timezone
       containerPath: /etc/timezone
+    - hostPath: /proc
+      containerPath: /host/real/proc
 EOF
 
 # 3. Add the registry config to the nodes

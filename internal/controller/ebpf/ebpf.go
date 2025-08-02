@@ -18,14 +18,17 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
 	"github.com/cilium/ebpf/rlimit"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	container "github.com/San7o/hive-operator/internal/controller/container"
 )
 
 const (
@@ -130,6 +133,7 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
 	}
 
+	log := log.FromContext(ctx)
 	data, err := ReadEbpfData() // Hangs
 	if err != nil {
 		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
@@ -143,6 +147,22 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 
 	for _, hiveData := range hiveDataList.Items {
 		if hiveData.Spec.InodeNo == data.Ino {
+
+			cwd := ""
+			// If the node is a container on some host, then we need to read
+			// the host's procfs which is assumed to be mounted in
+			// /host/real/proc. If this does not exist, either the cluster
+			// is misconfigured or it is non containerized, then we check
+			// the regualr procfs of the node. This workaround is needed
+			// since procfs of a node is not the same as the host if the
+			// node is a container on the host (for example, for clusters
+			// created using Kind)
+			cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.RealHostProcMountpoint,  data.Pid))
+			if err != nil {
+				cwd, _ = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
+				// error is handled gracefully
+				log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an HiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+			}
 			out := hivev1alpha1.HiveAlert{
 				Timestamp:      time.Now().Format(time.RFC3339),
 				HivePolicyName: hiveData.Annotations["hive_policy_name"],
@@ -170,7 +190,8 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 					Tgid:   data.Tgid,
 					Uid:    data.Uid,
 					Gid:    data.Gid,
-					Name:   int8ArrayToString(data.Comm),
+					Binary: int8ArrayToString(data.Comm),
+					Cwd:    cwd,
 				},
 			}
 
