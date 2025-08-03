@@ -23,7 +23,7 @@ callback to
 
 For convenience, you can create a tmux session with:
 
-```
+```bash
 make test-tmux
 ```
 

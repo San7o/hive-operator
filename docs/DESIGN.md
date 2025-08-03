@@ -36,12 +36,14 @@ the application operates.
   - [Pod Controller](#pod-controller)
 
 <a name="overview"></a>
+
 # Overview
 
 This section contains a brief description of how the application
 works, Its parts and how they interact with each other.
 
 <a name="description"></a>
+
 ## Application Description
 
 Hive is a kubernetes-native eBPF-based file access monitoring
@@ -55,6 +57,7 @@ all the `processes` that access the file `/etc/shadow` on pods
 that have the `security=high` label.
 
 <a name="components"></a>
+
 ## Components
 
 The application is implemented as a single kubernetes operator and is
@@ -77,6 +80,7 @@ A detailed description of the aforementioned components is given later
 in this document.
 
 <a name="accesses"></a>
+
 ## How to monitor accesses to files
 
 Briefly, the end goal is to log when a file is accessed, that is, when
@@ -107,6 +111,7 @@ information from the eBPF program and generating alerts
 (`HiveAlert`). A more satisfying description will be given later.
 
 <a name="identify"></a>
+
 ## How to uniquely identify a file
 
 To identify a particular file, we can use Its path name. There cannot
@@ -143,6 +148,7 @@ number is the *discover controller*. The loader controller and the
 discover controller share information through a `HiveData` resource.
 
 <a name="complications"></a>
+
 ## Kubernetes makes things harder
 
 Now, imagine all that we have just said, but inside containers in a
@@ -154,6 +160,7 @@ pods can be scheduled in any node, and so on. All of this needs to
 be handled carefully, increasing the complexity of the design.
 
 <a name="example"></a>
+
 ## Example
 
 An example deployment would look like the following:
@@ -170,6 +177,7 @@ pods like a normal node; if this is enabled, the operator will be
 scheduled to this node too.
 
 <a name="ebpf-overview"></a>
+
 ## Overview of eBPF
 
 eBPF programs are programs that run inside the kernel in a controlled
@@ -202,6 +210,7 @@ recent times people are exploring its usage more broadly as the
 programs are becoming more capable.
 
 <a name="kubernetes-overview"></a>
+
 ## Overview of Kubernetes
 
 Kubernetes is a declarative container management software. The user
@@ -231,6 +240,7 @@ may have multiple controllers for different custom resources, as we
 will see later.
 
 <a name="detailed-description"></a>
+
 # Detailed description
 
 This section describes the application in more depth. It is
@@ -238,6 +248,7 @@ recommended to read the overview section first in order to get a
 general understanding of the application before reading the details.
 
 <a name="design-considerations"></a>
+
 ## Design Considerations
 
 The design of this application was conducted considering the following:
@@ -251,6 +262,7 @@ The design of this application was conducted considering the following:
 The different components are now described below:
 
 <a name="discover-controller"></a>
+
 ## Discover Controller
 
 The *discover* controller aka `HivePolicy` controller is responsible for
@@ -279,6 +291,7 @@ Note that when referring to "inodes" in this document we are technically
 referring to the inode number.
 
 <a name="number-of-discover-controller"></a>
+
 ### Number of discover controllers
 
 There must be one discover controller for each node. This is necessary
@@ -296,6 +309,7 @@ policy may match multiple pods hence the relationship between a policy
 and a `HiveData` is *one to many*.
 
 <a name="hivepolicy-resource"></a>
+
 ### HivePolicy Resource
 
 A `HivePolicy` resource contains a list of `HiveTrap`, and looks like
@@ -329,6 +343,7 @@ spec:
 Each `HiveTrap` could contains the following fields:
 
 <a name="hivepolicy-resource-path"></a>
+
 #### Path
 
 This is the only non-optional fiels. `path` is the filesystem path in
@@ -336,6 +351,7 @@ a matched container starting from the root `/` directory of the file
 to trace.
 
 <a name="hivepolicy-resource-create"></a>
+
 #### Create
 
 The user may decide to create the file if not present by specifying
@@ -348,6 +364,7 @@ If present, the operator will send json-encoded data to the callback
 via an HTTP POST request.
 
 <a name="hivepolicy-resource-matchany"></a>
+
 #### MatchAny
 
 The `matchAny` field contains a list of match blocks which will be
@@ -383,6 +400,7 @@ The above matches all containers that are in pods named `nginx-pod` OR
 all the containers that are in the `default` namespace.
 
 <a name="hivepolicy-reconciliation"></a>
+
 ### HivePolicy Reconciliation
 
 The controller performs the following actions in sequence when a CRUD
@@ -435,6 +453,7 @@ If an `HivePolicy` is deleted, we delegate the responsibility of deleting
 old `HiveData` to the `HiveData` reconciliation.
 
 <a name="loader-controller"></a>
+
 ## Loader Controller
 
 The loader controller aka `HiveData` controller is responsible for the
@@ -453,6 +472,7 @@ Upon rescheduling of the operator, the eBPF program needs to be
 reloaded (closed and loaded again).
 
 <a name="number-of-loader-controllers"></a>
+
 ### Number of loader controllers
 
 There must be one loader controller for each running kernel. This is
@@ -465,6 +485,7 @@ identifier and then run elections so that only one node is elected per
 running kernel.
 
 <a name="hivedata-resource"></a>
+
 ### HiveData Resource
 
 The `HiveData` resource is used to communicate information between the
@@ -517,6 +538,7 @@ The `trap-id` is used to identify which `HiveTrap` generated this
 `HiveData`.
 
 <a name="hivedata-reconciliation"></a>
+
 ### HiveData Reconciliation
 
 Upon CRUD changes of the `HiveData` resource, the controller does the
@@ -535,6 +557,7 @@ following:
    old values that where there before.
 
 <a name="ebpf-program"></a>
+
 ## eBPF program
 
 To check whether an actor has interacted with a file, the eBPF program
@@ -560,7 +583,7 @@ only once and even shipped with the binaries of the application.
 The information from the ring buffer will be processed by the loader
 to generate an `HiveAlert`. An example alert is the following:
 
-```
+```json
 {
   "timestamp": "2025-08-02T16:51:19Z",
   "hive_policy_name": "hive-sample-policy",
@@ -593,6 +616,7 @@ to generate an `HiveAlert`. An example alert is the following:
 ```
 
 <a name="pod-controller"></a>
+
 ## Pod Controller
 
 When a pod is changed, we want to update both `HiveData` and the eBPF

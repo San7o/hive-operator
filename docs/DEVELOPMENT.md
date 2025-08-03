@@ -53,14 +53,14 @@ For example, the `IMG` variable tells the Makefile where to push
 images and tells the operator where to pull them. You can add an entry
 to your custom environment .env-custom like so:
 
-```
+```bash
 IMG=registry/my-bautiful-name:latest
 ```
 
 To select which environment to use, append `ENV=<ENV-NAME>` after your
 make commands, for example:
 
-```
+```bash
 make deploy ENV=custom
 ```
 
@@ -151,7 +151,7 @@ To run the end to end test, first make sure that you have a cluster
 running with the operator deployed, and that there is not `HivePolicy`
 present. Then, simply run:
 
-```
+```bash
 make test
 ```
 

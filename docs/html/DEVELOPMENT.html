@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="simple.css" />
+  <link rel="stylesheet" type="text/css" href="syntax.css" />
+</head>
+<body>
+  <div class="topnav">
+    <a href="./index.html">Hive</a>
+    <a href="./DESIGN.html">Design</a>
+    <a href="./USAGE.html">Usage</a>
+    <a href="./DEVELOPMENT.html">Development</a>
+    <a href="./EBPF-TESTING.html">eBPF Testing</a>
+  </div> 
+<h1 id="developement">Developement</h1>
+<p>This documents contains useful information to build the operator
+yourself. It explains how to create a local test cluster and build both
+the eBPF program and the kubernetes operator. To test the build, please
+read the <a href="./USAGE.html">USAGE</a> document.</p>
+<p>If you want to develop locally, the following sections are helpful.
+However, you could skip them and jump directly to the deployment if you
+just want to download the images from docker hub instead of building
+them.</p>
+<h2 id="setup-a-local-cluster">Setup a local cluster</h2>
+<p>To use an operator, you need a kubernetes cluster. This repository
+provides the script <code>registry-cluster.sh</code> which will create a
+local cluster using <a
+href="https://github.com/kubernetes-sigs/kind">kind</a> with one control
+node and one worker node. Additionally, It sets up a local docker
+registry to push the operator’s image during development.</p>
+<p>If you are using Kind, or any other method where the node runs inside
+a container, you need to mount <code>/proc</code> inside the node’s
+container in <code>/host/real/proc</code>. The script above already does
+this. This is needed because the eBPF program runs in the host’s kernel
+and the operator needs to access the host’s procfs to generate the
+<code>HiveAlert</code>. If you do not do this, the operator will
+gracefully report a message and some fields in the alert will remain
+empty (namely, <code>cwd</code>). If you are using virtual machines or
+hypervisors, this is not needed.</p>
+<p>Run the following command to create the cluster (needs to be run only
+once):</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> create-cluster-local</span></code></pre></div>
+<p>You can delete the cluster with <code>delete-cluster.sh</code> or
+with <code>make delete-cluster-local</code> when you do not want It
+anymore.</p>
+<h2 id="dev-environments">Dev Environments</h2>
+<p>For convenience, this project uses different environments to manage
+building and deploying. By default, there are two different
+environments: <code>local</code> and <code>remote</code>.</p>
+<p>You can easily add a custom environment by creating a file called
+<code>.env-&lt;ENV-NAME&gt;</code> where <code>&lt;ENV-NAME&gt;</code>
+is a name of your choice. This file will be included in the Makefile
+before running any command, so you can change the variables used by the
+Makefile from the env file without changing the Makefile.</p>
+<p>For example, the <code>IMG</code> variable tells the Makefile where
+to push images and tells the operator where to pull them. You can add an
+entry to your custom environment .env-custom like so:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">IMG</span><span class="op">=</span>registry/my-bautiful-name:latest</span></code></pre></div>
+<p>To select which environment to use, append
+<code>ENV=&lt;ENV-NAME&gt;</code> after your make commands, for
+example:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy ENV=custom</span></code></pre></div>
+<p>The default environment is <code>local</code>, in this case you can
+omit the <code>ENV</code> from the make command to use the local
+environment. You can use environments on all make commands.</p>
+<h2 id="generate-files">Generate files</h2>
+<p>The operator uses generators to create various config files such as
+RBAC policies, CRD manifests and the eBPF program. Those need to be
+regenerated every time they are updates.</p>
+<p>To generate the RBAC policies, run:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate</span></code></pre></div>
+<p>To create the CRD manifests, run:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> manifests</span></code></pre></div>
+<p>To generate the eBPF program, first you need to have the following
+dependencies in your system:</p>
+<ul>
+<li>Linux kernel version 5.7 or later, with ebpf support enabled</li>
+<li>LLVM 11 or later (clang and llvm-strip)</li>
+<li>libbpf headers</li>
+<li>Linux kernel headers</li>
+<li>a recent go compiler</li>
+</ul>
+<p>On Ubuntu, you can run the following command to install the required
+dependencies:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apt-get</span> install make clang llvm libbpf-dev golang linux-headers-<span class="va">$(</span><span class="fu">uname</span> <span class="at">-r</span><span class="va">)</span></span></code></pre></div>
+<p>Once you have the dependencies, run:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate-ebpf</span></code></pre></div>
+<h2 id="build-the-docker-contianer">Build the docker contianer</h2>
+<p>Note that you may need sudo privileges for the following commands
+depending on your permissions.</p>
+<p>To build everything inside a docker container, first <strong>make
+sure that generated files are updated</strong> (section above), then
+build the docker image with:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker-build</span></code></pre></div>
+<p>You can push it to a test local docker repository if you generated
+the cluster with <code>registry-cluster.sh</code>:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker-push</span></code></pre></div>
+<p>To do both of the above in a single command, run:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker</span></code></pre></div>
+<h2 id="deploy-the-operator">Deploy the operator</h2>
+<p>Finally, you can deploy the operator to the cluster with:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy</span></code></pre></div>
+<p>You can now proceed by reading the <a href="./USAGE.html">USAGE</a>
+document which will explain how to use the operator.</p>
+<h2 id="testing">Testing</h2>
+<p>To run the end to end test, first make sure that you have a cluster
+running with the operator deployed, and that there is not
+<code>HivePolicy</code> present. Then, simply run:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> test</span></code></pre></div>
+<h2 id="useful-commands">Useful commands</h2>
+<p>When building a new docker image, you want the hive pods to update to
+the new version. The pods are already configured to fetch the latest
+version of the image in the local test docker repository, to do so you
+just need to kill them. You can use the following command:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> kill-pods</span></code></pre></div>
+<p>This will also remove all the<code>HiveData</code> resources so that
+you start with a clean configuration, as if you just applied the
+<code>HivePolicies</code>.</p>
+<p>To completely remove the operator from the cluster, run:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> undeploy</span></code></pre></div>
+
+<footer>
+  
+<hr>
+
+  <p>Author: Giovanni Santini<br>
+    <a href="mailto:giovanni.santini@proton.me">giovanni.santini@protom.me</a>
+  </p>
+  <p>Github<br>
+    <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+  </p>
+</footer>
+
+</body>
+</html>

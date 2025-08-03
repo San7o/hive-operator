@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="simple.css" />
+  <link rel="stylesheet" type="text/css" href="syntax.css" />
+</head>
+<body>
+  <div class="topnav">
+    <a href="./index.html">Hive</a>
+    <a href="./DESIGN.html">Design</a>
+    <a href="./USAGE.html">Usage</a>
+    <a href="./DEVELOPMENT.html">Development</a>
+    <a href="./EBPF-TESTING.html">eBPF Testing</a>
+  </div> 
+<h1 id="usage">Usage</h1>
+<p>This document explains how to interact with the operator. You should
+have the operator deployed first, to do that please read the <a
+href="./DEVELOPMENT.html">DEVELOPMENT</a> document for instructions.</p>
+<p>Once you have the operator deployed, you can instruct It to log
+accesses to files via HivePolicies. An <strong>HivePolicy</strong> is a
+custom kubernetes resource that contains information about which file to
+trace and in which pods. The operator will parse this policy every time
+one is added / removed / updated and It will instruct the eBPF program
+to trace the right files.</p>
+<p>An example HivePolicy is located in <a
+href="../config/samples/hive_v1alpha1_hivepolicy.yaml">config/samples/hive_v1alpha1_hivepolicy.yaml</a>.
+More examples can be found in the same directory.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> hive-operator.com/v1alpha1</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> HivePolicy</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">app.kubernetes.io/name</span><span class="kw">:</span><span class="at"> hive-operator</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">finalizers</span><span class="kw">:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> hive-operator.com/finalizer</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> hive-sample-policy</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> hive-operator-system</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">traps</span><span class="kw">:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">create</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="dv">444</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">matchAny</span><span class="kw">:</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
+<p>This sample policy will trace the file <code>/secret.txt</code> in
+the pods with name <code>nginx-pod</code> in the namespace
+<code>default</code> and with the label
+<code>security-level=high</code>. If the file did not exist in the pod,
+It will create It with <code>mode</code> permissions since
+<code>create</code> is set to true.</p>
+<p>You can load it to the kubernetes cluster using the
+<strong>apply</strong> command of <a
+href="https://kubernetes.io/docs/reference/kubectl/">kubectl</a>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> config/samples/hive_v1alpha1_hivepolicy.yaml</span></code></pre></div>
+<p>The operator will log some information when a policy is created /
+deleted / updated.</p>
+<p>Let’s test this policy. First, we need to create a pod that matches
+the <code>match</code> fields in the HivePolicy. This repository
+provides an nginx pod in <a
+href="../config/samples/sample-nginx-pod.yaml">config/samples/sample-nginx-pod.yaml</a>
+with the right characteristics, you can load it with apply:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> hack/k8s-manifests/sample-nginx-pod.yaml</span></code></pre></div>
+<p>After the pod has started, you can try to access the
+<code>/secret.txt</code> file by executing a command inside it:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> kubectl exec <span class="at">-it</span> nginx-pod <span class="at">--</span> cat /secret.txt</span></code></pre></div>
+<p>You should expect to see some logging information on the standard
+output of one of the hive pods, like this:</p>
+<pre><code>2025-08-02T16:51:19Z    INFO    Access Detected    {&quot;HiveAlert&quot;: &quot;{\&quot;timestamp\&quot;:\&quot;2025-08-02T16:51:19Z\&quot;,\&quot;hive_policy_name\&quot;:\&quot;hive-sample-policy\&quot;,\&quot;metadata\&quot;:{\&quot;path\&quot;:\&quot;/secret.txt\&quot;,\&quot;inode\&quot;:16256084,\&quot;mask\&quot;:36,\&quot;kernel_id\&quot;:\&quot;2c147a95-23e5-4f99-a2de-67d5e9fdb502\&quot;},\&quot;pod\&quot;:{\&quot;name\&quot;:\&quot;nginx-pod\&quot;,\&quot;namespace\&quot;:\&quot;default\&quot;,\&quot;container\&quot;:{\&quot;id\&quot;:\&quot;containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c\&quot;,\&quot;name\&quot;:\&quot;nginx\&quot;}},\&quot;node\&quot;:{\&quot;name\&quot;:\&quot;hive-worker\&quot;},\&quot;process\&quot;:{\&quot;pid\&quot;:176928,\&quot;tgid\&quot;:176928,\&quot;uid\&quot;:0,\&quot;gid\&quot;:0,\&quot;binary\&quot;:\&quot;cat\&quot;,\&quot;cwd\&quot;:\&quot;\&quot;}}&quot;}</code></pre>
+<p>Note that only the leader pod in the kernel where the file resides
+will output the information, so you may need to check the standard
+output od all the hive pods.</p>
+<p>You may have seen a message like this just above the alert:</p>
+<pre><code>Could not read /host/proc/176917/cwd while generating an HiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in /host/real/proc</code></pre>
+<p>If you setup the cluster correctly, the problem here is that the
+<code>cat</code> process died before the operator could read the
+information associated with the process. Those missing informations will
+simply be empty values in the output and do not cause the operator to
+break. Try to keep the process alive and see that the warning does not
+appear and you get additional information such as the current working
+directory (cwd):</p>
+<pre><code>sudo kubectl exec -it nginx-pod -- cat /secret.txt -</code></pre>
+
+<footer>
+  
+<hr>
+
+  <p>Author: Giovanni Santini<br>
+    <a href="mailto:giovanni.santini@proton.me">giovanni.santini@protom.me</a>
+  </p>
+  <p>Github<br>
+    <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+  </p>
+</footer>
+
+</body>
+</html>
