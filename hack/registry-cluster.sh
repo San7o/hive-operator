@@ -30,8 +30,6 @@ if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true
 fi
 
 # 2. Create kind cluster with containerd registry config dir enabled
-# TODO: kind will eventually enable this by default and this patch will
-# be unnecessary.
 #
 # See:
 # https://github.com/kubernetes-sigs/kind/issues/2875
