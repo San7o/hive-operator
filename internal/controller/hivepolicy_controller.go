@@ -70,12 +70,13 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	hivePolicyList := &hivev1alpha1.HivePolicyList{}
 	err = r.Client.List(ctx, hivePolicyList)
-	if err != nil {
+	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HivePolicy resource: %w", err)
 	}
 
 	// Loop over the HivePolicies and check if all the corresponsing
 	// HiveData exist. In case they does not, a new HiveData is created.
+Policy:
 	for _, hivePolicy := range hivePolicyList.Items {
 
 		// Check if this policy is being deleted
@@ -84,12 +85,14 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				deleted = true
 				controllerutil.RemoveFinalizer(&hivePolicy, hivev1alpha1.HivePolicyFinalizerName)
 				if err := r.Update(ctx, &hivePolicy); err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Update finalizer: %w", err)
+					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for HivePolicy %s", hivePolicy.Name))
+					continue Policy
 				}
 			}
-			continue // skip
+			continue Policy
 		}
 
+	Trap:
 		for _, hiveTrap := range hivePolicy.Spec.Traps {
 
 			// Saves which containers are already matched by this trap so
@@ -97,19 +100,21 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			// HiveAlerts from the same trap
 			matchedContainers := map[string]bool{}
 
+			trapID, err := HiveTrapHashID(hiveTrap)
+			if err != nil {
+				log.Error(err, fmt.Sprintf("Reconcile Error Generate TrapID for Trap at path %s in HivePolicy %s", hiveTrap.Path, hivePolicy.Name))
+				continue Trap
+			}
+
+		Match:
 			for _, hiveTrapMatch := range hiveTrap.MatchAny {
 
-				// Get HiveData resources associated with this Trap
-				trapID, err := HiveTrapHashID(hiveTrap)
-				if err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Generate TrapID: %w", err)
-				}
 				labels := client.MatchingLabels{
 					TrapIdLabel: trapID,
 				}
 				hiveDataList := &hivev1alpha1.HiveDataList{}
 				err = r.Client.List(ctx, hiveDataList, labels)
-				if err != nil {
+				if err != nil { // Fatal
 					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
 				}
 
@@ -129,31 +134,35 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				podList := &corev1.PodList{}
 				err = r.UncachedClient.List(ctx, podList, labelMap, matchingFields)
 				if err != nil {
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to list pods: %w", err)
+					log.Error(err, "Reconcile Error Failed to list pods")
+					continue Match
 				}
 
 				for _, pod := range podList.Items {
 
+				Container:
 					for _, containerStatus := range pod.Status.ContainerStatuses {
 
 						match, err := RegexMatch(hiveTrapMatch.ContainerName, containerStatus.Name)
 						if err != nil {
-							return ctrl.Result{}, err
+							log.Error(err, fmt.Sprintf("Reconcile error matching regex %s with container %s", hiveTrapMatch.ContainerName, containerStatus.Name))
+							continue Container
 						}
 						if !match {
-							continue
+							continue Container
 						}
 
 						found := false
+					Data:
 						for _, hiveData := range hiveDataList.Items {
 							if HiveDataContainerCmp(hiveData, pod, containerStatus) {
 								found = true
-								break
+								break Data
 							}
 						}
 
 						if found {
-							continue
+							continue Container
 						}
 
 						if pod.Status.Phase != corev1.PodRunning {
@@ -163,21 +172,20 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						matchID := pod.Name + pod.Namespace + containerStatus.ContainerID
 						if _, ok := matchedContainers[matchID]; ok {
 							// This container was already registered
-							continue
+							continue Container
 						}
 						matchedContainers[matchID] = true
 
 						containerData, err := container.GetContainerData(ctx, containerStatus, hiveTrap)
 						if err != nil {
-							return ctrl.Result{}, fmt.Errorf("Reconcile Error Get contianer data: %w", err)
+							log.Error(err, fmt.Sprintf("Reconcile Error Get contianer data for container %s", containerStatus.Name))
+							continue Container
 						}
 						if containerData.ShouldRequeue {
 							return ctrl.Result{Requeue: true}, nil
 						}
 						if !containerData.IsFound { // Inode was not found
-							// DEBUG
-							//log.Info("Inode of " + hiveTrap.Path + " in matched pod " + pod.Name + " not found.")
-							continue
+							continue Container
 						}
 						inode := containerData.Ino
 
@@ -217,7 +225,8 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 						err = r.Client.Patch(ctx, hiveData, client.Apply, client.ForceOwnership, client.FieldOwner("hivepolicy-controller"))
 						if err != nil {
-							return ctrl.Result{}, fmt.Errorf("Reconcile Error Patch HiveData resource: %w", err)
+							log.Error(err, fmt.Sprintf("Reconcile Error patch HiveData resource %s", hiveData.Name))
+							continue Container
 						}
 						log.Info("Created / Updated HiveData resource.")
 					}
@@ -236,19 +245,21 @@ func (r *HivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// current time.
 	hiveDataList := &hivev1alpha1.HiveDataList{}
 	err = r.Client.List(ctx, hiveDataList)
-	if err != nil {
+	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
 	}
 
 	if len(hiveDataList.Items) != 0 {
-		orig := hiveDataList.Items[0].DeepCopy()
-		if hiveDataList.Items[0].Annotations == nil {
-			hiveDataList.Items[0].Annotations = map[string]string{}
+		hiveData := hiveDataList.Items[0]
+		orig := hiveData.DeepCopy()
+		if hiveData.Annotations == nil {
+			hiveData.Annotations = map[string]string{}
 		}
-		hiveDataList.Items[0].Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
-		err = r.Patch(ctx, &hiveDataList.Items[0], client.MergeFrom(orig))
+		hiveData.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
+		err = r.Patch(ctx, &hiveData, client.MergeFrom(orig))
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("Reconcile Error Patch HiveData: %w", err)
+			log.Error(err, fmt.Sprintf("Reconcile Error Patch HiveData %s", hiveData.Name))
+			return ctrl.Result{}, nil
 		}
 	}
 
