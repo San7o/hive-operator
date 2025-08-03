@@ -221,7 +221,7 @@ Create an official container image on the docker registry.
 Create an official helm chart for the application.
 *** TODO Integrate with Koney
 Integrate Hive with Koney
-** Optional - Refinement [2/6][33%]                             :refinement:
+** Optional - Refinement [3/6][50%]                             :refinement:
 *** DONE Log to an external service
 Instead of logging to stdout, the operator may log to a socket
 provided by the user or to a standard socket.
@@ -235,7 +235,8 @@ could look like the following in an HivePolicy:
       argUrl: http://ebpf.io
 #+end_src
 
-*** TODO Allow multiple values in match fields
+*** DONE Allow multiple values in match fields
+- State "DONE"       from "TODO"       [2025-08-02 Sat 19:11]
 When specifying a Hive Policy, the user should be able to
 specify multiple values for each match field (pod name and
 namespaces). Kubernetes does not support this natively so multiple

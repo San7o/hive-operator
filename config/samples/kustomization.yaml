@@ -1,5 +1,7 @@
 ## Append samples of your project ##
 resources:
+- hive_v1alpha1_hivepolicy_regex2.yaml
+- hive_v1alpha1_hivepolicy_regex.yaml
 - hive_v1alpha1_hivepolicy2.yaml
 - hive_v1alpha1_hivepolicy3.yaml
 - hive_v1alpha1_hivepolicy4.yaml

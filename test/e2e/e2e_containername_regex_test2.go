@@ -1,23 +1,18 @@
 /*
-Copyright 2025.
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
 */
+
+// SPDX-License-Identifier: GPL-2.0-only
 
 package e2e
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -30,83 +25,59 @@ import (
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
 )
 
-// Namespace for testing
-const namespaceName = "hive-test"
-
-// Namespace used by the operator
-const operatorNamespace = "hive-operator-system"
-
-// Maximum time for the operator to reconcile ruccessfully
-const reconcileTimeout = 1 * time.Second
-
-// Maximum time spent waiting for creation / deletion of pods
-const timeout = 30 * time.Second
-
-var (
-	Client          client.Client
-	ctx             context.Context
-	InitialHiveData int
-)
-
-var testNamespace = &corev1.Namespace{
-	ObjectMeta: metav1.ObjectMeta{
-		Name: namespaceName,
-	},
-}
-
-var hiveTestPolicy = &hivev1alpha1.HivePolicy{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "hive-policy-test1",
-		Namespace: namespaceName,
-	},
-	Spec: hivev1alpha1.HivePolicySpec{
-		Path:   "/test",
-		Create: true,
-		Match: hivev1alpha1.HivePolicyMatch{
-			PodName:   "test-pod",
-			Namespace: "hive-test",
-		},
-	},
-}
-
-var testPod = &corev1.Pod{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "test-pod",
-		Namespace: namespaceName,
-	},
-	Spec: corev1.PodSpec{
-		Containers: []corev1.Container{{
-			Name:  "test-pod",
-			Image: "nginx:latest",
-			Ports: []corev1.ContainerPort{{
-				ContainerPort: 80,
-			}},
-		}},
-	},
-}
-
-var _ = Describe("Hive operator", Ordered, func() {
+var _ = Describe("ContainerName Regex 2", Ordered, func() {
 	var err error
 
-	BeforeAll(func() {
-		ctx = context.Background()
-		Client, err = NewClient()
-		Expect(err).NotTo(HaveOccurred())
+	var hiveTestPolicy = &hivev1alpha1.HivePolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "hive-policy-test-regex2",
+			Namespace:  testNamespaceName,
+			Finalizers: []string{hivev1alpha1.HivePolicyFinalizerName},
+		},
+		Spec: hivev1alpha1.HivePolicySpec{
+			Traps: []hivev1alpha1.HiveTrap{
+				{
+					Path:   "/regex2",
+					Create: true,
+					MatchAny: []hivev1alpha1.HiveTrapMatch{
+						hivev1alpha1.HiveTrapMatch{
+							PodName:       "test-pod",
+							Namespace:     "hive-test",
+							ContainerName: "test-nope.*",
+						},
+					},
+				},
+			},
+		},
+	}
 
-		err = CreateTestNamespace(ctx, Client)
-		Expect(err).NotTo(HaveOccurred())
+	var testPod = corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-pod",
+			Namespace: testNamespaceName,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name:  "test-nginx",
+				Image: "nginx:latest",
+				Ports: []corev1.ContainerPort{{
+					ContainerPort: 80,
+				}},
+			}},
+		},
+	}
+
+	BeforeAll(func() {
 		err = CleanHivePolicies(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
-		err = CleanTestPods(ctx, Client)
+		err = CleanTestPods(ctx, Client, []corev1.Pod{testPod})
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	AfterAll(func() {
-		err = CleanTestPods(ctx, Client)
+		err = CleanTestPods(ctx, Client, []corev1.Pod{testPod})
 		Expect(err).NotTo(HaveOccurred())
 		err = CleanHivePolicies(ctx, Client)
-		Expect(err).NotTo(HaveOccurred())
-		err = DeleteTestNamespace(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -116,13 +87,14 @@ var _ = Describe("Hive operator", Ordered, func() {
 
 			By("Getting HivePolicy")
 			var hivePolicyList hivev1alpha1.HivePolicyList
-			err := Client.List(ctx, &hivePolicyList, client.InNamespace(namespaceName))
+			err := Client.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
 			if len(hivePolicyList.Items) != 0 {
 				Expect(fmt.Errorf("HivePolicy present")).NotTo(HaveOccurred())
 			}
 		})
+
 		It("Should not have any HiveData", func() {
 
 			By("Getting HiveData")
@@ -134,6 +106,7 @@ var _ = Describe("Hive operator", Ordered, func() {
 				Expect(fmt.Errorf("HiveData present")).NotTo(HaveOccurred())
 			}
 		})
+
 		It("Should succesfully create an HivePolicy", func() {
 
 			By("Creating HivePolicy")
@@ -145,7 +118,7 @@ var _ = Describe("Hive operator", Ordered, func() {
 
 			By("Getting HivePolicy")
 			var hivePolicyList hivev1alpha1.HivePolicyList
-			err := Client.List(ctx, &hivePolicyList, client.InNamespace(namespaceName))
+			err := Client.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
 			if len(hivePolicyList.Items) != 1 {
@@ -161,16 +134,17 @@ var _ = Describe("Hive operator", Ordered, func() {
 				Expect(fmt.Errorf("HiveData should not be present")).NotTo(HaveOccurred())
 			}
 		})
-		It("Should create an HiveData when a new pod matches the policy", func() {
+
+		It("Should not create an HiveData when a pod does not match the container name", func() {
 
 			By("Creating test pod")
-			err = Client.Create(ctx, testPod)
+			err = Client.Create(ctx, &testPod)
 			if err != nil {
 				Expect(fmt.Errorf("Creating Test Pod: %w", err)).NotTo(HaveOccurred())
 			}
 
 			By("Waiting for pod cration")
-			key := client.ObjectKeyFromObject(testPod)
+			key := client.ObjectKeyFromObject(&testPod)
 			deadline := time.Now().Add(timeout)
 			for time.Now().Before(deadline) {
 				var p corev1.Pod
@@ -197,9 +171,18 @@ var _ = Describe("Hive operator", Ordered, func() {
 			if err := Client.List(ctx, &hiveDataList, client.InNamespace(operatorNamespace)); err != nil {
 				Expect(fmt.Errorf("List HiveData: %w", err)).NotTo(HaveOccurred())
 			}
-			if len(hiveDataList.Items) != 1 {
-				Expect(fmt.Errorf("HiveData should be present")).NotTo(HaveOccurred())
+			if len(hiveDataList.Items) != 0 {
+				Expect(fmt.Errorf("One HiveData should not be present, found %d", len(hiveDataList.Items))).NotTo(HaveOccurred())
 			}
+		})
+
+		It("Should delete hivePolicy after deletion of HivePolicy", func() {
+
+			By("Deleting the HivePolicy")
+			err = Client.Delete(ctx, hiveTestPolicy)
+			Expect(err).NotTo(HaveOccurred())
+
+			time.Sleep(reconcileTimeout)
 		})
 	})
 })

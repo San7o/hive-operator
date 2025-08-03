@@ -19,17 +19,20 @@ kind: HivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: hive-operator
+  finalizers:
+    - hive-operator.com/finalizer
   name: hive-sample-policy
   namespace: hive-operator-system
 spec:
-  path: /secret.txt
-  create: true
-  mode: 444
-  match:
-    pod: nginx-pod
-    namespace: default
-    matchLabels:
-      security-level: high
+  traps:
+    - path: /secret.txt
+      create: true
+      mode: 444
+      matchAny:
+      - pod: nginx-pod
+        namespace: default
+        matchLabels:
+          security-level: high
 ```
 
 This sample policy will trace the file `/secret.txt` in the pods with
@@ -66,10 +69,28 @@ sudo kubectl exec -it nginx-pod -- cat /secret.txt
 You should expect to see some logging information on the standard
 output of one of the hive pods, like this:
 
-```bash
-2025-07-25T14:39:30Z    INFO    Access Detected    {"HiveAlert": "{\"timestamp\":\"2025-07-25T14:39:30Z\",\"hive_policy_name\":\"hive-sample-policy\",\"metadata\":{\"path\":\"/secret.txt\",\"inode\":14059098,\"mask\":36,\"kernel_id\":\"12c131ef-aec6-4d9c-ae9c-3ac871aaefe4\"},\"pod\":{\"name\":\"nginx-pod\",\"namespace\":\"default\",\"contianer\":{\"id\":\"containerd://e6e73ba6d2479702cebe6162a10b2c8ff45c533e556c08bc7d85930ebae8eeec\",\"name\":\"nginx\"}},\"process\":{\"pid\":58013,\"tgid\":58013}}"}
+```
+2025-08-02T16:51:19Z    INFO    Access Detected    {"HiveAlert": "{\"timestamp\":\"2025-08-02T16:51:19Z\",\"hive_policy_name\":\"hive-sample-policy\",\"metadata\":{\"path\":\"/secret.txt\",\"inode\":16256084,\"mask\":36,\"kernel_id\":\"2c147a95-23e5-4f99-a2de-67d5e9fdb502\"},\"pod\":{\"name\":\"nginx-pod\",\"namespace\":\"default\",\"container\":{\"id\":\"containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c\",\"name\":\"nginx\"}},\"node\":{\"name\":\"hive-worker\"},\"process\":{\"pid\":176928,\"tgid\":176928,\"uid\":0,\"gid\":0,\"binary\":\"cat\",\"cwd\":\"\"}}"}
 ```
 
 Note that only the leader pod in the kernel where the file resides
 will output the information, so you may need to check the standard
 output od all the hive pods.
+
+You may have seen a message like this just above the alert:
+
+```
+Could not read /host/proc/176917/cwd while generating an HiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in /host/real/proc
+```
+
+If you setup the cluster correctly, the problem here is that the `cat`
+process died before the operator could read the information associated
+with the process. Those missing informations will simply be empty
+values in the output and do not cause the operator to break. Try to
+keep the process alive and see that the warning does not appear and
+you get additional information such as the current working directory
+(cwd):
+
+```
+sudo kubectl exec -it nginx-pod -- cat /secret.txt -
+```

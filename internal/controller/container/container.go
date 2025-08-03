@@ -1,3 +1,15 @@
+/*
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
+
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+*/
+
+// SPDX-License-Identifier: GPL-2.0-only
+
 package container
 
 import (
@@ -7,6 +19,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+)
+
+const (
+	// The mountpoint inside the operator's container of the node's
+	// procfs
+	ProcMountpoint = "/host/proc"
+	// If the node is a container (for example, this happens with
+	// clusters created with Kind), the actual host's procfs is assumed
+	// to be mounted here
+	RealHostProcMountpoint = "/host/real/proc"
 )
 
 type ContainerName = string
@@ -29,7 +51,7 @@ type Runtime interface {
 	IsConnected() bool
 	Connect(ctx context.Context) error
 	Disconnect() error
-	GetContainerData(ctx context.Context, id ContainerID, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error)
+	GetContainerData(ctx context.Context, id ContainerID, hiveTrap hivev1alpha1.HiveTrap) (ContainerData, error)
 }
 
 var (
@@ -42,7 +64,7 @@ func init() {
 	}
 }
 
-func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatus, hivePolicy hivev1alpha1.HivePolicy) (ContainerData, error) {
+func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatus, hiveTrap hivev1alpha1.HiveTrap) (ContainerData, error) {
 
 	if !containerStatus.Ready {
 		return ContainerData{ShouldRequeue: true}, nil
@@ -64,7 +86,7 @@ func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatu
 		}
 	}
 
-	containerData, err := runtime.GetContainerData(ctx, containerId, hivePolicy)
+	containerData, err := runtime.GetContainerData(ctx, containerId, hiveTrap)
 	if err == nil {
 		containerData.ID = containerStatus.ContainerID
 		containerData.Name = containerStatus.Name

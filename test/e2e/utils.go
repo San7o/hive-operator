@@ -1,9 +1,22 @@
+/*
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
+
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+*/
+
+// SPDX-License-Identifier: GPL-2.0-only
+
 package e2e
 
 import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -40,7 +53,7 @@ func NewClient() (client.Client, error) {
 func CleanHivePolicies(ctx context.Context, c client.Client) error {
 
 	var hivePolicyList hivev1alpha1.HivePolicyList
-	if err := c.List(ctx, &hivePolicyList, client.InNamespace(namespaceName)); err != nil {
+	if err := c.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName)); err != nil {
 		return err
 	}
 
@@ -54,11 +67,13 @@ func CleanHivePolicies(ctx context.Context, c client.Client) error {
 	return nil
 }
 
-func CleanTestPods(ctx context.Context, c client.Client) error {
+func CleanTestPods(ctx context.Context, c client.Client, pods []corev1.Pod) error {
 
-	err := c.Delete(ctx, testPod)
-	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("Error Delete Test Pod %s: %w", testPod.Name, err)
+	for _, pod := range pods {
+		err := c.Delete(ctx, &pod)
+		if err != nil && !errors.IsNotFound(err) {
+			return fmt.Errorf("Error Delete Test Pod %s: %w", pod.Name, err)
+		}
 	}
 
 	return nil

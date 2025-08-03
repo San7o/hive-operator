@@ -37,6 +37,7 @@ spec:
           - --hive-policy-health-probe-bind-address=:8081
           - --hive-data-health-probe-bind-address=:8082
           - --hive-pod-health-probe-bind-address=:8083
+          # - --metrics-bind-address=0  # Disable metrics (default)
         image: hive-k8s-operator
         name: hive-k8s-operator
         securityContext:
@@ -48,6 +49,9 @@ spec:
             readOnly: false
           - name: proc
             mountPath: /host/proc
+            readOnly: true
+          - name: realproc
+            mountPath: /host/real/proc
             readOnly: true
         livenessProbe:
           httpGet:
@@ -78,4 +82,8 @@ spec:
         - name: proc
           hostPath:
             path: /proc
+            type: Directory
+        - name: realproc
+          hostPath:
+            path: /host/real/proc
             type: Directory

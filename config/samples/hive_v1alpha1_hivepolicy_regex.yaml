@@ -5,10 +5,13 @@ metadata:
     app.kubernetes.io/name: hive-operator
   finalizers:
     - hive-operator.com/finalizer
-  name: hive-sample-policy2
+  name: hive-sample-policy-regex
   namespace: hive-operator-system
 spec:
   traps:
-    - path: /etc/passwd
+    - path: /regex.txt
+      create: true
+      mode: 444
       matchAny:
         - namespace: default
+          container-name: ".*"

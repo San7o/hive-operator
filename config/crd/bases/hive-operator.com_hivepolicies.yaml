@@ -37,42 +37,54 @@ spec:
             type: object
           spec:
             properties:
-              callback:
-                description: Send an HTTP POST request to this endpoint if specified
-                type: string
-              create:
-                description: Whether to create the file or not if It cannot be found
-                type: boolean
-              match:
-                description: Filters the pods inside this namespace
-                properties:
-                  container-name:
-                    description: Filter container by name
-                    type: string
-                  ip:
-                    description: Filter pods by IP
-                    type: string
-                  matchLabels:
-                    additionalProperties:
+              traps:
+                description: List of traps
+                items:
+                  properties:
+                    callback:
+                      description: Send an HTTP POST request to this endpoint if specified
                       type: string
-                    description: Filter pods per label
-                    type: object
-                  namespace:
-                    description: Filter pods per namespace
-                    type: string
-                  pod:
-                    description: Filter pod by name
-                    type: string
-                type: object
-              mode:
-                description: |-
-                  The content of the file if It was created. This field
-                  is used only if Create is set to true
-                format: int32
-                type: integer
-              path:
-                description: Specifies which path to check
-                type: string
+                    create:
+                      description: Whether to create the file or not if It cannot
+                        be found
+                      type: boolean
+                    matchAny:
+                      description: Match any of the following items (logical OR)
+                      items:
+                        description: Match all the following optional filds (logical
+                          AND)
+                        properties:
+                          container-name:
+                            description: |-
+                              Filter container by name, can be a regex with syntax described at
+                              https://golang.org/s/re2syntax
+                            type: string
+                          ip:
+                            description: Filter pods by IP
+                            type: string
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: Filter pods per label
+                            type: object
+                          namespace:
+                            description: Filter pods per namespace
+                            type: string
+                          pod:
+                            description: Filter pod by name
+                            type: string
+                        type: object
+                      type: array
+                    mode:
+                      description: The permissions of the file to be created if create
+                        is set to ture
+                      format: int32
+                      type: integer
+                    path:
+                      description: Specifies which path to check
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true

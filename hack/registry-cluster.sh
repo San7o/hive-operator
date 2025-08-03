@@ -1,11 +1,22 @@
 #!/bin/sh
 
-# The registry can be used like this.
-# - First we’ll pull an image docker pull gcr.io/google-samples/hello-app:1.0
-# - Then we’ll tag the image to use the local registry docker tag gcr.io/google-samples/hello-app:1.0 localhost:5001/hello-app:1.0
-# - Then we’ll push it to the registry docker push localhost:5001/hello-app:1.0
-# - And now we can use the image kubectl create deployment hello-server --image=localhost:5001/hello-app:1.0
-# If you build your own image and tag it like localhost:5001/image:foo and then use it in kubernetes as localhost:5001/image:foo. And use it from inside of your cluster application as kind-registry:5000.
+######################################################################
+#
+# This script creates a local cluster using Kind and a local docker
+# registry accessible at localhost:5001
+#
+# The registry can be used like this:
+# - Suppose you have a docker container, for example:
+#       $ docker pull gcr.io/google-samples/hello-app:1.0
+# - Ne tag the image to use the local registry
+#       $ docker tag gcr.io/google-samples/hello-app:1.0 localhost:5001/hello-app:1.0
+# - Then we push it to the registry
+#       $ docker push localhost:5001/hello-app:1.0
+# - Finally now we can use the image
+#       $ kubectl create deployment hello-server --image=localhost:5001/hello-app:1.0
+# If you build your own image and tag it like `localhost:5001/image:foo`
+# you would use it in kubernetes as localhost:5001/image:foo or inside
+# your cluster application as kind-registry:5000.
 
 set -o errexit
 
@@ -19,8 +30,6 @@ if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true
 fi
 
 # 2. Create kind cluster with containerd registry config dir enabled
-# TODO: kind will eventually enable this by default and this patch will
-# be unnecessary.
 #
 # See:
 # https://github.com/kubernetes-sigs/kind/issues/2875
@@ -41,8 +50,29 @@ nodes:
     kind: KubeletConfiguration
     evictionHard:
       memory.available: "500Mi"
+  extraMounts:
+  - hostPath: /etc/localtime
+    containerPath: /etc/localtime
+  - hostPath: /etc/timezone
+    containerPath: /etc/timezone
+  - hostPath: /proc
+    containerPath: /host/real/proc
 - role: worker
+  extraMounts:
+    - hostPath: /etc/localtime
+      containerPath: /etc/localtime
+    - hostPath: /etc/timezone
+      containerPath: /etc/timezone
+    - hostPath: /proc
+      containerPath: /host/real/proc
 - role: worker
+  extraMounts:
+    - hostPath: /etc/localtime
+      containerPath: /etc/localtime
+    - hostPath: /etc/timezone
+      containerPath: /etc/timezone
+    - hostPath: /proc
+      containerPath: /host/real/proc
 EOF
 
 # 3. Add the registry config to the nodes

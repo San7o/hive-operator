@@ -26,7 +26,7 @@ the application operates.
     - [HivePolicy Resource](#hivepolicy-resource)
       - [Path](#hivepolicy-resource-path)
       - [Create](#hivepolicy-resource-create)
-      - [Match](#hivepolicy-resource-match)
+      - [MatchAny](#hivepolicy-resource-matchany)
     - [HivePolicy Reconciliation](#hivepolicy-reconciliation)
   - [Loader Controller](#loader-controller)
     - [Number of loader controllers](#number-of-loader-controller)
@@ -287,18 +287,19 @@ runtime and access the containers' filesystem in order to read the
 inode.
 
 Therefore, each discover controller instance will react to all the
-changes in the `HivePolicy` resource, and generate a `HiveData` resource
-for this specific kernel.
+changes in the `HivePolicy` resource, and generate one or multiple
+`HiveData` resource[s] for this specific kernel.
 
-As a consequence, any discover controller[s] may generate multiple
-`HiveData` resources from the same `HivePolicy`. This is intended by
-design since the policy may match multiple pods hence the relationship
-between a policy and a `HiveData` is *one to many*.
+Any discover controller[s] may generate multiple `HiveData` resources
+from the same `HivePolicy`. This is intended by design since the
+policy may match multiple pods hence the relationship between a policy
+and a `HiveData` is *one to many*.
 
 <a name="hivepolicy-resource"></a>
 ### HivePolicy Resource
 
-A `HivePolicy` resource looks like this:
+A `HivePolicy` resource contains a list of `HiveTrap`, and looks like
+this:
 
 ```yaml
 apiVersion: hive-operator.com/v1alpha1
@@ -306,26 +307,33 @@ kind: HivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: hive-operator
+  finalizers:
+    - hive-operator.com/finalizer
   name: hive-sample-policy
   namespace: hive-operator-system
 spec:
-  path: /secret.txt
-  create: true
-  mode: 444
-  callback: "http://my-callback.com/alerts"
-  match:
-    pod: nginx-pod
-    namespace: default
-    ip: 192.168.0.3
-    matchLabels:
-      security-level: high
+  traps:
+    - path: /secret.txt
+      create: true
+      mode: 444
+      callback: "http://my-callback.com/alerts"
+      matchAny:
+      - pod: nginx-pod
+        namespace: default
+        ip: 192.168.0.3
+        container-name: ".*"
+        matchLabels:
+          security-level: high
 ```
+
+Each `HiveTrap` could contains the following fields:
 
 <a name="hivepolicy-resource-path"></a>
 #### Path
 
-The operator only assumes the field `path` to be present. This is
-the path starting from the root `/` directory of the file to trace
+This is the only non-optional fiels. `path` is the filesystem path in
+a matched container starting from the root `/` directory of the file
+to trace.
 
 <a name="hivepolicy-resource-create"></a>
 #### Create
@@ -337,20 +345,42 @@ UNIX permissions given to the file to be created via the `mode` field.
 #### Callback
 
 If present, the operator will send json-encoded data to the callback
-via an HTTP post request.
+via an HTTP POST request.
 
-<a name="hivepolicy-resource-match"></a>
-#### Match
+<a name="hivepolicy-resource-matchany"></a>
+#### MatchAny
 
-The operator should assume that all the pods are selected unless
-optional filters are specified.  The optional filters are specified
-under the `match` field and are the following:
+The `matchAny` field contains a list of match blocks which will be
+matched with a logical OR. Each match block contains one or more match
+items matched with a logical AND, which include:
 
 - `pod`: the name of the pod
 - `namespace`: the namespace of the pod
-- `container-name`: the name of a container
+- `container-name`: a regex to match the name of containers
 - `ip`: the ipv4 of the pod
 - `matchLabels`: a list of labels and values
+
+At least one match block with one match item must be present.
+
+Examples:
+
+```yaml
+matchAny:
+- pod: nginx-pod
+  namespace: default
+```
+
+The above selects all the containers in pods with name `nginx-pod` AND
+those that are in the `default` namespace.
+
+```yaml
+matchAny:
+- pod: nginx-pod
+- namespace: default
+```
+
+The above matches all containers that are in pods named `nginx-pod` OR
+all the containers that are in the `default` namespace.
 
 <a name="hivepolicy-reconciliation"></a>
 ### HivePolicy Reconciliation
@@ -376,25 +406,28 @@ operation occurs on an `HivePolicy` resource (a "reconciliation"):
    the container runtime is necessary to know which PID corresponds to
    which container, and through the PID we can access the filesystem.
 
-3. Read all the `HivePolicies` to know which filters to apply for
-   selecting pods and which files to check.
+3. Read all the `HivePolicies` and their respective `HiveTraps`.
 
-4. For each policy, get the list of filtered containers, then check if
-   a `HiveData` resource already exists for each container.
+4. If an `HivePolicty` is about to be deleted (using finalizers),
+   trigger a reconciliation for `HiveData`, which will be responsible
+   for deleting any resource that does not belong anymore to a
+   `HiveTrap`.
+
+5. For each trap, get the list of matched containers, then check if
+   a `HiveData` resource already exists for each of them.
    
    If it does not exist:
    
-   - Read the inode by interacting with the contraller runtime.
+   - Read the inode of the file specified by the trap.
      
    - Create the `HiveData` with the information from the container,
-     the pod, the policy, and the inode.
+     the pod, the trap, the policy, and the inode.
+
+   - Compute an identifier of the policy and set it as a label in the
+     `HiveData`.
 
    If either the container or pod are not ready, requeue and restart
    from point 2.
-
-5. Trigger a reconciliation for `HiveData`, which will be responsible
-   for deleting any resource that does not belong anymore to a
-   `HivePolicy`.  This is necessary to handle deletion of `HivePolicies`.
 
 To summarize, if an `HivePolicy` is created / updated, the reconciliation
 will check if a `HiveData` was already present, or create it otherwise.
@@ -436,35 +469,36 @@ running kernel.
 
 The `HiveData` resource is used to communicate information between the
 discover and the loader controller. The relationship between an
-`HivePolicy` and an `HiveData` is one to many, where each `HiveData`
-must have an `HivePolicy`.
+`HiveTrap` and an `HiveData` is one to many, where each `HiveData`
+must have an `HiveTrap`.
 
 The loader uses information from this resource to instruct the eBPF
 program to filter certain inodes.
 
 The schema of the resource looks like the following:
 
-```bash
+```yaml
 apiVersion: hive-operator.com/v1alpha1
 kind: HiveData
 metadata:
   annotations:
     callback: ""
-    container_id: containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e
+    container_id: containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5
     container_name: nginx
     hive_policy_name: hive-sample-policy
-    match-label-security-level: high
     namespace: default
+    node_name: hive-worker2
     path: /secret.txt
-    pod_ip: 10.244.2.2
+    pod_ip: 10.244.1.2
     pod_name: nginx-pod
-    node_hostname: nginx
   creationTimestamp: "2025-07-25T08:06:12Z"
   generation: 1
   name: hive-data-nginx-pod-default-13667586
   namespace: hive-operator-system
   resourceVersion: "23395"
   uid: 788bcb67-a9de-480d-a179-e40234116459
+  labels:
+      trap-id: c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee
 spec:
   inode-no: 13667586
   kernel-id: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
@@ -476,8 +510,11 @@ The fields, all under the `spec` one, are the following:
 - `kernel-id`: An unique identifier of a running kernel, to discriminate
   which loader controller should handle this `HiveData`.
 
-The annotations are used to generate the `HiveAlert` later when an
-access is detected by the eBPF program.
+The annotations are used as additional information for the `HiveAlert`
+when an access is detected by the eBPF program.
+
+The `trap-id` is used to identify which `HiveTrap` generated this
+`HiveData`.
 
 <a name="hivedata-reconciliation"></a>
 ### HiveData Reconciliation
@@ -485,17 +522,17 @@ access is detected by the eBPF program.
 Upon CRUD changes of the `HiveData` resource, the controller does the
 following:
 
-1. Fetch the `HivePolicy` and `HiveData` resources in the cluster
+1. Fetch the `HivePolicy` and `HiveData` resources in the cluster.
 
 2. Check if each `HiveData` (referring to this kernel id) does have a
-   corresponding `HivePolicy`.
+   corresponding `HiveTrap` from an `HivePolicy`.
   
   If it does, then we update the eBPF map with the information from
-  the `HiveData`. It it doesn't, then the `HivePolicy` has been eliminated
-  and the `HiveData` should be deleted.
+  the `HiveData`. It it doesn't, then the `HiveTrap` has been
+  eliminated and the `HiveData` should be deleted.
   
-3. Fill the rest of the eBPF map with zeros so that we do not leave old
-   values that where there before.
+3. Fill the rest of the eBPF map with zeros so that we do not leave
+   old values that where there before.
 
 <a name="ebpf-program"></a>
 ## eBPF program
@@ -525,28 +562,32 @@ to generate an `HiveAlert`. An example alert is the following:
 
 ```
 {
-  "timestamp": "2025-07-25T08:14:22Z",
+  "timestamp": "2025-08-02T16:51:19Z",
   "hive_policy_name": "hive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
-    "inode": 13667586,
-    "mask": 34,
-    "kernel_id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71"
+    "inode": 16256084,
+    "mask": 36,
+    "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
   },
   "pod": {
     "name": "nginx-pod",
     "namespace": "default",
-    "contianer": {
-      "id": "containerd://9d7df722223a4ad7f67f2afef5fbc0e263e23c7921011497f445e657fbced97e",
+    "container": {
+      "id": "containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c",
       "name": "nginx"
     }
   },
   "node": {
-    "name": "hive-worker2"
+    "name": "hive-worker"
   },
   "process": {
-    "pid": 61116,
-    "tgid": 61164
+    "pid": 176928,
+    "tgid": 176928,
+    "uid": 0,
+    "gid": 0,
+    "binary": "cat",
+    "cwd": "/"
   }
 }
 ```
@@ -564,13 +605,14 @@ termination.
 - termination: upon termination, the controller should check if
   each `HiveData` refers to an existing pod. If it doesn't, then
   that resource should be eliminated.
+  
 Failures are treated as terminations.
 
 The implementation of said logic is achieved through a reconcile
 function like other controllers.
 
-Since Pod are global resources accessed by anyone, we need only one
-pod controller in the cluster. This is the sole reason why we need
+Since Pods are global resources accessed from anywhere, we need only
+one pod controller in the cluster. This is the sole reason why we need
 a separate controller from the others: there is a discover controller
 on each system, a loader controller on each running kernel, and a
 single pod controller per cluster.

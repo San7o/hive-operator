@@ -47,40 +47,46 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 
 	hiveDataList := &hivev1alpha1.HiveDataList{}
 	err := r.Client.List(ctx, hiveDataList)
-	if err != nil {
+	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get HiveData resource: %w", err)
 	}
 	podList := &corev1.PodList{}
 	err = r.Client.List(ctx, podList)
-	if err != nil {
+	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get PodList resource: %w", err)
 	}
 
+Data:
 	for _, hiveData := range hiveDataList.Items {
+
 		if hiveData.Spec.KernelID != KernelID {
 			// We are only concearned about the hiveData on this machine,
 			// to avoid conflicts.
-			continue
+			continue Data
 		}
 		found := false
+
+	Pod:
 		for _, pod := range podList.Items {
 			if hiveData.Annotations["pod_name"] == pod.Name &&
 				hiveData.Annotations["namespace"] == pod.Namespace &&
+				hiveData.Annotations["pod_ip"] == pod.Status.PodIPs[0].IP &&
 				// If the pod has terminated or has failed, we want to
 				// remove the HiveData so that it will be regenerated
-				// later duing the reconciliation of HivePolicy. This
+				// later during the reconciliation of HivePolicy. This
 				// is needed because the inode number or kernel id may
 				// change when a pod gets restarted / rescheduled.
 				pod.Status.Phase != corev1.PodSucceeded &&
 				pod.Status.Phase != corev1.PodFailed {
 				found = true
-				break
+				break Pod
 			}
 		}
 
 		if !found {
 			if err := r.Client.Delete(ctx, &hiveData); err != nil {
-				return reconcile.Result{}, fmt.Errorf("Reconcile Error Deleting HiveData after pod event: %w", err)
+				log.Error(err, fmt.Sprintf("Reconcile Error Deleting HiveData %s after pod event", hiveData.Name))
+				continue Data
 			}
 		}
 	}
@@ -90,17 +96,19 @@ func (r *HivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 	// Reconciliation should loop until all the pods are ready.
 	hivePolicyList := &hivev1alpha1.HivePolicyList{}
 	err = r.Client.List(ctx, hivePolicyList)
-	if err != nil {
+	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get Hive Policy resource: %w", err)
 	}
 	if len(hivePolicyList.Items) != 0 {
-		orig := hivePolicyList.Items[0].DeepCopy()
-		if hivePolicyList.Items[0].Annotations == nil {
-			hivePolicyList.Items[0].Annotations = map[string]string{}
+		hivePolicy := hivePolicyList.Items[0]
+		orig := hivePolicy.DeepCopy()
+		if hivePolicy.Annotations == nil {
+			hivePolicy.Annotations = map[string]string{}
 		}
-		hivePolicyList.Items[0].Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
-		if err = r.Patch(ctx, &hivePolicyList.Items[0], client.MergeFrom(orig)); err != nil {
-			return reconcile.Result{}, fmt.Errorf("Reconcile Error Patch: %w", err)
+		hivePolicy.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
+		if err = r.Patch(ctx, &hivePolicy, client.MergeFrom(orig)); err != nil {
+			log.Error(err, fmt.Sprintf("Reconcile Error Patch HivePolicy %s", hivePolicy.Name))
+			return ctrl.Result{}, nil
 		}
 	}
 	return reconcile.Result{}, nil

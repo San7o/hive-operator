@@ -1,3 +1,15 @@
+/*
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
+
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+*/
+
+// SPDX-License-Identifier: GPL-2.0-only
+
 package v1alpha1
 
 // Information about the container
@@ -17,7 +29,7 @@ type PodMetadata struct {
 	// Pod ip
 	Ip string `json:"ip,omitempty"`
 	// Information about the container
-	Container ContainerMetadata `json:"contianer,omitempty"`
+	Container ContainerMetadata `json:"container,omitempty"`
 }
 
 // Information about the node
@@ -29,19 +41,17 @@ type NodeMetadata struct {
 // Information related to the process that accessed the file
 type ProcessMetadata struct {
 	// Process ID
-	Pid int32 `json:"pid,omitempty"`
+	Pid int32 `json:"pid"`
 	// Thread group ID
-	Tgid uint32 `json:"tgid,omitempty"`
+	Tgid uint32 `json:"tgid"`
 	// User ID
-	Uid uint32 `json:"uid,omitempty"`
+	Uid uint32 `json:"uid"`
 	// Group ID
-	Gid uint32 `json:"gid,omitempty"`
+	Gid uint32 `json:"gid"`
+	// Process binary
+	Binary string `json:"binary,omitempty"`
 	// Current Working Directory
-	Cwd string `json:"cwd,omitempty"` // TODO
-	// Binary executable
-	Binary string `json:"binary,omitempty"` // TODO
-	// Arguments to binary
-	Arguments string `json:"arguments,omitempty"` // TODO
+	Cwd string `json:"cwd"`
 }
 
 // Additional information
