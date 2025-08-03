@@ -1,7 +1,8 @@
 # Simple workflow for deploying static content to GitHub Pages
 name: Deploy static content to Pages
 
-on:  push:
+on:
+  push:
     branches: ["hive-next"]
 
   # Allows you to run this workflow manually from the Actions tab
