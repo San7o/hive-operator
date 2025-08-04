@@ -89,6 +89,18 @@ To deploy the operator, simply run:
 kubectl apply -f https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml
 ```
 
+## Supported Environments
+
+
+| Component           | Supported Version(s)      | Notes                                                  |
+|---------------------|---------------------------|--------------------------------------------------------|
+| Kubernetes          | v1.33.x                   | Officially tested.                                     |
+| Container Runtime   | containerd                | Only `containerd` is supported at the moment.          |
+| Go (for dev build)  | 1.24                      | Required for building the operator.                    |
+| Linux Version       | 6.14                      | Tested on linux 6.14.                                  |
+| Architectures       | x86_64                    | The eBPf program works only on x86_64.                 |
+
+
 # Development
 
 The [DESIGN](./docs/DESIGN.md) document contains all the information
@@ -104,9 +116,3 @@ operator. To run a local cluster, take a look at
 
 The [status](./docs/status.org) contains information about the current
 status of development and future work.
-
-## Current Limitations
-
-Currently the only container runtime supported is containerd. The code
-already uses an abstraction over container runtimes to easily
-integrate more runtimes.

@@ -13,12 +13,12 @@ the application operates.
 - [Overview](#overview)
   - [Application Description](#description)
   - [Components](#components)
+  - [Overview of eBPF](#ebpf-overview)
+  - [Overview of Kubernetes](#kubernetes-overview)
   - [How to monitor accesses to files](#accesses)
   - [How to uniquely identify a file](#identify)
   - [Kubernetes makes things harder](#complications)
   - [Example](#example)
-  - [Overview of eBPF](#ebpf-overview)
-  - [Overview of Kubernetes](#kubernetes-overview)
 - [Detailed description](#detailed-description)
   - [Design Considerations](#design-considerations)
   - [Discover Controller](#discover-controller)
@@ -36,25 +36,28 @@ the application operates.
   - [Pod Controller](#pod-controller)
 
 <a name="overview"></a>
+
 # Overview
 
 This section contains a brief description of how the application
 works, Its parts and how they interact with each other.
 
 <a name="description"></a>
+
 ## Application Description
 
-Hive is a kubernetes-native eBPF-based file access monitoring
+Hive is a kubernetes-native eBPF-powered file access monitoring
 tool. The user is able to select which file to monitor based on the
 path and filters on pods / containers. When one of the monitored files
-is accessed (read from, written to...), the application will inform
+is accessed (read from, written to..), the application will inform
 the user by generating an alert.
 
-**User story**: I, as the user of the application, want to log
-all the `processes` that access the file `/etc/shadow` on pods
-that have the `security=high` label.
+- **User story**: I, as the user of the application, want to log all
+  the `processes` that access the file `/etc/shadow` on all containers
+  in pods that have the `security=high` label.
 
 <a name="components"></a>
+
 ## Components
 
 The application is implemented as a single kubernetes operator and is
@@ -76,132 +79,45 @@ The components are:
 A detailed description of the aforementioned components is given later
 in this document.
 
-<a name="accesses"></a>
-## How to monitor accesses to files
-
-Briefly, the end goal is to log when a file is accessed, that is, when
-an actor interacts with It by opening, closing, writing, appending and
-so on.
-
-The application uses eBPF programs to monitor accesses. More
-specifically, the eBPF program gets executed when a certain kernel
-function is called through a kprobe, and It will check if said
-function interacts with any of the files specified by the user. If
-that is the case, It should log the information with additional
-metadata such as which PID called the function.
-
-The information on which files to check is provided from userspace to
-the eBPF program via a map, which is a shared array between userspace
-and kernelspace (in both directions).
-
-If you are new to eBPF, you can think of them as simple "trusted"
-programs that run inside the kernel. They can access some
-internal kernel information that would only be available through
-kernel modules which are more powerful and, therefore, dangerous.
-
-The eBPF program needs to be loaded and updated when the user changes
-the monitoring policy (`HivePolicy`) or the cluster changes / updates
-its topology. Rherefore a loader and an updater are necessary, which
-are both done by the *loader controller*, as well as capturing
-information from the eBPF program and generating alerts
-(`HiveAlert`). A more satisfying description will be given later.
-
-<a name="identify"></a>
-## How to uniquely identify a file
-
-To identify a particular file, we can use Its path name. There cannot
-be two different files with the same path name, however you can create
-a symlink to a file: the path of the symlink will be different from
-the path of the original file but the actual data will be the same.
-
-To circumvent this, we are using the inode number instead.  Each file
-has an inode number that is unique in the filesystem that he lives
-in. This is how the kernel internally identifies data.
-
-However, there is still an edge case where different filesystems may
-have different files with the same inode number. This happens because
-the inode number is an identifier in a filesystem, but It has no
-meaning on another filesystem and may aswell point to a different
-file.
-
-To solve this problem, we can save both the inode number and the
-device id, which will be different for each filesystem unless the
-filesystem has been bind mounted. In this last case, from the user
-perspective, the binded filesystem and the filesystem onto which the
-binded one is mounted have different inode numbers so this is enough.
-
-Yet, this does not really hold for all filesystem, namely BTRFS.
-Indeed BTRFS may choose to have multiple internal device ids for the
-user filesystem. When `stat` is called, a call to a BTRFS function is
-done, which we cannot do in an eBPF program therefore we cannot access
-the userspace device id number. I got this issue during testing and It
-does not appear to be a solution, therefore we will fallback to only
-inode numbers.
-
-In our application, the logic that is responsible to get the inode
-number is the *discover controller*. The loader controller and the
-discover controller share information through a `HiveData` resource.
-
-<a name="complications"></a>
-## Kubernetes makes things harder
-
-Now, imagine all that we have just said, but inside containers in a
-very dynamic environment where things may change and break at any
-time.  There may be multiple operating systems so we need to load one
-eBPF program for each one of them but not more than one on the same
-kernel. We need to access inode numbers of files inside containers,
-pods can be scheduled in any node, and so on. All of this needs to
-be handled carefully, increasing the complexity of the design.
-
-<a name="example"></a>
-## Example
-
-An example deployment would look like the following:
-
-![design-image](./images/overall-design.png)
-
-On the picture, notice that Kernel #2 only has one loader. Each kernel
-has only one loader, which is chosen through elections. Instead, the
-discover controller is active in each node because It has to find
-information about other pods that may be scheduled in each node.
-There is only one pod controller on the entire cluster. The control
-pane does not have an operator normally, but can configure It to run
-pods like a normal node; if this is enabled, the operator will be
-scheduled to this node too.
 
 <a name="ebpf-overview"></a>
+
 ## Overview of eBPF
 
 eBPF programs are programs that run inside the kernel in a controlled
-environment. They can be hooked to traditional tracing systems such as
+environment. There are varous types of eBPF programs, which are
+executed in different contexes and moments, for example some program
+types can be hooked to existing tracing infrastructure such as
 tracepoints, perf events and kprobes, and they will be executed when
-the hook is triggered. An eBPF program has its own [instruction
-set](https://www.ietf.org/archive/id/draft-thaler-bpf-isa-00.html),
-programs are limited to having at most 512 Bytes of stack size and 1
-million instruction, unbounded loops are not allowed, functions can
-have up to 5 arguments and only certain functions (helpers or
-kfunctions) can be called.  Note that those (and many other)
-limitations are changing rapidly and the kernel verifier is getting
-always smarter, allowing for softer limits.
+the hook is triggered. An eBPF program uses its own [instruction
+set](https://www.ietf.org/archive/id/draft-thaler-bpf-isa-00.html) and
+the kernel will either interpret it (less common) or JIT compile it to
+native machine code after a verification step where several contraints
+are asserted. For example, eBPF program can have at most 512 Bytes of
+stack size and 1 million instruction, unbounded loops are not allowed
+and only certain functions (helpers or kfunctions) can be called.
+Note that those (and many other) limitations are changing rapidly and
+the kernel verifier is getting always smarter, allowing for softer
+limits.
 
 Usually you do not write bytecode directly; instead you let a
 compiler generate it for you. Traditionally, [BCC](https://github.com/iovisor/bcc)
 is used to compile said programs, however, both LLVM and GCC have caught
 up and now provide an eBPF target.
 
-A fundamental change to the eBPF ecosystem was made with the
-introduction of the Bpf Type Format (BTF) which enables CO-RE (Compile
-Once, Run Everywhere). Using BTF will enable the program to work on
-any kernel version. User space provides eBPF programs to the kernel
-via the `bpf(2)` syscall, which will verify that the program is
-correct (enforcing the limitations) and will proceed to JIT compile
-it to native instructions.
+To enable loading compiled eBPF programs on different versions of the
+linux kernel, Bpf Type Format (BTF) was introduced, providing CO-RE
+(Compile Once, Run Everywhere) compilation. User space provides eBPF
+programs to the kernel via the `bpf(2)` syscall, which will verify
+that the program is correct (enforcing the limitations) and will
+proceed to JIT compile it to native instructions.
 
-People have been using eBPF mostly for tracing purposes. However, in
-recent times people are exploring its usage more broadly as the
-programs are becoming more capable.
+eBPF is particularly useful for monitoring and tracig uses cases, and
+recently it has been used to extend the kernel in more meaningful
+ways such as customized scheduling or memory management.
 
 <a name="kubernetes-overview"></a>
+
 ## Overview of Kubernetes
 
 Kubernetes is a declarative container management software. The user
@@ -216,21 +132,123 @@ on the scheduling and setting up of containers in a physical or
 logical cluster.
 
 Each unit on the cluster is called a *node*. There are two kinds of
-nodes: a worker node and the control pane. The former will run the
-user's applications and services through contianers grouped in *pods*,
-the latter forms the backbone of the kubernetes cluster and is
-responsible for central management of the workers. The most important
-components are the api server (which the kubelet use to communicate
-with the control pane) etcd (a highly-available key-value store),
-scheduler and a controller manager which manages all of the above.
+nodes: a *worker node* and the *control plane*. The former will run
+applications and services through contianers grouped in *pods*, the
+latter forms the backbone of the kubernetes cluster and is responsible
+for central management of the workers. The most important components
+are the api server (which the kubelet use to communicate with the
+control pane) etcd (a highly-available key-value store), scheduler and
+a controller manager which manages all of the above.
 
-A common pattern found in kubernetes is the Operator, which is a
-custom controller that manages some resources called *custom resources*
-and extends the behavior of the cluster. Note that the same operator
-may have multiple controllers for different custom resources, as we
-will see later.
+A common pattern found in kubernetes is the *Operator*, which is a
+custom controller that manages some *custom resources* hereby
+extending the behavior of the cluster. Note that the same operator may
+have multiple controllers for different custom resources, as we will
+see later.
+
+<a name="accesses"></a>
+
+## How to monitor accesses to files
+
+Briefly, the end goal is to log when a file is accessed, that is, when
+an actor interacts with It by opening, closing, writing, appending and
+so on.
+
+The application uses eBPF programs to monitor accesses. More
+specifically, the eBPF program gets executed when a certain kernel
+function is called through a kprobe, and It will check if said
+function interacts with any of the files specified by the user. If
+that is the case, It should log the information with additional
+metadata such as which PID called the function. The choice of what
+function to hook to is crucial for the correct behaviour of the
+application.
+
+The information of which files to check is provided from userspace to
+the eBPF program via a map, which is a shared array between userspace
+and kernelspace (can be read from and written to in both cases).
+
+You can think of eBPF programs as simple programs that run inside the
+kernel with some limitations to ensure certain safety measures. They
+can access some internal kernel structures that would only be
+available through kernel modules which are more powerful and,
+therefore, dangerous.
+
+The eBPF program needs to be loaded and updated when the user changes
+the monitoring policy (`HivePolicy`) or the cluster changes / updates
+its topology. Therefore a loader and an updater are necessary, which
+are both done by the *loader controller*, as well as capturing
+information from the eBPF program and generating alerts
+(`HiveAlert`). A more satisfying description will be given later.
+
+<a name="identify"></a>
+
+## How to uniquely identify a file
+
+To identify a particular file, we can use its path name. There cannot
+be two different files with the same path name, however you can create
+a symlink to a file: the path of the symlink will be different from
+the path of the original file but the actual data will be the same.
+
+To circumvent this, we are using the inode number instead.  Each file
+has an inode number that is unique in the filesystem that he lives
+in. This is how the kernel internally identifies data.
+
+However, there is still an edge case where different filesystems may
+have different files with the same inode number. This happens because
+the inode number is an identifier in a filesystem, but It has no
+meaning on another filesystem and may aswell point to a different
+file.
+
+To solve this problem, we can use both the inode number and the device
+id as unique identifiers. Even if a filesystem is binded onto another,
+from the user perspective the binded filesystem and the filesystem
+onto which the binded one is mounted have different inode numbers so
+the key remains unique.
+
+Yet, fome filesystems may handle things differently, namely BTRFS.
+Indeed BTRFS may choose to have multiple internal device ids for the
+filesystem. When `stat` is called, a call to a BTRFS function is done,
+which we cannot do in an eBPF program therefore we cannot access the
+userspace device id number. I got this issue during testing and there
+appears not to be a solution, therefore we will fallback to only inode
+numbers.
+
+In our application, the entity that is responsible to get the inode
+number is the *discover controller*. The loader controller and the
+discover controller share information through a `HiveData` resource.
+
+<a name="complications"></a>
+
+## Kubernetes makes things harder
+
+Now, imagine all that we have just said, but inside containers in a
+very dynamic environment where things may change and break at any
+time.  There may be multiple operating systems on the same cluster so
+we need to load one eBPF program for each one of them, but not more
+than one on the same kernel to save resources. We need to access inode
+numbers of files inside containers, pods can be scheduled in any node,
+and so on. All of this needs to be handled carefully, increasing the
+complexity of the design.
+
+<a name="example"></a>
+
+## Example
+
+An example deployment would look like the following:
+
+![design-image](./docs/images/overall-design.png)
+
+On the picture, notice that Kernel #2 only has one loader. Each kernel
+has only one loader, which is chosen through leader
+elections. Instead, the discover controller is active in each node
+because It has to find information about other pods that may be
+scheduled in any node.  There is only one pod controller on the entire
+cluster. The control plane usually does not run pods, but it can be
+configured It to do like a normal node; if this is the case, the
+operator will be scheduled to this node too.
 
 <a name="detailed-description"></a>
+
 # Detailed description
 
 This section describes the application in more depth. It is
@@ -238,9 +256,11 @@ recommended to read the overview section first in order to get a
 general understanding of the application before reading the details.
 
 <a name="design-considerations"></a>
+
 ## Design Considerations
 
 The design of this application was conducted considering the following:
+
 - the cluster runs on one or more linux operating systems
 - one operating system may host one or more nodes (for example, a
   cluster with [kind](https://kind.sigs.k8s.io/))
@@ -251,6 +271,7 @@ The design of this application was conducted considering the following:
 The different components are now described below:
 
 <a name="discover-controller"></a>
+
 ## Discover Controller
 
 The *discover* controller aka `HivePolicy` controller is responsible for
@@ -269,22 +290,23 @@ the following:
 
 - reacting to CRUD operations on `HivePolicy` resource, which will:
 
-  - Fetch files' information such as the inode number from the
+  - Fetch the information of a file such as the inode number from the
     matched contianers, hence the name *discover*
   - Create `HiveData` resources with the previously fetched information
 
 The `HiveData` resource is specified later in [HiveData resource](#hivedata-resource).
 
-Note that when referring to "inodes" in this document we are technically
+Note that when referring to inodes in this document we are technically
 referring to the inode number.
 
 <a name="number-of-discover-controller"></a>
+
 ### Number of discover controllers
 
 There must be one discover controller for each node. This is necessary
 because the controller has to interface directly to the container
-runtime and access the containers' filesystem in order to read the
-inode.
+runtime and access the filesystem of the container in order to read
+the inode.
 
 Therefore, each discover controller instance will react to all the
 changes in the `HivePolicy` resource, and generate one or multiple
@@ -296,6 +318,7 @@ policy may match multiple pods hence the relationship between a policy
 and a `HiveData` is *one to many*.
 
 <a name="hivepolicy-resource"></a>
+
 ### HivePolicy Resource
 
 A `HivePolicy` resource contains a list of `HiveTrap`, and looks like
@@ -326,9 +349,10 @@ spec:
           security-level: high
 ```
 
-Each `HiveTrap` could contains the following fields:
+Each `HiveTrap` can contain the following fields:
 
 <a name="hivepolicy-resource-path"></a>
+
 #### Path
 
 This is the only non-optional fiels. `path` is the filesystem path in
@@ -336,6 +360,7 @@ a matched container starting from the root `/` directory of the file
 to trace.
 
 <a name="hivepolicy-resource-create"></a>
+
 #### Create
 
 The user may decide to create the file if not present by specifying
@@ -348,6 +373,7 @@ If present, the operator will send json-encoded data to the callback
 via an HTTP POST request.
 
 <a name="hivepolicy-resource-matchany"></a>
+
 #### MatchAny
 
 The `matchAny` field contains a list of match blocks which will be
@@ -383,6 +409,7 @@ The above matches all containers that are in pods named `nginx-pod` OR
 all the containers that are in the `default` namespace.
 
 <a name="hivepolicy-reconciliation"></a>
+
 ### HivePolicy Reconciliation
 
 The controller performs the following actions in sequence when a CRUD
@@ -435,6 +462,7 @@ If an `HivePolicy` is deleted, we delegate the responsibility of deleting
 old `HiveData` to the `HiveData` reconciliation.
 
 <a name="loader-controller"></a>
+
 ## Loader Controller
 
 The loader controller aka `HiveData` controller is responsible for the
@@ -453,6 +481,7 @@ Upon rescheduling of the operator, the eBPF program needs to be
 reloaded (closed and loaded again).
 
 <a name="number-of-loader-controllers"></a>
+
 ### Number of loader controllers
 
 There must be one loader controller for each running kernel. This is
@@ -465,6 +494,7 @@ identifier and then run elections so that only one node is elected per
 running kernel.
 
 <a name="hivedata-resource"></a>
+
 ### HiveData Resource
 
 The `HiveData` resource is used to communicate information between the
@@ -504,7 +534,8 @@ spec:
   kernel-id: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
 ```
 
-The fields, all under the `spec` one, are the following:
+The fields under `spec` are:
+
 - `inode-no`: The inode number of the file to trace, needed by the
   eBPF program.
 - `kernel-id`: An unique identifier of a running kernel, to discriminate
@@ -517,6 +548,7 @@ The `trap-id` is used to identify which `HiveTrap` generated this
 `HiveData`.
 
 <a name="hivedata-reconciliation"></a>
+
 ### HiveData Reconciliation
 
 Upon CRUD changes of the `HiveData` resource, the controller does the
@@ -528,13 +560,14 @@ following:
    corresponding `HiveTrap` from an `HivePolicy`.
   
   If it does, then we update the eBPF map with the information from
-  the `HiveData`. It it doesn't, then the `HiveTrap` has been
+  the `HiveData`. It it does not, then the `HiveTrap` has been
   eliminated and the `HiveData` should be deleted.
   
 3. Fill the rest of the eBPF map with zeros so that we do not leave
    old values that where there before.
 
 <a name="ebpf-program"></a>
+
 ## eBPF program
 
 To check whether an actor has interacted with a file, the eBPF program
@@ -560,7 +593,7 @@ only once and even shipped with the binaries of the application.
 The information from the ring buffer will be processed by the loader
 to generate an `HiveAlert`. An example alert is the following:
 
-```
+```json
 {
   "timestamp": "2025-08-02T16:51:19Z",
   "hive_policy_name": "hive-sample-policy",
@@ -593,6 +626,7 @@ to generate an `HiveAlert`. An example alert is the following:
 ```
 
 <a name="pod-controller"></a>
+
 ## Pod Controller
 
 When a pod is changed, we want to update both `HiveData` and the eBPF
@@ -603,7 +637,7 @@ termination.
   reconcile request for `HivePolicy` so that new `HiveData` will
   be generated for the new pod.
 - termination: upon termination, the controller should check if
-  each `HiveData` refers to an existing pod. If it doesn't, then
+  each `HiveData` refers to an existing pod. If it does not, then
   that resource should be eliminated.
   
 Failures are treated as terminations.

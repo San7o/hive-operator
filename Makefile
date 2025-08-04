@@ -406,3 +406,59 @@ test-tmux: ## Run a tmux session to debug the eBPF program
 .PHONY: objdump
 objdump: ## Dump eBPF bytecode
 	llvm-objdump -d -S internal/controller/ebpf/bpf_bpfeb.o
+
+DOCS_DIR := docs
+HTML_DIR := docs/html
+DOCS := ${wildcard ${DOCS_DIR}/*.md}
+HTML := ${patsubst ${DOCS_DIR}/%.md, ${HTML_DIR}/%.html, ${DOCS}}
+HTML_INTRO := hack/website/intro.html
+HTML_OUTRO := hack/website/outro.html
+CSS_FILE := hack/website/simple.css
+INDEX_FILE := hack/website/index.html
+TMP_FILE := /tmp/padoc-out.html
+HIGHLIGHT_STYLE := tango
+PANDOC_FLAGS := --highlight-style ${HIGHLIGHT_STYLE}
+
+html: ${HTML} index css favicon labs callback ## Generate the html documentation
+
+favicon: hack/website/favicon.ico
+	cp hack/website/favicon.ico ${HTML_DIR}
+
+css: ${CSS_FILE}
+	cp hack/website/syntax.css ${HTML_DIR}
+	cp ${CSS_FILE} ${HTML_DIR}
+
+index: ${INDEX_FILE} ${HTML_INTRO} ${HTML_OUTRO} 
+	pandoc ${INDEX_FILE} -o ${TMP_FILE} ${PANDOC_FLAGS}
+	cp ${HTML_INTRO} ${HTML_DIR}/index.html
+	cat ${TMP_FILE} >> ${HTML_DIR}/index.html
+	cat ${HTML_OUTRO} >> ${HTML_DIR}/index.html
+
+labs: k8s-lab/README.md ${HTML_INTRO} ${HTML_OUTRO} 
+	pandoc k8s-lab/README.md -o ${TMP_FILE} ${PANDOC_FLAGS}
+	cp ${HTML_INTRO} ${HTML_DIR}/k8s-lab.html
+	cat ${TMP_FILE} >> ${HTML_DIR}/k8s-lab.html
+	cat ${HTML_OUTRO} >> ${HTML_DIR}/k8s-lab.html
+
+.PHONY: callback
+callback: callback/README.md ${HTML_INTRO} ${HTML_OUTRO} 
+	pandoc callback/README.md -o ${TMP_FILE} ${PANDOC_FLAGS}
+	cp ${HTML_INTRO} ${HTML_DIR}/callback.html
+	cat ${TMP_FILE} >> ${HTML_DIR}/callback.html
+	cat ${HTML_OUTRO} >> ${HTML_DIR}/callback.html
+
+$(HTML_DIR)/%.html: ${DOCS_DIR}/%.md  ${HTML_INTRO} ${HTML_OUTRO} | ${HTML_DIR}
+	pandoc $< -o ${TMP_FILE} ${PANDOC_FLAGS}
+	cp ${HTML_INTRO} $@
+	cat ${TMP_FILE} >> $@
+	cat ${HTML_OUTRO} >> $@
+	sed -i 's/\.md/\.html/g' $@
+	sed -i 's/docs\/images/images/g' $@
+	sed -i 's/..\/config/https:\/\/github.com\/San7o\/hive-operator\/tree\/main\/config/g' $@
+	sed -i 's/..\/hack/https:\/\/github.com\/San7o\/hive-operator\/tree\/main\/hack/g' $@
+
+$(HTML_DIR):
+	mkdir -p ${HTML_DIR}
+
+clean-html:  ## Remove the html docs directory
+	rm ${HTML_DIR}/*.html

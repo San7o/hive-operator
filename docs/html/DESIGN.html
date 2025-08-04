@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="simple.css" />
+  <link rel="stylesheet" type="text/css" href="syntax.css" />
+</head>
+<body>
+  <div class="topnav">
+    <a href="./index.html">Hive</a>
+    <a href="./DESIGN.html">Design</a>
+    <a href="./USAGE.html">Usage</a>
+    <a href="./DEVELOPMENT.html">Development</a>
+    <a href="./EBPF-TESTING.html">eBPF Testing</a>
+    <a href="./k8s-lab.html">k8s lab</a>
+    <a href="./callback.html">callback</a>
+    <a href="https://github.com/San7o/hive-operator">Github</a>
+  </div> 
+<h1 id="design-document">Design Document</h1>
+<p>This document contains all the information necessary to understand
+the application and Its implementation. It explains the design decisions
+and how the different components interact with one another and with
+other systems.</p>
+<p>After reading this document, you will gain a good understanding of
+how the application operates.</p>
+<h1 id="index">Index</h1>
+<ul>
+<li><a href="#overview">Overview</a>
+<ul>
+<li><a href="#description">Application Description</a></li>
+<li><a href="#components">Components</a></li>
+<li><a href="#ebpf-overview">Overview of eBPF</a></li>
+<li><a href="#kubernetes-overview">Overview of Kubernetes</a></li>
+<li><a href="#accesses">How to monitor accesses to files</a></li>
+<li><a href="#identify">How to uniquely identify a file</a></li>
+<li><a href="#complications">Kubernetes makes things harder</a></li>
+<li><a href="#example">Example</a></li>
+</ul></li>
+<li><a href="#detailed-description">Detailed description</a>
+<ul>
+<li><a href="#design-considerations">Design Considerations</a></li>
+<li><a href="#discover-controller">Discover Controller</a>
+<ul>
+<li><a href="#number-of-discover-controller">Number of discover
+controllers</a></li>
+<li><a href="#hivepolicy-resource">HivePolicy Resource</a>
+<ul>
+<li><a href="#hivepolicy-resource-path">Path</a></li>
+<li><a href="#hivepolicy-resource-create">Create</a></li>
+<li><a href="#hivepolicy-resource-matchany">MatchAny</a></li>
+</ul></li>
+<li><a href="#hivepolicy-reconciliation">HivePolicy
+Reconciliation</a></li>
+</ul></li>
+<li><a href="#loader-controller">Loader Controller</a>
+<ul>
+<li><a href="#number-of-loader-controller">Number of loader
+controllers</a></li>
+<li><a href="#hivedata-resource">HiveData Resource</a></li>
+<li><a href="#hivedata-reconciliation">HiveData Reconciliation</a></li>
+</ul></li>
+<li><a href="#ebpf-program">eBPF program</a></li>
+<li><a href="#pod-controller">Pod Controller</a></li>
+</ul></li>
+</ul>
+<p><a name="overview"></a></p>
+<h1 id="overview">Overview</h1>
+<p>This section contains a brief description of how the application
+works, Its parts and how they interact with each other.</p>
+<p><a name="description"></a></p>
+<h2 id="application-description">Application Description</h2>
+<p>Hive is a kubernetes-native eBPF-powered file access monitoring tool.
+The user is able to select which file to monitor based on the path and
+filters on pods / containers. When one of the monitored files is
+accessed (read from, written to..), the application will inform the user
+by generating an alert.</p>
+<ul>
+<li><strong>User story</strong>: I, as the user of the application, want
+to log all the <code>processes</code> that access the file
+<code>/etc/shadow</code> on all containers in pods that have the
+<code>security=high</code> label.</li>
+</ul>
+<p><a name="components"></a></p>
+<h2 id="components">Components</h2>
+<p>The application is implemented as a single kubernetes operator and is
+structured into multiple components that interact with each other,
+kubernetes or the operating systems.</p>
+<p>The components are:</p>
+<ul>
+<li><strong>discover controller</strong>: collects identifying data of
+the files to monitor. Manages the <code>HivePolicy</code> resource.</li>
+<li><strong>loader controller</strong>: loads and updates the eBPF
+program into the kernel. Generates the <code>HiveAlerts</code> and
+manages the <code>HiveData</code> resource.</li>
+<li><strong>eBPF program</strong>: informs the loader that one of the
+monitored files was accessed, with additional information from the
+kernel.</li>
+<li><strong>pod controller</strong>: reacts to changes in the pods to
+update the other resources.</li>
+</ul>
+<p>A detailed description of the aforementioned components is given
+later in this document.</p>
+<p><a name="ebpf-overview"></a></p>
+<h2 id="overview-of-ebpf">Overview of eBPF</h2>
+<p>eBPF programs are programs that run inside the kernel in a controlled
+environment. There are varous types of eBPF programs, which are executed
+in different contexes and moments, for example some program types can be
+hooked to existing tracing infrastructure such as tracepoints, perf
+events and kprobes, and they will be executed when the hook is
+triggered. An eBPF program uses its own <a
+href="https://www.ietf.org/archive/id/draft-thaler-bpf-isa-00.html">instruction
+set</a> and the kernel will either interpret it (less common) or JIT
+compile it to native machine code after a verification step where
+several contraints are asserted. For example, eBPF program can have at
+most 512 Bytes of stack size and 1 million instruction, unbounded loops
+are not allowed and only certain functions (helpers or kfunctions) can
+be called. Note that those (and many other) limitations are changing
+rapidly and the kernel verifier is getting always smarter, allowing for
+softer limits.</p>
+<p>Usually you do not write bytecode directly; instead you let a
+compiler generate it for you. Traditionally, <a
+href="https://github.com/iovisor/bcc">BCC</a> is used to compile said
+programs, however, both LLVM and GCC have caught up and now provide an
+eBPF target.</p>
+<p>To enable loading compiled eBPF programs on different versions of the
+linux kernel, Bpf Type Format (BTF) was introduced, providing CO-RE
+(Compile Once, Run Everywhere) compilation. User space provides eBPF
+programs to the kernel via the <code>bpf(2)</code> syscall, which will
+verify that the program is correct (enforcing the limitations) and will
+proceed to JIT compile it to native instructions.</p>
+<p>eBPF is particularly useful for monitoring and tracig uses cases, and
+recently it has been used to extend the kernel in more meaningful ways
+such as customized scheduling or memory management.</p>
+<p><a name="kubernetes-overview"></a></p>
+<h2 id="overview-of-kubernetes">Overview of Kubernetes</h2>
+<p>Kubernetes is a declarative container management software. The user
+specifies the desired state of the cluster and kubernetes will try to
+update the current state to the desired state. Applications should
+expect to be interrupted at any time and failures should be handled
+gracefully. Kubernetes can work with multiple container runtimes such as
+containerd or podman, and interacts with the containers through their
+runtime (for example, via a containerd client). Therefore, kubernetes
+abstracts the management of single container, and focuses on the
+scheduling and setting up of containers in a physical or logical
+cluster.</p>
+<p>Each unit on the cluster is called a <em>node</em>. There are two
+kinds of nodes: a <em>worker node</em> and the <em>control plane</em>.
+The former will run applications and services through contianers grouped
+in <em>pods</em>, the latter forms the backbone of the kubernetes
+cluster and is responsible for central management of the workers. The
+most important components are the api server (which the kubelet use to
+communicate with the control pane) etcd (a highly-available key-value
+store), scheduler and a controller manager which manages all of the
+above.</p>
+<p>A common pattern found in kubernetes is the <em>Operator</em>, which
+is a custom controller that manages some <em>custom resources</em>
+hereby extending the behavior of the cluster. Note that the same
+operator may have multiple controllers for different custom resources,
+as we will see later.</p>
+<p><a name="accesses"></a></p>
+<h2 id="how-to-monitor-accesses-to-files">How to monitor accesses to
+files</h2>
+<p>Briefly, the end goal is to log when a file is accessed, that is,
+when an actor interacts with It by opening, closing, writing, appending
+and so on.</p>
+<p>The application uses eBPF programs to monitor accesses. More
+specifically, the eBPF program gets executed when a certain kernel
+function is called through a kprobe, and It will check if said function
+interacts with any of the files specified by the user. If that is the
+case, It should log the information with additional metadata such as
+which PID called the function. The choice of what function to hook to is
+crucial for the correct behaviour of the application.</p>
+<p>The information of which files to check is provided from userspace to
+the eBPF program via a map, which is a shared array between userspace
+and kernelspace (can be read from and written to in both cases).</p>
+<p>You can think of eBPF programs as simple programs that run inside the
+kernel with some limitations to ensure certain safety measures. They can
+access some internal kernel structures that would only be available
+through kernel modules which are more powerful and, therefore,
+dangerous.</p>
+<p>The eBPF program needs to be loaded and updated when the user changes
+the monitoring policy (<code>HivePolicy</code>) or the cluster changes /
+updates its topology. Therefore a loader and an updater are necessary,
+which are both done by the <em>loader controller</em>, as well as
+capturing information from the eBPF program and generating alerts
+(<code>HiveAlert</code>). A more satisfying description will be given
+later.</p>
+<p><a name="identify"></a></p>
+<h2 id="how-to-uniquely-identify-a-file">How to uniquely identify a
+file</h2>
+<p>To identify a particular file, we can use its path name. There cannot
+be two different files with the same path name, however you can create a
+symlink to a file: the path of the symlink will be different from the
+path of the original file but the actual data will be the same.</p>
+<p>To circumvent this, we are using the inode number instead. Each file
+has an inode number that is unique in the filesystem that he lives in.
+This is how the kernel internally identifies data.</p>
+<p>However, there is still an edge case where different filesystems may
+have different files with the same inode number. This happens because
+the inode number is an identifier in a filesystem, but It has no meaning
+on another filesystem and may aswell point to a different file.</p>
+<p>To solve this problem, we can use both the inode number and the
+device id as unique identifiers. Even if a filesystem is binded onto
+another, from the user perspective the binded filesystem and the
+filesystem onto which the binded one is mounted have different inode
+numbers so the key remains unique.</p>
+<p>Yet, fome filesystems may handle things differently, namely BTRFS.
+Indeed BTRFS may choose to have multiple internal device ids for the
+filesystem. When <code>stat</code> is called, a call to a BTRFS function
+is done, which we cannot do in an eBPF program therefore we cannot
+access the userspace device id number. I got this issue during testing
+and there appears not to be a solution, therefore we will fallback to
+only inode numbers.</p>
+<p>In our application, the entity that is responsible to get the inode
+number is the <em>discover controller</em>. The loader controller and
+the discover controller share information through a
+<code>HiveData</code> resource.</p>
+<p><a name="complications"></a></p>
+<h2 id="kubernetes-makes-things-harder">Kubernetes makes things
+harder</h2>
+<p>Now, imagine all that we have just said, but inside containers in a
+very dynamic environment where things may change and break at any time.
+There may be multiple operating systems on the same cluster so we need
+to load one eBPF program for each one of them, but not more than one on
+the same kernel to save resources. We need to access inode numbers of
+files inside containers, pods can be scheduled in any node, and so on.
+All of this needs to be handled carefully, increasing the complexity of
+the design.</p>
+<p><a name="example"></a></p>
+<h2 id="example">Example</h2>
+<p>An example deployment would look like the following:</p>
+<figure>
+<img src="./images/overall-design.png" alt="design-image" />
+<figcaption aria-hidden="true">design-image</figcaption>
+</figure>
+<p>On the picture, notice that Kernel #2 only has one loader. Each
+kernel has only one loader, which is chosen through leader elections.
+Instead, the discover controller is active in each node because It has
+to find information about other pods that may be scheduled in any node.
+There is only one pod controller on the entire cluster. The control
+plane usually does not run pods, but it can be configured It to do like
+a normal node; if this is the case, the operator will be scheduled to
+this node too.</p>
+<p><a name="detailed-description"></a></p>
+<h1 id="detailed-description">Detailed description</h1>
+<p>This section describes the application in more depth. It is
+recommended to read the overview section first in order to get a general
+understanding of the application before reading the details.</p>
+<p><a name="design-considerations"></a></p>
+<h2 id="design-considerations">Design Considerations</h2>
+<p>The design of this application was conducted considering the
+following:</p>
+<ul>
+<li>the cluster runs on one or more linux operating systems</li>
+<li>one operating system may host one or more nodes (for example, a
+cluster with <a href="https://kind.sigs.k8s.io/">kind</a>)</li>
+<li>each node runs Its own container runtime</li>
+<li>pods may be scheduled and rescheduled in any node with any number of
+replicas</li>
+</ul>
+<p>The different components are now described below:</p>
+<p><a name="discover-controller"></a></p>
+<h2 id="discover-controller">Discover Controller</h2>
+<p>The <em>discover</em> controller aka <code>HivePolicy</code>
+controller is responsible for the following:</p>
+<ul>
+<li><p>Identify the kernel instance: the controller will fetch an unique
+identifier for the running kernel (for example reading
+<code>/proc/sys/kernel/random/boot_id</code>).</p>
+<p>This is needed because the loader should send to the eBPF program
+only the inodes that exist on the running kernel. In other words, and
+inode makes sense only in the kernel where It runs. Therefore, the
+discover controller needs to identify Its running kernel in order to
+share the inodes with the right loader (there is one loader per running
+kernel, more info below).</p></li>
+<li><p>reacting to CRUD operations on <code>HivePolicy</code> resource,
+which will:</p>
+<ul>
+<li>Fetch the information of a file such as the inode number from the
+matched contianers, hence the name <em>discover</em></li>
+<li>Create <code>HiveData</code> resources with the previously fetched
+information</li>
+</ul></li>
+</ul>
+<p>The <code>HiveData</code> resource is specified later in <a
+href="#hivedata-resource">HiveData resource</a>.</p>
+<p>Note that when referring to inodes in this document we are
+technically referring to the inode number.</p>
+<p><a name="number-of-discover-controller"></a></p>
+<h3 id="number-of-discover-controllers">Number of discover
+controllers</h3>
+<p>There must be one discover controller for each node. This is
+necessary because the controller has to interface directly to the
+container runtime and access the filesystem of the container in order to
+read the inode.</p>
+<p>Therefore, each discover controller instance will react to all the
+changes in the <code>HivePolicy</code> resource, and generate one or
+multiple <code>HiveData</code> resource[s] for this specific kernel.</p>
+<p>Any discover controller[s] may generate multiple
+<code>HiveData</code> resources from the same <code>HivePolicy</code>.
+This is intended by design since the policy may match multiple pods
+hence the relationship between a policy and a <code>HiveData</code> is
+<em>one to many</em>.</p>
+<p><a name="hivepolicy-resource"></a></p>
+<h3 id="hivepolicy-resource">HivePolicy Resource</h3>
+<p>A <code>HivePolicy</code> resource contains a list of
+<code>HiveTrap</code>, and looks like this:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> hive-operator.com/v1alpha1</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> HivePolicy</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">app.kubernetes.io/name</span><span class="kw">:</span><span class="at"> hive-operator</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">finalizers</span><span class="kw">:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> hive-operator.com/finalizer</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> hive-sample-policy</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> hive-operator-system</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">traps</span><span class="kw">:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">create</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="dv">444</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">callback</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;http://my-callback.com/alerts&quot;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">matchAny</span><span class="kw">:</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.0.3</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">container-name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;.*&quot;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
+<p>Each <code>HiveTrap</code> can contain the following fields:</p>
+<p><a name="hivepolicy-resource-path"></a></p>
+<h4 id="path">Path</h4>
+<p>This is the only non-optional fiels. <code>path</code> is the
+filesystem path in a matched container starting from the root
+<code>/</code> directory of the file to trace.</p>
+<p><a name="hivepolicy-resource-create"></a></p>
+<h4 id="create">Create</h4>
+<p>The user may decide to create the file if not present by specifying
+<code>create: true</code> in the policy. Furthermore, the user can
+specify the UNIX permissions given to the file to be created via the
+<code>mode</code> field.</p>
+<h4 id="callback">Callback</h4>
+<p>If present, the operator will send json-encoded data to the callback
+via an HTTP POST request.</p>
+<p><a name="hivepolicy-resource-matchany"></a></p>
+<h4 id="matchany">MatchAny</h4>
+<p>The <code>matchAny</code> field contains a list of match blocks which
+will be matched with a logical OR. Each match block contains one or more
+match items matched with a logical AND, which include:</p>
+<ul>
+<li><code>pod</code>: the name of the pod</li>
+<li><code>namespace</code>: the namespace of the pod</li>
+<li><code>container-name</code>: a regex to match the name of
+containers</li>
+<li><code>ip</code>: the ipv4 of the pod</li>
+<li><code>matchLabels</code>: a list of labels and values</li>
+</ul>
+<p>At least one match block with one match item must be present.</p>
+<p>Examples:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">matchAny</span><span class="kw">:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span></code></pre></div>
+<p>The above selects all the containers in pods with name
+<code>nginx-pod</code> AND those that are in the <code>default</code>
+namespace.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">matchAny</span><span class="kw">:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span></code></pre></div>
+<p>The above matches all containers that are in pods named
+<code>nginx-pod</code> OR all the containers that are in the
+<code>default</code> namespace.</p>
+<p><a name="hivepolicy-reconciliation"></a></p>
+<h3 id="hivepolicy-reconciliation">HivePolicy Reconciliation</h3>
+<p>The controller performs the following actions in sequence when a CRUD
+operation occurs on an <code>HivePolicy</code> resource (a
+“reconciliation”):</p>
+<ol type="1">
+<li><p>Identify the kernel instance: the controller will fetch an unique
+identifier for the running kernel (for example reading
+<code>/proc/sys/kernel/random/boot_id</code>).</p>
+<p>This is needed because the loader should send to the eBPF program
+only the inodes that exist on the running kernel. In other words, and
+inode makes sense only in the kernel where It runs. Therefore, the
+discover controller needs to identify Its running kernel in order to
+share the inodes with the right loader (there is one loader per running
+kernel, more info below).</p>
+<p>This is node only once at startup.</p></li>
+<li><p>Initialize a connection with the container runtime of the kubelet
+where the controller lives, if not previously done. Interfacing to the
+container runtime is necessary to know which PID corresponds to which
+container, and through the PID we can access the filesystem.</p></li>
+<li><p>Read all the <code>HivePolicies</code> and their respective
+<code>HiveTraps</code>.</p></li>
+<li><p>If an <code>HivePolicty</code> is about to be deleted (using
+finalizers), trigger a reconciliation for <code>HiveData</code>, which
+will be responsible for deleting any resource that does not belong
+anymore to a <code>HiveTrap</code>.</p></li>
+<li><p>For each trap, get the list of matched containers, then check if
+a <code>HiveData</code> resource already exists for each of them.</p>
+<p>If it does not exist:</p>
+<ul>
+<li><p>Read the inode of the file specified by the trap.</p></li>
+<li><p>Create the <code>HiveData</code> with the information from the
+container, the pod, the trap, the policy, and the inode.</p></li>
+<li><p>Compute an identifier of the policy and set it as a label in the
+<code>HiveData</code>.</p></li>
+</ul>
+<p>If either the container or pod are not ready, requeue and restart
+from point 2.</p></li>
+</ol>
+<p>To summarize, if an <code>HivePolicy</code> is created / updated, the
+reconciliation will check if a <code>HiveData</code> was already
+present, or create it otherwise. If an <code>HivePolicy</code> is
+deleted, we delegate the responsibility of deleting old
+<code>HiveData</code> to the <code>HiveData</code> reconciliation.</p>
+<p><a name="loader-controller"></a></p>
+<h2 id="loader-controller">Loader Controller</h2>
+<p>The loader controller aka <code>HiveData</code> controller is
+responsible for the following operations:</p>
+<ul>
+<li>Load the eBPF program at startup and unload It during shutdown.</li>
+<li>Update the eBPF map when there is a change in a
+<code>HiveData</code> resource.</li>
+<li>Generate <code>HiveAlerts</code>: the controller will read the
+output of the eBPF program from a ring buffer, parse it, add kubernetes
+information (such as the name of the pod corresponding to the inode and
+other information from the kubernetes topology) and generate an
+<code>HiveAlert</code>, which will either be printed to standard output
+or sent to a callback via a POST HTTP request.</li>
+</ul>
+<p>Upon rescheduling of the operator, the eBPF program needs to be
+reloaded (closed and loaded again).</p>
+<p><a name="number-of-loader-controllers"></a></p>
+<h3 id="number-of-loader-controllers">Number of loader controllers</h3>
+<p>There must be one loader controller for each running kernel. This is
+necessary because the loader interacts directly with the running kernel.
+It is useless to have multiple loaders in the same kernel, but at least
+one is necessary to load the eBPF program.</p>
+<p>To implement this, each node needs to fetch Its running kernel
+identifier and then run elections so that only one node is elected per
+running kernel.</p>
+<p><a name="hivedata-resource"></a></p>
+<h3 id="hivedata-resource">HiveData Resource</h3>
+<p>The <code>HiveData</code> resource is used to communicate information
+between the discover and the loader controller. The relationship between
+an <code>HiveTrap</code> and an <code>HiveData</code> is one to many,
+where each <code>HiveData</code> must have an <code>HiveTrap</code>.</p>
+<p>The loader uses information from this resource to instruct the eBPF
+program to filter certain inodes.</p>
+<p>The schema of the resource looks like the following:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> hive-operator.com/v1alpha1</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> HiveData</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">annotations</span><span class="kw">:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">callback</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_id</span><span class="kw">:</span><span class="at"> containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_name</span><span class="kw">:</span><span class="at"> nginx</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hive_policy_name</span><span class="kw">:</span><span class="at"> hive-sample-policy</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">node_name</span><span class="kw">:</span><span class="at"> hive-worker2</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pod_ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">10.244.1.2</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pod_name</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">creationTimestamp</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;2025-07-25T08:06:12Z&quot;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">generation</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> hive-data-nginx-pod-default-13667586</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> hive-operator-system</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">resourceVersion</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;23395&quot;</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uid</span><span class="kw">:</span><span class="at"> 788bcb67-a9de-480d-a179-e40234116459</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">trap-id</span><span class="kw">:</span><span class="at"> c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">inode-no</span><span class="kw">:</span><span class="at"> </span><span class="dv">13667586</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">kernel-id</span><span class="kw">:</span><span class="at"> fc9a30d5-6140-4dd1-b8ef-c638f19ebd71</span></span></code></pre></div>
+<p>The fields under <code>spec</code> are:</p>
+<ul>
+<li><code>inode-no</code>: The inode number of the file to trace, needed
+by the eBPF program.</li>
+<li><code>kernel-id</code>: An unique identifier of a running kernel, to
+discriminate which loader controller should handle this
+<code>HiveData</code>.</li>
+</ul>
+<p>The annotations are used as additional information for the
+<code>HiveAlert</code> when an access is detected by the eBPF
+program.</p>
+<p>The <code>trap-id</code> is used to identify which
+<code>HiveTrap</code> generated this <code>HiveData</code>.</p>
+<p><a name="hivedata-reconciliation"></a></p>
+<h3 id="hivedata-reconciliation">HiveData Reconciliation</h3>
+<p>Upon CRUD changes of the <code>HiveData</code> resource, the
+controller does the following:</p>
+<ol type="1">
+<li><p>Fetch the <code>HivePolicy</code> and <code>HiveData</code>
+resources in the cluster.</p></li>
+<li><p>Check if each <code>HiveData</code> (referring to this kernel id)
+does have a corresponding <code>HiveTrap</code> from an
+<code>HivePolicy</code>.</p></li>
+</ol>
+<p>If it does, then we update the eBPF map with the information from the
+<code>HiveData</code>. It it does not, then the <code>HiveTrap</code>
+has been eliminated and the <code>HiveData</code> should be deleted.</p>
+<ol start="3" type="1">
+<li>Fill the rest of the eBPF map with zeros so that we do not leave old
+values that where there before.</li>
+</ol>
+<p><a name="ebpf-program"></a></p>
+<h2 id="ebpf-program">eBPF program</h2>
+<p>To check whether an actor has interacted with a file, the eBPF
+program hooks to the function <code>inode_permission</code> through a
+keyprobe. This function gets called every time the permissions of an
+inode are checked in the kernel, which appends before any operation on
+them. It allows the eBPF program to log when a permission is checked and
+with what rights, as well as who tried to check the permissions.</p>
+<p>The eBPF program will log information only if said function is called
+on an inode present in an <code>HiveData</code> resource. The loader
+will fetch those inodes from the CRD and send them to the eBPF program
+via a map, that is an array of inodes.</p>
+<p>The info is sent in a kernel ringbuffer accessible by the operator
+for logging purposes.</p>
+<p>The eBPF program uses BTF types information to enable compile-once
+run everywhere (CORE) meaning that the ebpf program does not need to be
+compiled each time It needs to be loaded, but can be compiled only once
+and even shipped with the binaries of the application.</p>
+<p>The information from the ring buffer will be processed by the loader
+to generate an <code>HiveAlert</code>. An example alert is the
+following:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;timestamp&quot;</span><span class="fu">:</span> <span class="st">&quot;2025-08-02T16:51:19Z&quot;</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;hive_policy_name&quot;</span><span class="fu">:</span> <span class="st">&quot;hive-sample-policy&quot;</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;path&quot;</span><span class="fu">:</span> <span class="st">&quot;/secret.txt&quot;</span><span class="fu">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;inode&quot;</span><span class="fu">:</span> <span class="dv">16256084</span><span class="fu">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;mask&quot;</span><span class="fu">:</span> <span class="dv">36</span><span class="fu">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;kernel_id&quot;</span><span class="fu">:</span> <span class="st">&quot;2c147a95-23e5-4f99-a2de-67d5e9fdb502&quot;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;pod&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;nginx-pod&quot;</span><span class="fu">,</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;namespace&quot;</span><span class="fu">:</span> <span class="st">&quot;default&quot;</span><span class="fu">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;container&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c&quot;</span><span class="fu">,</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;nginx&quot;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;node&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;hive-worker&quot;</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;process&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;pid&quot;</span><span class="fu">:</span> <span class="dv">176928</span><span class="fu">,</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;tgid&quot;</span><span class="fu">:</span> <span class="dv">176928</span><span class="fu">,</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;uid&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;gid&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;binary&quot;</span><span class="fu">:</span> <span class="st">&quot;cat&quot;</span><span class="fu">,</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;cwd&quot;</span><span class="fu">:</span> <span class="st">&quot;/&quot;</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p><a name="pod-controller"></a></p>
+<h2 id="pod-controller">Pod Controller</h2>
+<p>When a pod is changed, we want to update both <code>HiveData</code>
+and the eBPF map. To achieve, this we need a pod controller. There are
+two main operations we are concerned about with pods: pod creation and
+pod termination. - creation: upon creation, the controller should send a
+reconcile request for <code>HivePolicy</code> so that new
+<code>HiveData</code> will be generated for the new pod. - termination:
+upon termination, the controller should check if each
+<code>HiveData</code> refers to an existing pod. If it does not, then
+that resource should be eliminated.</p>
+<p>Failures are treated as terminations.</p>
+<p>The implementation of said logic is achieved through a reconcile
+function like other controllers.</p>
+<p>Since Pods are global resources accessed from anywhere, we need only
+one pod controller in the cluster. This is the sole reason why we need a
+separate controller from the others: there is a discover controller on
+each system, a loader controller on each running kernel, and a single
+pod controller per cluster.</p>
+
+<footer>
+  
+<hr>
+
+  <p>Author: Giovanni Santini <a href="mailto:giovanni.santini@proton.me">giovanni.santini@proton.me</a>
+  </p>
+<p>Code: GitHub <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+<p>License: GPLv2 <a href="https://github.com/San7o/hive-operator/blob/main/LICENSE.html">LICENSE</a>
+  </p>
+</footer>
+
+</body>
+</html>

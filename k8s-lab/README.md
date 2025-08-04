@@ -1,11 +1,12 @@
 # k8s-lab
 
-This directory contains useful scripts to create a local test
-kubernetes cluster. The cluster is composed of local virtual machines
-running via qemu with KVM. The virtual machines are connected to the
-host network and to themselves via tap interfaces and a bridge on the
-host's system. The officially supported operating system is linux,
-more specifically [Fedora Cloud](https://fedoraproject.org/cloud/).
+[k9s-lab](https://github.com/San7o/hive-operator/tree/main/k8s-lab) is
+a collection of useful scripts to create a local test kubernetes
+cluster. The cluster is composed of local virtual machines running via
+qemu with KVM. The virtual machines are connected to the host network
+and to themselves via tap interfaces and a bridge on the host
+system. The officially supported operating system is GNU/Linux, more
+specifically [Fedora Cloud](https://fedoraproject.org/cloud/).
 
 Potentially, you could use any distro as a base as long as you can run
 all the software required for a kubernetes cluster, mainly a container
@@ -41,13 +42,13 @@ make setup
 You need to download the fedora cloud image from their
 [website](https://fedoraproject.org/cloud/) and place It in the
 `images` directory. You also need to modify the entry `FEDORA_IMAGE`
-on [config.sh](./config.sh) with the name of the downloaded image.
+in `config.sh` with the name of the downloaded image.
 
 You need to generate the cloud-init files. Those are used to easily
 configure the virtual machines with a bunch of files and the user
-"fedora" with password "fedora".
+*fedora* with password *fedora*.
 
-```
+```bash
 make generate
 ```
 
@@ -64,4 +65,4 @@ make clean # removes the images
 make network-reset # removes the tap and bridge interfaces
 ```
 
-Have fun!
+Happy hacking!
