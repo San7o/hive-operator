@@ -1,16 +1,23 @@
 # Usage
 
 This document explains how to interact with the operator. You should
-have the operator deployed first, to do that please read the
-[DEVELOPMENT](./DEVELOPMENT.md) document for instructions.
+have the operator deployed first: to use a local development build
+please read the [DEVELOPMENT](./DEVELOPMENT.md) document for
+instructions, otherwise you can fetch the operator from the official
+docker registry by deploying it with:
 
-Once you have the operator deployed, you can instruct It to log accesses
-to files via HivePolicies. An **HivePolicy** is a custom kubernetes resource
-that contains information about which file to trace and in which pods.
-The operator will parse this policy every time one is added / removed / updated
-and It will instruct the eBPF program to trace the right files.
+```bash
+kubectl apply -f https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml
+```
 
-An example HivePolicy is located in [config/samples/hive_v1alpha1_hivepolicy.yaml](../config/samples/hive_v1alpha1_hivepolicy.yaml).
+Once you have the operator deployed, you can instruct It to log
+accesses to files via **HivePolicies**. An `HivePolicy` is a custom
+kubernetes resource that contains information about which file[s] to
+trace and in which pods.  The operator will parse this policy every
+time one is added / removed / updated and It will configure the eBPF
+program to monitor the right files.
+
+An example `HivePolicy` is located in [config/samples/hive_v1alpha1_hivepolicy.yaml](../config/samples/hive_v1alpha1_hivepolicy.yaml).
 More examples can be found in the same directory.
 
 ```yaml
@@ -50,10 +57,11 @@ kubectl apply -f config/samples/hive_v1alpha1_hivepolicy.yaml
 The operator will log some information when a policy is created /
 deleted / updated.
 
-Let's test this policy. First, we need to create a pod that matches
-the `match` fields in the HivePolicy. This repository provides
-an nginx pod in [config/samples/sample-nginx-pod.yaml](../config/samples/sample-nginx-pod.yaml)
-with the right characteristics, you can load it with apply:
+It it now time to test this policy. First, we need to create a pod
+that matches the `match` fields in the `HivePolicy`. This repository
+provides an nginx pod in
+[hack/k8s-manifests/sample-nginx-pod.yaml](../hack/k8s-manifests/sample-nginx-pod.yaml)
+with the right characteristics, you can load it with kubectl:
 
 ```bash
 kubectl apply -f hack/k8s-manifests/sample-nginx-pod.yaml
@@ -67,15 +75,50 @@ sudo kubectl exec -it nginx-pod -- cat /secret.txt
 ```
 
 You should expect to see some logging information on the standard
-output of one of the hive pods, like this:
+output of one of the hive pods, like this (prettified):
 
-```
-2025-08-02T16:51:19Z    INFO    Access Detected    {"HiveAlert": "{\"timestamp\":\"2025-08-02T16:51:19Z\",\"hive_policy_name\":\"hive-sample-policy\",\"metadata\":{\"path\":\"/secret.txt\",\"inode\":16256084,\"mask\":36,\"kernel_id\":\"2c147a95-23e5-4f99-a2de-67d5e9fdb502\"},\"pod\":{\"name\":\"nginx-pod\",\"namespace\":\"default\",\"container\":{\"id\":\"containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c\",\"name\":\"nginx\"}},\"node\":{\"name\":\"hive-worker\"},\"process\":{\"pid\":176928,\"tgid\":176928,\"uid\":0,\"gid\":0,\"binary\":\"cat\",\"cwd\":\"\"}}"}
+```json
+2025-08-02T16:51:19Z    INFO    Access Detected
+{
+  "HiveAlert": {
+    "timestamp": "2025-08-02T16:51:19Z",
+    "hive_policy_name": "hive-sample-policy",
+    "metadata": {
+      "path": "/secret.txt",
+      "inode": 16256084,
+      "mask": 36,
+      "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+    },
+    "pod": {
+      "name": "nginx-pod",
+      "namespace": "default",
+      "container": {
+        "id": "containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c",
+        "name": "nginx"
+      }
+    },
+    "node": {
+      "name": "hive-worker"
+    },
+    "process": {
+      "pid": 176928,
+      "tgid": 176928,
+      "uid": 0,
+      "gid": 0,
+      "binary": "cat",
+      "cwd": ""
+    }
+  }
+}
 ```
 
 Note that only the leader pod in the kernel where the file resides
 will output the information, so you may need to check the standard
-output od all the hive pods.
+output of all the hive pods. This happens because the data is logged
+in the same node where the eBPF program noticed the access (to
+understand how the operator works under the hood, read the
+[DESIGN](./DESIGN.md) document), we will later see how you can easily
+gather all the logs in a single place using [callbacks](#callback).
 
 You may have seen a message like this just above the alert:
 
@@ -91,6 +134,42 @@ keep the process alive and see that the warning does not appear and
 you get additional information such as the current working directory
 (cwd):
 
-```
+```bash
 sudo kubectl exec -it nginx-pod -- cat /secret.txt -
 ```
+
+Support for getting the process information is in the work.
+
+<a name="callback"></a>
+
+## Callback
+
+You can ask the operator to use send data to an endpoint by setting
+the `callback` filed in a trap like this:
+
+```yaml
+apiVersion: hive-operator.com/v1alpha1
+kind: HivePolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: hive-operator
+  finalizers:
+    - hive-operator.com/finalizer
+  name: hive-sample-policy
+  namespace: hive-operator-system
+spec:
+  traps:
+    - path: /secret.txt
+      create: true
+      mode: 444
+      callback: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"  # HERE
+      matchAny:
+      - pod: nginx-pod
+        namespace: default
+        matchLabels:
+          security-level: high
+```
+
+If a callback is set on a trap, then the operator will make an HTTP
+POST request to that endpoint with the `HiveAlert` as json data and
+will stop logging to the standard output.

@@ -11,12 +11,16 @@
     <a href="./USAGE.html">Usage</a>
     <a href="./DEVELOPMENT.html">Development</a>
     <a href="./EBPF-TESTING.html">eBPF Testing</a>
+    <a href="./k8s-lab.html">k8s lab</a>
+    <a href="./callback.html">callback</a>
+    <a href="https://github.com/San7o/hive-operator">Github</a>
   </div> 
 <h1 id="ebpf-testing">eBPF Testing</h1>
-<p>In this document we discuss how to test the eBPF program. We assume
-that you have the required dependencies, if not please check the <a
-href="./DEVELOPMENT.html">DEVELOPMENT</a> document so that you are able to
-compile the program.</p>
+<p>This document contains information to build the eBPF program locally
+without building the entire operator or running a kubernetes cluster. We
+assume that you have the required dependencies, if not please check the
+<a href="./DEVELOPMENT.html">DEVELOPMENT</a> document so that you are able
+to compile the program.</p>
 <p>The code of the eBPF program lives in the <code>ebpf/</code>
 directory of the project. A go loader is implemented in
 <code>test/ebpf-local/</code> which will load the ebpf program on your
@@ -27,11 +31,9 @@ directory comes with the following helpful make commands:</p>
 <li><code>test-run-ebpf</code>: run the ebpf-local program</li>
 <li><code>test-ebpf</code>: build and run the ebpf-local program</li>
 </ul>
-<p>If you want to receive all the alerts in a single place, you can use
-setup a callback service from <code>callback/</code> by running
-<code>make docker</code> and <code>make deploy</code>. Then, you can
-configure your policies to send a callback to
-<code>http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest</code>.</p>
+<p>By default, the program monitors accesses to the
+<code>LICENSE.html</code> file in the root directory, so you can test that
+it is working as expected.</p>
 <p>For convenience, you can create a tmux session with:</p>
 <div class="sourceCode" id="cb1"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> test-tmux</span></code></pre></div>
@@ -42,11 +44,10 @@ with the eBPF program and one with a bash shell.</p>
   
 <hr>
 
-  <p>Author: Giovanni Santini<br>
-    <a href="mailto:giovanni.santini@proton.me">giovanni.santini@protom.me</a>
+  <p>Author: Giovanni Santini <a href="mailto:giovanni.santini@proton.me">giovanni.santini@proton.me</a>
   </p>
-  <p>Github<br>
-    <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+<p>Code: GitHub <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+<p>License: GPLv2 <a href="https://github.com/San7o/hive-operator/blob/main/LICENSE.html">LICENSE</a>
   </p>
 </footer>
 

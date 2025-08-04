@@ -6,7 +6,7 @@
     }
     code {
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
-      font-size: 85%;
+      font-size: 100%;
       margin: 0;
       hyphens: manual;
       font-weight: bold;
@@ -21,7 +21,7 @@
       overflow-wrap: normal;
     }
     .sourceCode {
-     background-color: transparent;
+     background-color: var(--code-background);
      overflow: visible;
     }
     table {
@@ -109,7 +109,7 @@
       }
     pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
     div.sourceCode
-      {  background-color: var(--accent-bg); }
+    {  background-color: transparent; /*var(--accent-bg);*/ }
     @media screen {
     pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
     }

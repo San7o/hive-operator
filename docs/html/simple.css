@@ -11,7 +11,7 @@
 
   /* Default (light) theme */
   --bg: #fff;
-  --accent-bg: #f5f7ff;
+  --accent-bg: #eaf2fc;
   --text: #212121;
   --text-light: #585858;
   --border: #898EA4;
@@ -22,6 +22,7 @@
   --preformatted: #444;
   --marked: #ffdd33;
   --disabled: #efefef;
+  --code-background: #eaf2fc;
 }
 
 /* Dark theme */
@@ -36,9 +37,10 @@
     --accent-hover: #ffe099;
     --accent-text: var(--bg);
     --code: #f01b60;
-    --code-light: #f06292;
+    --code-light: #dcdcdc;
     --preformatted: #ccc;
     --disabled: #111;
+    --code-background: #202020;
   }
   /* Add a bit of transparency so light media isn't so glaring in dark mode */
   img,
@@ -64,19 +66,21 @@ progress {
 
 html {
   /* Set the font globally */
-  font-family: monospace /* var(--mono-font); */
-  /* scroll-behavior: smooth; */
+  font-family: monospace; /* var(--mono-font); */
+  scroll-behavior: smooth;
 }
 
 /* Make the body a nice central block */
 body {
   color: var(--text);
   background-color: var(--bg);
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   line-height: 1.5;
   display: grid;
   grid-template-columns: 1fr min(80rem, 90%) 1fr;
   margin: 0;
+  text-align: justify;
+  text-justify: inter-word;
 }
 body > * {
   grid-column: 2;
@@ -96,12 +100,14 @@ body > header > *:only-child {
 }
 
 body > header h1 {
-  max-width: 60rem;
+  /*max-width: 60rem;*/
+  max-width: 1200px;
   margin: 1rem auto;
 }
 
 body > header p {
-  max-width: 60rem;
+  /*max-width: 60rem;*/
+  max-width: 1200px;
   margin: 0.5rem auto;
 }
 
@@ -114,13 +120,14 @@ body > footer {
   margin-top: 3rem;
   padding: 2rem 1rem 1.5rem 1rem;
   color: var(--text-light);
-  font-size: 0.9rem;
+  font-size: 1.5rem;
   text-align: center;
   border-top: var(--border-width) solid var(--border);
 }
 
 /* Format headers */
 h1 {
+  text-align: center;
   margin-top: 3rem;
   font-size: 3rem;
 }
@@ -148,8 +155,7 @@ h6 {
 }
 
 p {
-  text-align: justify;
-  margin: 0.3rem 0;
+  margin: 0.5rem 0;
 }
 
 /* Prevent long strings from overflowing container */
@@ -164,8 +170,13 @@ h3 {
   line-height: 1.1;
 }
 
+.centered {
+    text-align: center;
+}
+
 /* Reduce header size on mobile */
 @media only screen and (max-width: 720px) {
+
   h1 {
     font-size: 2.5rem;
   }
@@ -179,6 +190,7 @@ h3 {
   }
 
   h4 {
+    font-weight: normal;
     font-size: 1.25rem;
   }
 }
@@ -772,16 +784,20 @@ sub {
 .topnav {
   background-color: var(--bg);
   overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* Style the links inside the navigation bar */
 .topnav a {
-  float: left;
+  /*float: left;*/
   color: var(--text);
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
   font-size: 17px;
+  display: inline-block;
 }
 
 /* Change the color of links on hover */
@@ -797,3 +813,16 @@ sub {
   color: white;
 }
 */
+
+@media (max-width: 600px) {
+  .topnav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topnav a {
+    text-align: left;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+}

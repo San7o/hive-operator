@@ -1,31 +1,29 @@
 # Developement
 
-This documents contains useful information to build the operator
+This document contains useful information to build the operator
 yourself. It explains how to create a local test cluster and build
-both the eBPF program and the kubernetes operator. To test the build,
+both the eBPF program and the kubernetes operator. For regular usage,
 please read the [USAGE](./USAGE.md) document.
-
-If you want to develop locally, the following sections are
-helpful. However, you could skip them and jump directly to the
-deployment if you just want to download the images from docker hub
-instead of building them.
 
 ## Setup a local cluster
 
-To use an operator, you need a kubernetes cluster. This repository
-provides the script `registry-cluster.sh` which will create a local
-cluster using [kind](https://github.com/kubernetes-sigs/kind) with one
-control node and one worker node. Additionally, It sets up a local
-docker registry to push the operator's image during development.
+To use an operator, you need a kubernetes cluster. In the [official
+repository](https://github.com/San7o/hive-operator) you can find the
+script [hack/registry-cluster.sh](../hack/registry-cluster.sh) which will
+create a local cluster using
+[kind](https://github.com/kubernetes-sigs/kind) with one control node
+and one worker node. Additionally, It sets up a local docker registry
+to push the operator image during development.
 
 If you are using Kind, or any other method where the node runs inside
-a container, you need to mount `/proc` inside the node's container in
-`/host/real/proc`. The script above already does this. This is needed
-because the eBPF program runs in the host's kernel and the operator
-needs to access the host's procfs to generate the `HiveAlert`. If you
-do not do this, the operator will gracefully report a message and some
+a container, you need to mount `/proc` inside the node at
+`/host/real/proc`. The script above already does it. This is needed
+because the eBPF program runs in the host kernel and the operator
+needs to access the host procfs to generate the `HiveAlert`. If you do
+not do this, the operator will gracefully report a message and some
 fields in the alert will remain empty (namely, `cwd`). If you are
-using virtual machines or hypervisors, this is not needed.
+using virtual machines / real nodes or hypervisors (likely in
+production clusters), this is not needed.
 
 Run the following command to create the cluster (needs to be run only
 once):
@@ -35,7 +33,7 @@ make create-cluster-local
 ```
 
 You can delete the cluster with `delete-cluster.sh` or with
-`make delete-cluster-local` when you do not want It anymore.
+`make delete-cluster-local` when you do not need It anymore.
 
 ## Dev Environments
 
@@ -51,13 +49,13 @@ without changing the Makefile.
 
 For example, the `IMG` variable tells the Makefile where to push
 images and tells the operator where to pull them. You can add an entry
-to your custom environment .env-custom like so:
+to your custom environment `.env-custom` like so:
 
 ```bash
 IMG=registry/my-bautiful-name:latest
 ```
 
-To select which environment to use, append `ENV=<ENV-NAME>` after your
+To select which environment to use, append `ENV=<ENV-NAME>` to your
 make commands, for example:
 
 ```bash
@@ -72,7 +70,7 @@ environments on all make commands.
 
 The operator uses generators to create various config files such as
 RBAC policies, CRD manifests and the eBPF program. Those need to be
-regenerated every time they are updates.
+regenerated every time they are updated.
 
 To generate the RBAC policies, run:
 
@@ -86,7 +84,7 @@ To create the CRD manifests, run:
 make manifests
 ```
 
-To generate the eBPF program, first you need to have the following
+To generate the eBPF program, you need to have the following
 dependencies in your system:
 
 - Linux kernel version 5.7 or later, with ebpf support enabled
@@ -108,27 +106,39 @@ Once you have the dependencies, run:
 make generate-ebpf
 ```
 
-## Build the docker contianer
+If you just want to test the eBPF program without building / deploying
+the entire operator, please refer to the
+[BPF-TESTING](./EBPF-TESTING.md) document.
+
+Now, if you simply want to check if the operator compiles, you can run
+`make` and the operator will be compiled locally. This is not enough
+to use or test the operator since it neds to be running in a
+kubernetes cluster in a pod, we will now see how to do this.
+
+## Build the docker container
 
 Note that you may need sudo privileges for the following commands
 depending on your permissions.
 
-To build everything inside a docker container, first **make sure that
-generated files are updated** (section above), then build the docker
-image with:
+To build the docker image, first **make sure that generated files are
+updated** (section above), then build the image with:
 
 ```bash
 make docker-build
 ```
 
-You can push it to a test local docker repository if you generated
-the cluster with `registry-cluster.sh`:
+If you generated the cluster with `registry-cluster.sh`, you can push
+it to a test local docker repository:
 
 ```bash
 make docker-push
 ```
 
-To do both of the above in a single command, run:
+Or specify how to tag / push the image by modifying the `IMG` env
+variable in your environment.
+
+To do both `docker-build` and `docker-push` in a single command, you
+can run:
 
 ```bash
 make docker
@@ -136,7 +146,13 @@ make docker
 
 ## Deploy the operator
 
-Finally, you can deploy the operator to the cluster with:
+If you just want to load *only* the custom resources, run:
+
+```bash
+make install
+```
+
+If you want to deploy the full operator (including resources), run:
 
 ```bash
 make deploy
@@ -147,7 +163,7 @@ will explain how to use the operator.
 
 ## Testing
 
-To run the end to end test, first make sure that you have a cluster
+To run end to end tests, first make sure that you have a cluster
 running with the operator deployed, and that there is not `HivePolicy`
 present. Then, simply run:
 
@@ -166,11 +182,17 @@ just need to kill them. You can use the following command:
 make kill-pods
 ```
 
-This will also remove all the` HiveData` resources so that you start
+This will also remove all the `HiveData` resources so that you start
 with a clean configuration, as if you just applied the `HivePolicies`.
 
 To completely remove the operator from the cluster, run:
 
 ```bash
 make undeploy
+```
+
+Other commands can be found via `make help`.
+
+```bash
+make help
 ```

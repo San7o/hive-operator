@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="simple.css" />
+  <link rel="stylesheet" type="text/css" href="syntax.css" />
+</head>
+<body>
+  <div class="topnav">
+    <a href="./index.html">Hive</a>
+    <a href="./DESIGN.html">Design</a>
+    <a href="./USAGE.html">Usage</a>
+    <a href="./DEVELOPMENT.html">Development</a>
+    <a href="./EBPF-TESTING.html">eBPF Testing</a>
+    <a href="./k8s-lab.html">k8s lab</a>
+    <a href="./callback.html">callback</a>
+    <a href="https://github.com/San7o/hive-operator">Github</a>
+  </div> 
+<h1 id="k8s-lab">k8s-lab</h1>
+<p><a
+href="https://github.com/San7o/hive-operator/tree/main/k8s-lab">k9s-lab</a>
+is a collection of useful scripts to create a local test kubernetes
+cluster. The cluster is composed of local virtual machines running via
+qemu with KVM. The virtual machines are connected to the host network
+and to themselves via tap interfaces and a bridge on the host system.
+The officially supported operating system is GNU/Linux, more
+specifically <a href="https://fedoraproject.org/cloud/">Fedora
+Cloud</a>.</p>
+<p>Potentially, you could use any distro as a base as long as you can
+run all the software required for a kubernetes cluster, mainly a
+container runtime. In the future this could be extended to test specific
+kernel versions or patches while maintaining a common userspace.</p>
+<h2 id="requirements">Requirements</h2>
+<p>The following commands must be available on the host machine to build
+the cluster:</p>
+<ul>
+<li>qemu-system-x86_64</li>
+<li>cloud-localds</li>
+<li>ip</li>
+<li>tmux</li>
+<li>awk</li>
+</ul>
+<h2 id="build-the-cluster">Build the cluster</h2>
+<p>The following commands bootstrap a cluster with two virtual machines:
+a master kubernetes node and a worker kubernetes node. To setup
+everything you just need to run simple commands which are explained
+below.</p>
+<p>First, you need to setup the network interfaces to make the VMs talk
+to each other and to the internet. This consists of setting up a tap
+interface per virtual machine and a common bridge.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> setup</span></code></pre></div>
+<p>You need to download the fedora cloud image from their <a
+href="https://fedoraproject.org/cloud/">website</a> and place It in the
+<code>images</code> directory. You also need to modify the entry
+<code>FEDORA_IMAGE</code> in <code>config.sh</code> with the name of the
+downloaded image.</p>
+<p>You need to generate the cloud-init files. Those are used to easily
+configure the virtual machines with a bunch of files and the user
+<em>fedora</em> with password <em>fedora</em>.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate</span></code></pre></div>
+<p>Finally you can deploy the cluster with:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span></span></code></pre></div>
+<p>To undo what you just did, run:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> clean <span class="co"># removes the images</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> network-reset <span class="co"># removes the tap and bridge interfaces</span></span></code></pre></div>
+<p>Happy hacking!</p>
+
+<footer>
+  
+<hr>
+
+  <p>Author: Giovanni Santini <a href="mailto:giovanni.santini@proton.me">giovanni.santini@proton.me</a>
+  </p>
+<p>Code: GitHub <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+<p>License: GPLv2 <a href="https://github.com/San7o/hive-operator/blob/main/LICENSE.md">LICENSE</a>
+  </p>
+</footer>
+
+</body>
+</html>

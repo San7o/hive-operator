@@ -1,7 +1,18 @@
-<h1 id="hive">Hive</h1>
-<p>Hive is an eBPF-powered file access monitoring Kubernetes
-operator.</p>
-<h1 id="basic-usage">Quick Start</h1>
+<div class="centered">
+  <h1 id="hive">Hive</h1>
+  <h4>Hive is an eBPF-powered file access monitoring Kubernetes
+    operator.</h4>
+</div>
+
+<h2 id="quick-deploy">Deploy</h2>
+<p>To deploy the operator from the official docker repository, simply run:</p>
+<div class="sourceCode" id="cb3"><pre
+                                   class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml</span></code></pre></div>
+
+<p>Then read the <a href="./USAGE.html">USAGE</a> document to
+learn how to use the operator. If you want to build the operator yourself please read the <a href="./DEVELOPMENT.html">DEVELOPMENT</a> document for instructions.</p>
+
+<h2 id="ovewview">Overview</h2>
 <p>You can specify a path to monitor and in which containers by creating
 an <code>HivePolicy</code>. The following is an example policy:</p>
 <div class="sourceCode" id="cb1"><pre
@@ -68,25 +79,18 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="
 <p>If you specify a <code>callback</code> in the
 <code>HivePolicy</code>, then the data will be sent to the URL of the
 callback through an HTTP POST request.</p>
-<p>Please, read the <a href="./USAGE.html">USAGE</a> document to
-learn how to use the operator in more detail. You can find more examples
+
+<p>You can find more examples
 in <a href="https://github.com/San7o/hive-operator/tree/main/config/samples">config/samples</a>.</p>
-<h2 id="quick-deploy">Quick deploy</h2>
-<p>To deploy the operator, simply run:</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml</span></code></pre></div>
-<h1 id="development">Development</h1>
+<h2 id="learn">Learn More</h2>
 <p>The <a href="./DESIGN.html">DESIGN</a> document contains all the
 information about the internals of the operator.</p>
 <p>Please read the <a href="./DEVELOPMENT.html">DEVELOPMENT</a>
-document to build and get started with Hive’s development. <a
+document to build and get started with Hive's development. <a
 href="./EBPF-TESTING.html">EBPF-TESTING</a> has instructions to build
 and test the eBPF program without running the kubernetes operator. To
 run a local cluster, take a look at <a
 href="https://github.com/San7o/hive-operator/tree/main/k8s-lab">k8s-lab</a> or simply use the script <a
 href="https://github.com/San7o/hive-operator/blob/main/hack/registry-cluster.sh">registry-cluster.sh</a>.</p>
-
-<h2 id="current-limitations">Current Limitations</h2>
-<p>Currently the only container runtime supported is containerd. The
-code already uses an abstraction over container runtimes to easily
-integrate more runtimes.</p>
+<h2 id="contributing">Contributing</h2>
+<p>We are happy to receive any contribution. The project is hosted on <a href="https://github.com/San7o/hive-operator">GitHub</a> and it is licensed under under GPLv2. Check out the <a href="https://github.com/San7o/hive-operator/issues">issues</a></p>

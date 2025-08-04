@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="simple.css" />
+  <link rel="stylesheet" type="text/css" href="syntax.css" />
+</head>
+<body>
+  <div class="topnav">
+    <a href="./index.html">Hive</a>
+    <a href="./DESIGN.html">Design</a>
+    <a href="./USAGE.html">Usage</a>
+    <a href="./DEVELOPMENT.html">Development</a>
+    <a href="./EBPF-TESTING.html">eBPF Testing</a>
+    <a href="./k8s-lab.html">k8s lab</a>
+    <a href="./callback.html">callback</a>
+    <a href="https://github.com/San7o/hive-operator">Github</a>
+  </div> 
+<h1 id="callback-service">Callback Service</h1>
+<p>This project contains a callback container for testing pupuses,
+located in the <a
+href="https://github.com/San7o/hive-operator/tree/main/callback">callback/</a>
+directory. This is used to collect all the <code>HiveAlert</code> in a
+central place. This container hosts the <code>/ingest</code> HTTP
+endpoint at default port <code>8090</code> and logs the body of all the
+requests made to it. The <code>Hive</code> operator can use this service
+to aggreate all logs from all nodes in a single place.</p>
+<p>On kubernetes, it registers a service at port <code>9376</code>,
+which can be accessed by other pods via the url
+<code>http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest</code>.</p>
+<p>The commands to build, containerize and deploy the application in a
+kubernetes cluster are the same as the <code>Hive</code> operator except
+that there are no code generation commands. Here is a quick summary:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> build      <span class="co"># Build</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker     <span class="co"># Build doker image</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy     <span class="co"># Deploy on kubernetes</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> undeploy   <span class="co"># Undeploy the application</span></span></code></pre></div>
+
+<footer>
+  
+<hr>
+
+  <p>Author: Giovanni Santini <a href="mailto:giovanni.santini@proton.me">giovanni.santini@proton.me</a>
+  </p>
+<p>Code: GitHub <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
+<p>License: GPLv2 <a href="https://github.com/San7o/hive-operator/blob/main/LICENSE.md">LICENSE</a>
+  </p>
+</footer>
+
+</body>
+</html>
