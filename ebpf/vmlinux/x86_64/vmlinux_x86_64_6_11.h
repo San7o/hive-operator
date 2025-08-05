@@ -127268,7 +127268,7 @@ struct svc_process_info {
 		int (*dispatch)(struct svc_rqst *);
 		struct {
 			unsigned int lovers;
-			unsigned int hivers;
+			unsigned int kivers;
 		} mismatch;
 	};
 };
@@ -127279,7 +127279,7 @@ struct svc_program {
 	struct svc_program *pg_next;
 	u32 pg_prog;
 	unsigned int pg_lovers;
-	unsigned int pg_hivers;
+	unsigned int pg_kivers;
 	unsigned int pg_nvers;
 	const struct svc_version **pg_vers;
 	char *pg_name;

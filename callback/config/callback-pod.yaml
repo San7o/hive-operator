@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: callback-deployment
-  namespace: hive-operator-system
+  namespace: kivebpf-system
   labels:
     app.kubernetes.io/name: callback-pod
 spec:

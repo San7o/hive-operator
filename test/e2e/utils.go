@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
 )
 
 func NewClient() (client.Client, error) {
@@ -33,8 +33,8 @@ func NewClient() (client.Client, error) {
 		return nil, fmt.Errorf("NewClient Error add core scheme: %w", err)
 	}
 
-	if err := hivev1alpha1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("NewClient Error add HivePolicy scheme: %w", err)
+	if err := kivev1alpha1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("NewClient Error add KivePolicy scheme: %w", err)
 	}
 
 	cfg, err := config.GetConfig()
@@ -50,17 +50,17 @@ func NewClient() (client.Client, error) {
 	return c, nil
 }
 
-func CleanHivePolicies(ctx context.Context, c client.Client) error {
+func CleanKivePolicies(ctx context.Context, c client.Client) error {
 
-	var hivePolicyList hivev1alpha1.HivePolicyList
-	if err := c.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName)); err != nil {
+	var kivePolicyList kivev1alpha1.KivePolicyList
+	if err := c.List(ctx, &kivePolicyList, client.InNamespace(testNamespaceName)); err != nil {
 		return err
 	}
 
-	for _, hivePolicy := range hivePolicyList.Items {
-		err := c.Delete(ctx, &hivePolicy)
+	for _, kivePolicy := range kivePolicyList.Items {
+		err := c.Delete(ctx, &kivePolicy)
 		if err != nil {
-			return fmt.Errorf("Error Delte HivePolicy %s: %w", hivePolicy.Name, err)
+			return fmt.Errorf("Error Delte KivePolicy %s: %w", kivePolicy.Name, err)
 		}
 	}
 

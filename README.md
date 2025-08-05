@@ -1,22 +1,22 @@
-# hive-operator
+# kivebpf
 
-Hive is an eBPF-powered file access monitoring Kubernetes operator.
+Kive is an eBPF-powered file access monitoring Kubernetes operator.
 
 # Basic Usage
 
 You can specify a path to monitor and in which containers by
-creating an `HivePolicy`. The following is an example policy:
+creating an `KivePolicy`. The following is an example policy:
 
 ```yaml
-apiVersion: hive-operator.com/v1alpha1
-kind: HivePolicy
+apiVersion: kivebpf.san7o.github.io/v1alpha1
+kind: KivePolicy
 metadata:
   labels:
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: kivebpf
   finalizers:
-    - hive-operator.com/finalizer
-  name: hive-sample-policy
-  namespace: hive-operator-system
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy
+  namespace: kivebpf-system
 spec:
   traps:
   - path: /secret.txt
@@ -38,14 +38,14 @@ a logical OR, and each field in a match group is matched with a
 logical AND. All the match fields are optional, but there must be at
 least one match group under `matchAny`.
 
-When a file gets accessed, the operator will generate an `HiveAlert`
+When a file gets accessed, the operator will generate an `KiveAlert`
 and print the information to standard output in json format. The
 following is an example alert:
 
 ```json
 {
   "timestamp": "2025-08-02T16:51:19Z",
-  "hive_policy_name": "hive-sample-policy",
+  "kive_policy_name": "kive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
     "inode": 16256084,
@@ -61,7 +61,7 @@ following is an example alert:
     }
   },
   "node": {
-    "name": "hive-worker"
+    "name": "kive-worker"
   },
   "process": {
     "pid": 176928,
@@ -74,7 +74,7 @@ following is an example alert:
 }
 ```
 
-If you specify a `callback` in the `HivePolicy`, then the data will be
+If you specify a `callback` in the `KivePolicy`, then the data will be
 sent to the URL of the callback through an HTTP POST request.
 
 Please, read the [USAGE](./docs/USAGE.md) document to learn how to use
@@ -86,7 +86,7 @@ the operator in more detail. You can find more examples in
 To deploy the operator, simply run:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml
+kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
 ```
 
 ## Supported Environments
@@ -107,7 +107,7 @@ The [DESIGN](./docs/DESIGN.md) document contains all the information
 about the internals of the operator.
 
 Please read the [DEVELOPMENT](./docs/DEVELOPMENT.md) document to build
-and get started with Hive's
+and get started with Kive's
 development. [EBPF-TESTING](./docs/EBPF-TESTING.md) has instructions
 to build and test the eBPF program without running the kubernetes
 operator. To run a local cluster, take a look at

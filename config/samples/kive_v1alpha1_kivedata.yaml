@@ -1,0 +1,24 @@
+apiVersion: kivebpf.san7o.github.io/v1alpha1
+kind: KiveData
+metadata:
+  annotations:
+    callback: ""
+    container_id: containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5
+    container_name: nginx
+    kive_policy_name: kive-sample-policy
+    namespace: default
+    node_name: kive-worker2
+    path: /secret.txt
+    pod_ip: 10.244.1.2
+    pod_name: nginx-pod
+  creationTimestamp: "2025-07-25T08:06:12Z"
+  generation: 1
+  name: kive-data-nginx-pod-default-13667586
+  namespace: kivebpf-system
+  resourceVersion: "23395"
+  uid: 788bcb67-a9de-480d-a179-e40234116459
+  labels:
+    trap-id: c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee
+spec:
+  inode-no: 13667586
+  kernel-id: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71

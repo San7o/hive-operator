@@ -23,15 +23,15 @@ the application operates.
   - [Design Considerations](#design-considerations)
   - [Discover Controller](#discover-controller)
     - [Number of discover controllers](#number-of-discover-controller)
-    - [HivePolicy Resource](#hivepolicy-resource)
-      - [Path](#hivepolicy-resource-path)
-      - [Create](#hivepolicy-resource-create)
-      - [MatchAny](#hivepolicy-resource-matchany)
-    - [HivePolicy Reconciliation](#hivepolicy-reconciliation)
+    - [KivePolicy Resource](#kivepolicy-resource)
+      - [Path](#kivepolicy-resource-path)
+      - [Create](#kivepolicy-resource-create)
+      - [MatchAny](#kivepolicy-resource-matchany)
+    - [KivePolicy Reconciliation](#kivepolicy-reconciliation)
   - [Loader Controller](#loader-controller)
     - [Number of loader controllers](#number-of-loader-controller)
-    - [HiveData Resource](#hivedata-resource)
-    - [HiveData Reconciliation](#hivedata-reconciliation)
+    - [KiveData Resource](#kivedata-resource)
+    - [KiveData Reconciliation](#kivedata-reconciliation)
   - [eBPF program](#ebpf-program)
   - [Pod Controller](#pod-controller)
 
@@ -46,7 +46,7 @@ works, Its parts and how they interact with each other.
 
 ## Application Description
 
-Hive is a kubernetes-native eBPF-powered file access monitoring
+Kive is a kubernetes-native eBPF-powered file access monitoring
 tool. The user is able to select which file to monitor based on the
 path and filters on pods / containers. When one of the monitored files
 is accessed (read from, written to..), the application will inform
@@ -67,9 +67,9 @@ kubernetes or the operating systems.
 The components are:
 
 - **discover controller**: collects identifying data of the files to
-  monitor. Manages the `HivePolicy` resource.
+  monitor. Manages the `KivePolicy` resource.
 - **loader controller**: loads and updates the eBPF program into the
-  kernel. Generates the `HiveAlerts` and manages the `HiveData`
+  kernel. Generates the `KiveAlerts` and manages the `KiveData`
   resource.
 - **eBPF program**: informs the loader that one of the monitored files
   was accessed, with additional information from the kernel.
@@ -90,7 +90,7 @@ executed in different contexes and moments, for example some program
 types can be hooked to existing tracing infrastructure such as
 tracepoints, perf events and kprobes, and they will be executed when
 the hook is triggered. An eBPF program uses its own [instruction
-set](https://www.ietf.org/archive/id/draft-thaler-bpf-isa-00.html) and
+set](https://www.ietf.org/arckive/id/draft-thaler-bpf-isa-00.html) and
 the kernel will either interpret it (less common) or JIT compile it to
 native machine code after a verification step where several contraints
 are asserted. For example, eBPF program can have at most 512 Bytes of
@@ -174,11 +174,11 @@ available through kernel modules which are more powerful and,
 therefore, dangerous.
 
 The eBPF program needs to be loaded and updated when the user changes
-the monitoring policy (`HivePolicy`) or the cluster changes / updates
+the monitoring policy (`KivePolicy`) or the cluster changes / updates
 its topology. Therefore a loader and an updater are necessary, which
 are both done by the *loader controller*, as well as capturing
 information from the eBPF program and generating alerts
-(`HiveAlert`). A more satisfying description will be given later.
+(`KiveAlert`). A more satisfying description will be given later.
 
 <a name="identify"></a>
 
@@ -215,7 +215,7 @@ numbers.
 
 In our application, the entity that is responsible to get the inode
 number is the *discover controller*. The loader controller and the
-discover controller share information through a `HiveData` resource.
+discover controller share information through a `KiveData` resource.
 
 <a name="complications"></a>
 
@@ -274,7 +274,7 @@ The different components are now described below:
 
 ## Discover Controller
 
-The *discover* controller aka `HivePolicy` controller is responsible for
+The *discover* controller aka `KivePolicy` controller is responsible for
 the following:
 
 - Identify the kernel instance: the controller will fetch an unique
@@ -288,13 +288,13 @@ the following:
    order to share the inodes with the right loader (there is one
    loader per running kernel, more info below).
 
-- reacting to CRUD operations on `HivePolicy` resource, which will:
+- reacting to CRUD operations on `KivePolicy` resource, which will:
 
   - Fetch the information of a file such as the inode number from the
     matched contianers, hence the name *discover*
-  - Create `HiveData` resources with the previously fetched information
+  - Create `KiveData` resources with the previously fetched information
 
-The `HiveData` resource is specified later in [HiveData resource](#hivedata-resource).
+The `KiveData` resource is specified later in [KiveData resource](#kivedata-resource).
 
 Note that when referring to inodes in this document we are technically
 referring to the inode number.
@@ -309,31 +309,31 @@ runtime and access the filesystem of the container in order to read
 the inode.
 
 Therefore, each discover controller instance will react to all the
-changes in the `HivePolicy` resource, and generate one or multiple
-`HiveData` resource[s] for this specific kernel.
+changes in the `KivePolicy` resource, and generate one or multiple
+`KiveData` resource[s] for this specific kernel.
 
-Any discover controller[s] may generate multiple `HiveData` resources
-from the same `HivePolicy`. This is intended by design since the
+Any discover controller[s] may generate multiple `KiveData` resources
+from the same `KivePolicy`. This is intended by design since the
 policy may match multiple pods hence the relationship between a policy
-and a `HiveData` is *one to many*.
+and a `KiveData` is *one to many*.
 
-<a name="hivepolicy-resource"></a>
+<a name="kivepolicy-resource"></a>
 
-### HivePolicy Resource
+### KivePolicy Resource
 
-A `HivePolicy` resource contains a list of `HiveTrap`, and looks like
+A `KivePolicy` resource contains a list of `KiveTrap`, and looks like
 this:
 
 ```yaml
-apiVersion: hive-operator.com/v1alpha1
-kind: HivePolicy
+apiVersion: kivebpf.san7o.github.io/v1alpha1
+kind: KivePolicy
 metadata:
   labels:
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: kivebpf
   finalizers:
-    - hive-operator.com/finalizer
-  name: hive-sample-policy
-  namespace: hive-operator-system
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy
+  namespace: kivebpf-system
 spec:
   traps:
     - path: /secret.txt
@@ -349,9 +349,9 @@ spec:
           security-level: high
 ```
 
-Each `HiveTrap` can contain the following fields:
+Each `KiveTrap` can contain the following fields:
 
-<a name="hivepolicy-resource-path"></a>
+<a name="kivepolicy-resource-path"></a>
 
 #### Path
 
@@ -359,7 +359,7 @@ This is the only non-optional fiels. `path` is the filesystem path in
 a matched container starting from the root `/` directory of the file
 to trace.
 
-<a name="hivepolicy-resource-create"></a>
+<a name="kivepolicy-resource-create"></a>
 
 #### Create
 
@@ -372,7 +372,7 @@ UNIX permissions given to the file to be created via the `mode` field.
 If present, the operator will send json-encoded data to the callback
 via an HTTP POST request.
 
-<a name="hivepolicy-resource-matchany"></a>
+<a name="kivepolicy-resource-matchany"></a>
 
 #### MatchAny
 
@@ -408,12 +408,12 @@ matchAny:
 The above matches all containers that are in pods named `nginx-pod` OR
 all the containers that are in the `default` namespace.
 
-<a name="hivepolicy-reconciliation"></a>
+<a name="kivepolicy-reconciliation"></a>
 
-### HivePolicy Reconciliation
+### KivePolicy Reconciliation
 
 The controller performs the following actions in sequence when a CRUD
-operation occurs on an `HivePolicy` resource (a "reconciliation"):
+operation occurs on an `KivePolicy` resource (a "reconciliation"):
 
 1. Identify the kernel instance: the controller will fetch an unique
    identifier for the running kernel (for example reading
@@ -433,48 +433,48 @@ operation occurs on an `HivePolicy` resource (a "reconciliation"):
    the container runtime is necessary to know which PID corresponds to
    which container, and through the PID we can access the filesystem.
 
-3. Read all the `HivePolicies` and their respective `HiveTraps`.
+3. Read all the `KivePolicies` and their respective `KiveTraps`.
 
-4. If an `HivePolicty` is about to be deleted (using finalizers),
-   trigger a reconciliation for `HiveData`, which will be responsible
+4. If an `KivePolicty` is about to be deleted (using finalizers),
+   trigger a reconciliation for `KiveData`, which will be responsible
    for deleting any resource that does not belong anymore to a
-   `HiveTrap`.
+   `KiveTrap`.
 
 5. For each trap, get the list of matched containers, then check if
-   a `HiveData` resource already exists for each of them.
+   a `KiveData` resource already exists for each of them.
    
    If it does not exist:
    
    - Read the inode of the file specified by the trap.
      
-   - Create the `HiveData` with the information from the container,
+   - Create the `KiveData` with the information from the container,
      the pod, the trap, the policy, and the inode.
 
    - Compute an identifier of the policy and set it as a label in the
-     `HiveData`.
+     `KiveData`.
 
    If either the container or pod are not ready, requeue and restart
    from point 2.
 
-To summarize, if an `HivePolicy` is created / updated, the reconciliation
-will check if a `HiveData` was already present, or create it otherwise.
-If an `HivePolicy` is deleted, we delegate the responsibility of deleting
-old `HiveData` to the `HiveData` reconciliation.
+To summarize, if an `KivePolicy` is created / updated, the reconciliation
+will check if a `KiveData` was already present, or create it otherwise.
+If an `KivePolicy` is deleted, we delegate the responsibility of deleting
+old `KiveData` to the `KiveData` reconciliation.
 
 <a name="loader-controller"></a>
 
 ## Loader Controller
 
-The loader controller aka `HiveData` controller is responsible for the
+The loader controller aka `KiveData` controller is responsible for the
 following operations:
 
 - Load the eBPF program at startup and unload It during shutdown.
-- Update the eBPF map when there is a change in a `HiveData` resource.
-- Generate `HiveAlerts`: the controller will read the output of the
+- Update the eBPF map when there is a change in a `KiveData` resource.
+- Generate `KiveAlerts`: the controller will read the output of the
   eBPF program from a ring buffer, parse it, add kubernetes
   information (such as the name of the pod corresponding to the inode
   and other information from the kubernetes topology) and generate an
-  `HiveAlert`, which will either be printed to standard output or sent
+  `KiveAlert`, which will either be printed to standard output or sent
   to a callback via a POST HTTP request.
 
 Upon rescheduling of the operator, the eBPF program needs to be
@@ -493,14 +493,14 @@ To implement this, each node needs to fetch Its running kernel
 identifier and then run elections so that only one node is elected per
 running kernel.
 
-<a name="hivedata-resource"></a>
+<a name="kivedata-resource"></a>
 
-### HiveData Resource
+### KiveData Resource
 
-The `HiveData` resource is used to communicate information between the
+The `KiveData` resource is used to communicate information between the
 discover and the loader controller. The relationship between an
-`HiveTrap` and an `HiveData` is one to many, where each `HiveData`
-must have an `HiveTrap`.
+`KiveTrap` and an `KiveData` is one to many, where each `KiveData`
+must have an `KiveTrap`.
 
 The loader uses information from this resource to instruct the eBPF
 program to filter certain inodes.
@@ -508,23 +508,23 @@ program to filter certain inodes.
 The schema of the resource looks like the following:
 
 ```yaml
-apiVersion: hive-operator.com/v1alpha1
-kind: HiveData
+apiVersion: kivebpf.san7o.github.io/v1alpha1
+kind: KiveData
 metadata:
   annotations:
     callback: ""
     container_id: containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5
     container_name: nginx
-    hive_policy_name: hive-sample-policy
+    kive_policy_name: kive-sample-policy
     namespace: default
-    node_name: hive-worker2
+    node_name: kive-worker2
     path: /secret.txt
     pod_ip: 10.244.1.2
     pod_name: nginx-pod
   creationTimestamp: "2025-07-25T08:06:12Z"
   generation: 1
-  name: hive-data-nginx-pod-default-13667586
-  namespace: hive-operator-system
+  name: kive-data-nginx-pod-default-13667586
+  namespace: kivebpf-system
   resourceVersion: "23395"
   uid: 788bcb67-a9de-480d-a179-e40234116459
   labels:
@@ -539,29 +539,29 @@ The fields under `spec` are:
 - `inode-no`: The inode number of the file to trace, needed by the
   eBPF program.
 - `kernel-id`: An unique identifier of a running kernel, to discriminate
-  which loader controller should handle this `HiveData`.
+  which loader controller should handle this `KiveData`.
 
-The annotations are used as additional information for the `HiveAlert`
+The annotations are used as additional information for the `KiveAlert`
 when an access is detected by the eBPF program.
 
-The `trap-id` is used to identify which `HiveTrap` generated this
-`HiveData`.
+The `trap-id` is used to identify which `KiveTrap` generated this
+`KiveData`.
 
-<a name="hivedata-reconciliation"></a>
+<a name="kivedata-reconciliation"></a>
 
-### HiveData Reconciliation
+### KiveData Reconciliation
 
-Upon CRUD changes of the `HiveData` resource, the controller does the
+Upon CRUD changes of the `KiveData` resource, the controller does the
 following:
 
-1. Fetch the `HivePolicy` and `HiveData` resources in the cluster.
+1. Fetch the `KivePolicy` and `KiveData` resources in the cluster.
 
-2. Check if each `HiveData` (referring to this kernel id) does have a
-   corresponding `HiveTrap` from an `HivePolicy`.
+2. Check if each `KiveData` (referring to this kernel id) does have a
+   corresponding `KiveTrap` from an `KivePolicy`.
   
   If it does, then we update the eBPF map with the information from
-  the `HiveData`. It it does not, then the `HiveTrap` has been
-  eliminated and the `HiveData` should be deleted.
+  the `KiveData`. It it does not, then the `KiveTrap` has been
+  eliminated and the `KiveData` should be deleted.
   
 3. Fill the rest of the eBPF map with zeros so that we do not leave
    old values that where there before.
@@ -578,7 +578,7 @@ allows the eBPF program to log when a permission is checked and with
 what rights, as well as who tried to check the permissions.
 
 The eBPF program will log information only if said function is called
-on an inode present in an `HiveData` resource.  The loader will fetch
+on an inode present in an `KiveData` resource.  The loader will fetch
 those inodes from the CRD and send them to the eBPF program via a map,
 that is an array of inodes.
 
@@ -591,12 +591,12 @@ to be compiled each time It needs to be loaded, but can be compiled
 only once and even shipped with the binaries of the application.
 
 The information from the ring buffer will be processed by the loader
-to generate an `HiveAlert`. An example alert is the following:
+to generate an `KiveAlert`. An example alert is the following:
 
 ```json
 {
   "timestamp": "2025-08-02T16:51:19Z",
-  "hive_policy_name": "hive-sample-policy",
+  "kive_policy_name": "kive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
     "inode": 16256084,
@@ -612,7 +612,7 @@ to generate an `HiveAlert`. An example alert is the following:
     }
   },
   "node": {
-    "name": "hive-worker"
+    "name": "kive-worker"
   },
   "process": {
     "pid": 176928,
@@ -629,15 +629,15 @@ to generate an `HiveAlert`. An example alert is the following:
 
 ## Pod Controller
 
-When a pod is changed, we want to update both `HiveData` and the eBPF
+When a pod is changed, we want to update both `KiveData` and the eBPF
 map. To achieve, this we need a pod controller. There are two main
 operations we are concerned about with pods: pod creation and pod
 termination.
 - creation: upon creation, the controller should send a
-  reconcile request for `HivePolicy` so that new `HiveData` will
+  reconcile request for `KivePolicy` so that new `KiveData` will
   be generated for the new pod.
 - termination: upon termination, the controller should check if
-  each `HiveData` refers to an existing pod. If it does not, then
+  each `KiveData` refers to an existing pod. If it does not, then
   that resource should be eliminated.
   
 Failures are treated as terminations.

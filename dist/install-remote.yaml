@@ -3,23 +3,23 @@ kind: Namespace
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-k8s-operator
+    app.kubernetes.io/name: kive-k8s-operator
     control-plane: manager
-  name: hive-operator-system
+  name: kivebpf-system
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: hivedata.hive-operator.com
+  name: kivedata.kivebpf.san7o.github.io
 spec:
-  group: hive-operator.com
+  group: kivebpf.san7o.github.io
   names:
-    kind: HiveData
-    listKind: HiveDataList
-    plural: hivedata
-    singular: hivedata
+    kind: KiveData
+    listKind: KiveDataList
+    plural: kivedata
+    singular: kivedata
   scope: Namespaced
   versions:
   - name: v1alpha1
@@ -44,7 +44,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: HiveDataSpec defines the desired state of HiveData
+            description: KiveDataSpec defines the desired state of KiveData
             properties:
               inode-no:
                 description: The inode number of the file
@@ -65,14 +65,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: hivepolicies.hive-operator.com
+  name: kivepolicies.kivebpf.san7o.github.io
 spec:
-  group: hive-operator.com
+  group: kivebpf.san7o.github.io
   names:
-    kind: HivePolicy
-    listKind: HivePolicyList
-    plural: hivepolicies
-    singular: hivepolicy
+    kind: KivePolicy
+    listKind: KivePolicyList
+    plural: kivepolicies
+    singular: kivepolicy
   scope: Namespaced
   versions:
   - name: v1alpha1
@@ -158,18 +158,18 @@ kind: ServiceAccount
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-manager
-  namespace: hive-operator-system
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-manager
+  namespace: kivebpf-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-leader-election-role
-  namespace: hive-operator-system
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-leader-election-role
+  namespace: kivebpf-system
 rules:
 - apiGroups:
   - ""
@@ -208,13 +208,13 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-hive-editor-role
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kive-editor-role
 rules:
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hives
+  - kives
   verbs:
   - create
   - delete
@@ -224,9 +224,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hives/status
+  - kives/status
   verbs:
   - get
 ---
@@ -235,21 +235,21 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-hive-viewer-role
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kive-viewer-role
 rules:
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hives
+  - kives
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hives/status
+  - kives/status
   verbs:
   - get
 ---
@@ -258,13 +258,13 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-hivedata-editor-role
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kivedata-editor-role
 rules:
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata
+  - kivedata
   verbs:
   - create
   - delete
@@ -274,9 +274,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata/status
+  - kivedata/status
   verbs:
   - get
 ---
@@ -285,28 +285,28 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-hivedata-viewer-role
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kivedata-viewer-role
 rules:
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata
+  - kivedata
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata/status
+  - kivedata/status
   verbs:
   - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: hive-operator-manager-role
+  name: kivebpf-manager-role
 rules:
 - apiGroups:
   - apps
@@ -332,10 +332,10 @@ rules:
   - list
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata
-  - hivepolicies
+  - kivedata
+  - kivepolicies
   verbs:
   - create
   - delete
@@ -345,17 +345,17 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata/finalizers
-  - hivepolicies/finalizers
+  - kivedata/finalizers
+  - kivepolicies/finalizers
   verbs:
   - update
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata/status
-  - hivepolicies/status
+  - kivedata/status
+  - kivepolicies/status
   verbs:
   - get
   - patch
@@ -364,7 +364,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: hive-operator-metrics-auth-role
+  name: kivebpf-metrics-auth-role
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -382,7 +382,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: hive-operator-metrics-reader
+  name: kivebpf-metrics-reader
 rules:
 - nonResourceURLs:
   - /metrics
@@ -394,56 +394,56 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-leader-election-rolebinding
-  namespace: hive-operator-system
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-leader-election-rolebinding
+  namespace: kivebpf-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: hive-operator-leader-election-role
+  name: kivebpf-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: hive-operator-manager
-  namespace: hive-operator-system
+  name: kivebpf-manager
+  namespace: kivebpf-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
-  name: hive-operator-manager-rolebinding
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: hive-operator-manager-role
+  name: kivebpf-manager-role
 subjects:
 - kind: ServiceAccount
-  name: hive-operator-manager
-  namespace: hive-operator-system
+  name: kivebpf-manager
+  namespace: kivebpf-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: hive-operator-metrics-auth-rolebinding
+  name: kivebpf-metrics-auth-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: hive-operator-metrics-auth-role
+  name: kivebpf-metrics-auth-role
 subjects:
 - kind: ServiceAccount
-  name: hive-operator-manager
-  namespace: hive-operator-system
+  name: kivebpf-manager
+  namespace: kivebpf-system
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: kivebpf
     control-plane: manager
-  name: hive-operator-manager-metrics-service
-  namespace: hive-operator-system
+  name: kivebpf-manager-metrics-service
+  namespace: kivebpf-system
 spec:
   ports:
   - name: https
@@ -458,10 +458,10 @@ kind: DaemonSet
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: kivebpf
     control-plane: manager
-  name: hive-operator-manager
-  namespace: hive-operator-system
+  name: kivebpf-manager
+  namespace: kivebpf-system
 spec:
   selector:
     matchLabels:
@@ -475,19 +475,19 @@ spec:
     spec:
       containers:
       - args:
-        - --hive-policy-health-probe-bind-address=:8081
-        - --hive-data-health-probe-bind-address=:8082
-        - --hive-pod-health-probe-bind-address=:8083
+        - --kive-policy-health-probe-bind-address=:8081
+        - --kive-data-health-probe-bind-address=:8082
+        - --kive-pod-health-probe-bind-address=:8083
         command:
         - /manager
-        image: giovann103/hive-k8s-operator:latest
+        image: giovann103/kive-k8s-operator:latest
         livenessProbe:
           httpGet:
             path: /healthz
             port: 8081
           initialDelaySeconds: 15
           periodSeconds: 20
-        name: hive-k8s-operator
+        name: kive-k8s-operator
         readinessProbe:
           httpGet:
             path: /readyz
@@ -517,7 +517,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: hive-operator-manager
+      serviceAccountName: kivebpf-manager
       terminationGracePeriodSeconds: 10
       volumes:
       - hostPath:

@@ -1,6 +1,6 @@
 # k8s-lab
 
-[k9s-lab](https://github.com/San7o/hive-operator/tree/main/k8s-lab) is
+[k9s-lab](https://github.com/San7o/kivebpf/tree/main/k8s-lab) is
 a collection of useful scripts to create a local test kubernetes
 cluster. The cluster is composed of local virtual machines running via
 qemu with KVM. The virtual machines are connected to the host network
@@ -40,7 +40,7 @@ make setup
 ```
 
 You need to download the fedora cloud image from their
-[website](https://fedoraproject.org/cloud/) and place It in the
+[website](https://fedoraproject.org/cloud/) and place it in the
 `images` directory. You also need to modify the entry `FEDORA_IMAGE`
 in `config.sh` with the name of the downloaded image.
 

@@ -6,14 +6,14 @@
 </head>
 <body>
   <div class="topnav">
-    <a href="./index.html">Hive</a>
+    <a href="./index.html">Kive</a>
     <a href="./DESIGN.html">Design</a>
     <a href="./USAGE.html">Usage</a>
     <a href="./DEVELOPMENT.html">Development</a>
     <a href="./EBPF-TESTING.html">eBPF Testing</a>
     <a href="./k8s-lab.html">k8s lab</a>
     <a href="./callback.html">callback</a>
-    <a href="https://github.com/San7o/hive-operator">Github</a>
+    <a href="https://github.com/San7o/kivebpf">Github</a>
   </div> 
 <h1 id="developement">Developement</h1>
 <p>This document contains useful information to build the operator
@@ -22,9 +22,9 @@ the eBPF program and the kubernetes operator. For regular usage, please
 read the <a href="./USAGE.html">USAGE</a> document.</p>
 <h2 id="setup-a-local-cluster">Setup a local cluster</h2>
 <p>To use an operator, you need a kubernetes cluster. In the <a
-href="https://github.com/San7o/hive-operator">official repository</a>
-you can find the script <a
-href="https://github.com/San7o/hive-operator/tree/main/hack/registry-cluster.sh">hack/registry-cluster.sh</a> which
+href="https://github.com/San7o/kivebpf">official repository</a> you can
+find the script <a
+href="https://github.com/San7o/kivebpf/tree/main/hack/registry-cluster.sh">hack/registry-cluster.sh</a> which
 will create a local cluster using <a
 href="https://github.com/kubernetes-sigs/kind">kind</a> with one control
 node and one worker node. Additionally, It sets up a local docker
@@ -33,7 +33,7 @@ registry to push the operator image during development.</p>
 a container, you need to mount <code>/proc</code> inside the node at
 <code>/host/real/proc</code>. The script above already does it. This is
 needed because the eBPF program runs in the host kernel and the operator
-needs to access the host procfs to generate the <code>HiveAlert</code>.
+needs to access the host procfs to generate the <code>KiveAlert</code>.
 If you do not do this, the operator will gracefully report a message and
 some fields in the alert will remain empty (namely, <code>cwd</code>).
 If you are using virtual machines / real nodes or hypervisors (likely in
@@ -131,19 +131,19 @@ document which will explain how to use the operator.</p>
 <h2 id="testing">Testing</h2>
 <p>To run end to end tests, first make sure that you have a cluster
 running with the operator deployed, and that there is not
-<code>HivePolicy</code> present. Then, simply run:</p>
+<code>KivePolicy</code> present. Then, simply run:</p>
 <div class="sourceCode" id="cb13"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> test</span></code></pre></div>
 <h2 id="useful-commands">Useful commands</h2>
-<p>When building a new docker image, you want the hive pods to update to
+<p>When building a new docker image, you want the kive pods to update to
 the new version. The pods are already configured to fetch the latest
 version of the image in the local test docker repository, to do so you
 just need to kill them. You can use the following command:</p>
 <div class="sourceCode" id="cb14"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> kill-pods</span></code></pre></div>
-<p>This will also remove all the <code>HiveData</code> resources so that
+<p>This will also remove all the <code>KiveData</code> resources so that
 you start with a clean configuration, as if you just applied the
-<code>HivePolicies</code>.</p>
+<code>KivePolicies</code>.</p>
 <p>To completely remove the operator from the cluster, run:</p>
 <div class="sourceCode" id="cb15"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> undeploy</span></code></pre></div>
@@ -157,8 +157,8 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href=
 
   <p>Author: Giovanni Santini <a href="mailto:giovanni.santini@proton.me">giovanni.santini@proton.me</a>
   </p>
-<p>Code: GitHub <a href="https://github.com/San7o/hive-operator/tree/main">@San7o/hive-operator</a>
-<p>License: GPLv2 <a href="https://github.com/San7o/hive-operator/blob/main/LICENSE.html">LICENSE</a>
+<p>Code: GitHub <a href="https://github.com/San7o/kivebpf/tree/main">@San7o/kivebpf</a>
+<p>License: GPLv2 <a href="https://github.com/San7o/kivebpf/blob/main/LICENSE.html">LICENSE</a>
   </p>
 </footer>
 

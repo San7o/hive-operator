@@ -21,7 +21,7 @@ import (
 	containerd "github.com/containerd/containerd"
 	containerdCio "github.com/containerd/containerd/cio"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
 )
 
 const (
@@ -71,7 +71,7 @@ func (self *Containerd) IsConnected() bool {
 	return self.isConnected
 }
 
-func (self *Containerd) GetContainerData(ctx context.Context, id string, hiveTrap hivev1alpha1.HiveTrap) (ContainerData, error) {
+func (self *Containerd) GetContainerData(ctx context.Context, id string, kiveTrap kivev1alpha1.KiveTrap) (ContainerData, error) {
 
 	attach := containerdCio.NewAttach()
 
@@ -88,7 +88,7 @@ func (self *Containerd) GetContainerData(ctx context.Context, id string, hiveTra
 			}
 
 			inode, err := getInode(task.Pid(),
-				hiveTrap.Path, hiveTrap.Create, hiveTrap.Mode)
+				kiveTrap.Path, kiveTrap.Create, kiveTrap.Mode)
 			if err != nil {
 				return ContainerData{}, err
 			}

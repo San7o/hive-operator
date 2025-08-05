@@ -28,10 +28,10 @@ rules:
   - list
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata
-  - hivepolicies
+  - kivedata
+  - kivepolicies
   verbs:
   - create
   - delete
@@ -41,17 +41,17 @@ rules:
   - update
   - watch
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata/finalizers
-  - hivepolicies/finalizers
+  - kivedata/finalizers
+  - kivepolicies/finalizers
   verbs:
   - update
 - apiGroups:
-  - hive-operator.com
+  - kivebpf.san7o.github.io
   resources:
-  - hivedata/status
-  - hivepolicies/status
+  - kivedata/status
+  - kivepolicies/status
   verbs:
   - get
   - patch

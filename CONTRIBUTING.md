@@ -6,7 +6,7 @@ pillar of the project. If you find issues, or have feature requests,
 or want to contribute to the current issues, feel free to do so.
 
 Development happens on github, you can find open issues in the
-[issues](https://github.com/San7o/hive-operator/issues) page. Here you
+[issues](https://github.com/San7o/kivebpf/issues) page. Here you
 can see if a problem was already encountered, discuss possible
 solutions and read future plains in feature-tracking issues.
 

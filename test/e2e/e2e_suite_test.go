@@ -30,8 +30,8 @@ func TestE2E(t *testing.T) {
 	suiteConfig.ParallelTotal = 1 // force sequential
 	suiteConfig.RandomizeAllSpecs = false
 
-	_, _ = fmt.Fprintf(GinkgoWriter, "Starting hive-operator suite\n")
-	RunSpecs(t, "Hive Operator E2E Suite", suiteConfig, reporterConfig)
+	_, _ = fmt.Fprintf(GinkgoWriter, "Starting kivebpf suite\n")
+	RunSpecs(t, "Kive Operator E2E Suite", suiteConfig, reporterConfig)
 }
 
 var _ = BeforeSuite(func() {

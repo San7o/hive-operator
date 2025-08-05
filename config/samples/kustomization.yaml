@@ -1,11 +1,11 @@
 ## Append samples of your project ##
 resources:
-- hive_v1alpha1_hivepolicy_regex2.yaml
-- hive_v1alpha1_hivepolicy_regex.yaml
-- hive_v1alpha1_hivepolicy2.yaml
-- hive_v1alpha1_hivepolicy3.yaml
-- hive_v1alpha1_hivepolicy4.yaml
-- hive_v1alpha1_hivepolicy.yaml 
-- hive_v1alpha1_hivedata.yaml
+- kive_v1alpha1_kivepolicy_regex2.yaml
+- kive_v1alpha1_kivepolicy_regex.yaml
+- kive_v1alpha1_kivepolicy2.yaml
+- kive_v1alpha1_kivepolicy3.yaml
+- kive_v1alpha1_kivepolicy4.yaml
+- kive_v1alpha1_kivepolicy.yaml 
+- kive_v1alpha1_kivedata.yaml
 
 # +kubebuilder:scaffold:manifestskustomizesamples

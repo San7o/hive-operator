@@ -22,8 +22,8 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the Project itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
-- hivedata_editor_role.yaml
-- hivedata_viewer_role.yaml
-- hive_editor_role.yaml
-- hive_viewer_role.yaml
+- kivedata_editor_role.yaml
+- kivedata_viewer_role.yaml
+- kive_editor_role.yaml
+- kive_viewer_role.yaml
 

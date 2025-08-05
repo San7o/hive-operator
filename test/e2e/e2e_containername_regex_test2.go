@@ -22,27 +22,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
 )
 
 var _ = Describe("ContainerName Regex 2", Ordered, func() {
 	var err error
 
-	var hiveTestPolicy = &hivev1alpha1.HivePolicy{
+	var kiveTestPolicy = &kivev1alpha1.KivePolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "hive-policy-test-regex2",
+			Name:       "kive-policy-test-regex2",
 			Namespace:  testNamespaceName,
-			Finalizers: []string{hivev1alpha1.HivePolicyFinalizerName},
+			Finalizers: []string{kivev1alpha1.KivePolicyFinalizerName},
 		},
-		Spec: hivev1alpha1.HivePolicySpec{
-			Traps: []hivev1alpha1.HiveTrap{
+		Spec: kivev1alpha1.KivePolicySpec{
+			Traps: []kivev1alpha1.KiveTrap{
 				{
 					Path:   "/regex2",
 					Create: true,
-					MatchAny: []hivev1alpha1.HiveTrapMatch{
-						hivev1alpha1.HiveTrapMatch{
+					MatchAny: []kivev1alpha1.KiveTrapMatch{
+						kivev1alpha1.KiveTrapMatch{
 							PodName:       "test-pod",
-							Namespace:     "hive-test",
+							Namespace:     "kive-test",
 							ContainerName: "test-nope.*",
 						},
 					},
@@ -68,7 +68,7 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 	}
 
 	BeforeAll(func() {
-		err = CleanHivePolicies(ctx, Client)
+		err = CleanKivePolicies(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
 		err = CleanTestPods(ctx, Client, []corev1.Pod{testPod})
 		Expect(err).NotTo(HaveOccurred())
@@ -77,65 +77,65 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 	AfterAll(func() {
 		err = CleanTestPods(ctx, Client, []corev1.Pod{testPod})
 		Expect(err).NotTo(HaveOccurred())
-		err = CleanHivePolicies(ctx, Client)
+		err = CleanKivePolicies(ctx, Client)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Context("Operator", func() {
 
-		It("Should not have any HivePolicy", func() {
+		It("Should not have any KivePolicy", func() {
 
-			By("Getting HivePolicy")
-			var hivePolicyList hivev1alpha1.HivePolicyList
-			err := Client.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName))
+			By("Getting KivePolicy")
+			var kivePolicyList kivev1alpha1.KivePolicyList
+			err := Client.List(ctx, &kivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
-			if len(hivePolicyList.Items) != 0 {
-				Expect(fmt.Errorf("HivePolicy present")).NotTo(HaveOccurred())
+			if len(kivePolicyList.Items) != 0 {
+				Expect(fmt.Errorf("KivePolicy present")).NotTo(HaveOccurred())
 			}
 		})
 
-		It("Should not have any HiveData", func() {
+		It("Should not have any KiveData", func() {
 
-			By("Getting HiveData")
-			var hiveDataList hivev1alpha1.HiveDataList
-			err := Client.List(ctx, &hiveDataList, client.InNamespace(operatorNamespace))
+			By("Getting KiveData")
+			var kiveDataList kivev1alpha1.KiveDataList
+			err := Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace))
 			Expect(err).NotTo(HaveOccurred())
 
-			if len(hiveDataList.Items) != 0 {
-				Expect(fmt.Errorf("HiveData present")).NotTo(HaveOccurred())
+			if len(kiveDataList.Items) != 0 {
+				Expect(fmt.Errorf("KiveData present")).NotTo(HaveOccurred())
 			}
 		})
 
-		It("Should succesfully create an HivePolicy", func() {
+		It("Should succesfully create an KivePolicy", func() {
 
-			By("Creating HivePolicy")
-			err = Client.Create(ctx, hiveTestPolicy)
+			By("Creating KivePolicy")
+			err = Client.Create(ctx, kiveTestPolicy)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Give the operator some time to react
 			time.Sleep(reconcileTimeout)
 
-			By("Getting HivePolicy")
-			var hivePolicyList hivev1alpha1.HivePolicyList
-			err := Client.List(ctx, &hivePolicyList, client.InNamespace(testNamespaceName))
+			By("Getting KivePolicy")
+			var kivePolicyList kivev1alpha1.KivePolicyList
+			err := Client.List(ctx, &kivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
-			if len(hivePolicyList.Items) != 1 {
-				Expect(fmt.Errorf("HivePolicy not present")).NotTo(HaveOccurred())
+			if len(kivePolicyList.Items) != 1 {
+				Expect(fmt.Errorf("KivePolicy not present")).NotTo(HaveOccurred())
 			}
 
-			By("Getting HiveData")
-			var hiveDataList hivev1alpha1.HiveDataList
-			err = Client.List(ctx, &hiveDataList, client.InNamespace(operatorNamespace))
+			By("Getting KiveData")
+			var kiveDataList kivev1alpha1.KiveDataList
+			err = Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace))
 			Expect(err).NotTo(HaveOccurred())
 
-			if len(hiveDataList.Items) != 0 {
-				Expect(fmt.Errorf("HiveData should not be present")).NotTo(HaveOccurred())
+			if len(kiveDataList.Items) != 0 {
+				Expect(fmt.Errorf("KiveData should not be present")).NotTo(HaveOccurred())
 			}
 		})
 
-		It("Should not create an HiveData when a pod does not match the container name", func() {
+		It("Should not create an KiveData when a pod does not match the container name", func() {
 
 			By("Creating test pod")
 			err = Client.Create(ctx, &testPod)
@@ -166,20 +166,20 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 			// Give the operator some time to react
 			time.Sleep(reconcileTimeout)
 
-			By("Getting HiveData")
-			var hiveDataList hivev1alpha1.HiveDataList
-			if err := Client.List(ctx, &hiveDataList, client.InNamespace(operatorNamespace)); err != nil {
-				Expect(fmt.Errorf("List HiveData: %w", err)).NotTo(HaveOccurred())
+			By("Getting KiveData")
+			var kiveDataList kivev1alpha1.KiveDataList
+			if err := Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace)); err != nil {
+				Expect(fmt.Errorf("List KiveData: %w", err)).NotTo(HaveOccurred())
 			}
-			if len(hiveDataList.Items) != 0 {
-				Expect(fmt.Errorf("One HiveData should not be present, found %d", len(hiveDataList.Items))).NotTo(HaveOccurred())
+			if len(kiveDataList.Items) != 0 {
+				Expect(fmt.Errorf("One KiveData should not be present, found %d", len(kiveDataList.Items))).NotTo(HaveOccurred())
 			}
 		})
 
-		It("Should delete hivePolicy after deletion of HivePolicy", func() {
+		It("Should delete kivePolicy after deletion of KivePolicy", func() {
 
-			By("Deleting the HivePolicy")
-			err = Client.Delete(ctx, hiveTestPolicy)
+			By("Deleting the KivePolicy")
+			err = Client.Delete(ctx, kiveTestPolicy)
 			Expect(err).NotTo(HaveOccurred())
 
 			time.Sleep(reconcileTimeout)

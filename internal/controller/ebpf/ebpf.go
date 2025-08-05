@@ -27,8 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
-	container "github.com/San7o/hive-operator/internal/controller/container"
+	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
 const (
@@ -127,26 +127,26 @@ func ReadEbpfData() (bpfLogData, error) {
 	return data, nil
 }
 
-func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, error) {
+func ReadAlert(ctx context.Context, cli client.Reader) (kivev1alpha1.KiveAlert, error) {
 
 	if RingbuffReader == nil {
-		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
+		return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
 	}
 
 	log := log.FromContext(ctx)
 	data, err := ReadEbpfData() // Hangs
 	if err != nil {
-		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
+		return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
 	}
 
-	hiveDataList := &hivev1alpha1.HiveDataList{}
-	err = cli.List(ctx, hiveDataList)
+	kiveDataList := &kivev1alpha1.KiveDataList{}
+	err = cli.List(ctx, kiveDataList)
 	if err != nil {
-		return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error Failed to get Hive Data resource: %w", err)
+		return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Failed to get Kive Data resource: %w", err)
 	}
 
-	for _, hiveData := range hiveDataList.Items {
-		if hiveData.Spec.InodeNo == data.Ino {
+	for _, kiveData := range kiveDataList.Items {
+		if kiveData.Spec.InodeNo == data.Ino {
 
 			cwd := ""
 			// If the node is a container on some host, then we need to read
@@ -161,31 +161,31 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 			if err != nil {
 				cwd, _ = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
 				// error is handled gracefully
-				log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an HiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+				log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
 			}
-			out := hivev1alpha1.HiveAlert{
+			out := kivev1alpha1.KiveAlert{
 				Timestamp:      time.Now().Format(time.RFC3339),
-				HivePolicyName: hiveData.Annotations["hive_policy_name"],
-				Metadata: hivev1alpha1.HiveAlertMetadata{
-					Path:     hiveData.Annotations["path"],
+				KivePolicyName: kiveData.Annotations["kive_policy_name"],
+				Metadata: kivev1alpha1.KiveAlertMetadata{
+					Path:     kiveData.Annotations["path"],
 					Inode:    data.Ino,
 					Mask:     data.Mask,
-					KernelID: hiveData.Spec.KernelID,
-					Callback: hiveData.ObjectMeta.Annotations["callback"],
+					KernelID: kiveData.Spec.KernelID,
+					Callback: kiveData.ObjectMeta.Annotations["callback"],
 				},
-				Pod: hivev1alpha1.PodMetadata{
-					Name:      hiveData.Annotations["pod_name"],
-					Namespace: hiveData.Annotations["namespace"],
-					Container: hivev1alpha1.ContainerMetadata{
-						Id:   hiveData.Annotations["container_id"],
-						Name: hiveData.Annotations["container_name"],
+				Pod: kivev1alpha1.PodMetadata{
+					Name:      kiveData.Annotations["pod_name"],
+					Namespace: kiveData.Annotations["namespace"],
+					Container: kivev1alpha1.ContainerMetadata{
+						Id:   kiveData.Annotations["container_id"],
+						Name: kiveData.Annotations["container_name"],
 					},
-					Ip: hiveData.Annotations["ip"],
+					Ip: kiveData.Annotations["ip"],
 				},
-				Node: hivev1alpha1.NodeMetadata{
-					Name: hiveData.Annotations["node_name"],
+				Node: kivev1alpha1.NodeMetadata{
+					Name: kiveData.Annotations["node_name"],
 				},
-				Process: hivev1alpha1.ProcessMetadata{
+				Process: kivev1alpha1.ProcessMetadata{
 					Pid:    data.Pid,
 					Tgid:   data.Tgid,
 					Uid:    data.Uid,
@@ -199,5 +199,5 @@ func ReadAlert(ctx context.Context, cli client.Reader) (hivev1alpha1.HiveAlert, 
 		}
 	}
 
-	return hivev1alpha1.HiveAlert{}, fmt.Errorf("ReadAlert Error eBPF data received but no corresponsing hiveData was found")
+	return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error eBPF data received but no corresponsing kiveData was found")
 }
