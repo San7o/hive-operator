@@ -2,31 +2,53 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: hive-operator.com
+domain: kivebpf.san7o.github.io
 layout:
 - go.kubebuilder.io/v4
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: hive-operator
-repo: github.com/San7o/hive-operator
+projectName: kivebpf
+repo: github.com/San7o/kivebpf
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: hive-operator.com
-  group: hive
-  kind: Hive
-  path: github.com/San7o/hive-operator/api/v1alpha1
-  version: v1alpha1
+  domain: kivebpf.san7o.github.io
+  group: kive
+  kind: KivePolicy
+  path: github.com/San7o/kivebpf/api/v2alpha1
+  version: v2alpha1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: hive-operator.com
-  group: hive
-  kind: HiveData
-  path: github.com/San7o/hive-operator/api/v1alpha1
-  version: v1alpha1
+  domain: kivebpf.san7o.github.io
+  group: kive
+  kind: KiveData
+  path: github.com/San7o/kivebpf/api/v2alpha1
+  version: v2alpha1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kivebpf.san7o.github.io
+  group: kive
+  kind: KivePolicy
+  path: github.com/San7o/kivebpf/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kivebpf.san7o.github.io
+  group: kive
+  kind: KiveData
+  path: github.com/San7o/kivebpf/api/v1
+  version: v1
 version: "3"

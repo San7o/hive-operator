@@ -1,4 +1,4 @@
-module github.com/San7o/hive-operator
+module github.com/San7o/kivebpf
 
 go 1.24.0
 

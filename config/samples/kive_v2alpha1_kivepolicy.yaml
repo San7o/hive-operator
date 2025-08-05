@@ -1,0 +1,19 @@
+apiVersion: kivebpf.san7o.github.io/v2alpha1
+kind: KivePolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: kivebpf
+  finalizers:
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy
+  namespace: kivebpf-system
+spec:
+  traps:
+  - path: /secret.txt
+    create: true
+    mode: 444
+    matchAny:
+    - pod: nginx-pod
+      namespace: default
+      matchLabels:
+        security-level: high

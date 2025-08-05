@@ -1,5 +1,5 @@
 # VERSION defines the project version for the bundle.
-VERSION ?= 0.0.1
+VERSION ?= 1.0.0
 
 ENV?=local
 include .env-${ENV}
@@ -34,9 +34,9 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build
 # catalog-push' will build and push both
-# hive-operator.com/hive-operator-bundle:$VERSION and
-# hive-operator.com/hive-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= localhost:5001/hive-k8s-operator
+# kivebpf.san7o.github.io/kivebpf-bundle:$VERSION and
+# kivebpf.san7o.github.io/kivebpf-catalog:$VERSION.
+IMAGE_TAG_BASE ?= localhost:5001/kive-k8s-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.  You can use
 # it as an arg. (E.g make bundle-build
@@ -48,7 +48,7 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 
 # Docker registry image
-IMG ?= localhost:5001/hive-k8s-operator:latest
+IMG ?= localhost:5001/kive-k8s-operator:latest
 
 # USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
 # You can enable this value if you would like to use SHA Based Digests
@@ -152,9 +152,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build
 docker-build: ## Build the operator docker image
-	docker rmi hive-k8s-operator ${IMG} &2>/dev/null || :
-	docker build -t hive-k8s-operator .
-	docker tag hive-k8s-operator ${IMG}
+	docker rmi kive-k8s-operator ${IMG} &2>/dev/null || :
+	docker build -t kive-k8s-operator .
+	docker tag kive-k8s-operator ${IMG}
 
 # If you wish to build the manager image targeting other platforms you
 # can use the --platform flag.  (i.e. docker build --platform
@@ -185,16 +185,16 @@ docker-build: ## Build the operator docker image
 #docker-buildx: ## Build and push docker image for the manager for cross-platform support
 #	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
 #	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-#	- $(CONTAINER_TOOL) buildx create --name hive-operator-builder
-#	$(CONTAINER_TOOL) buildx use hive-operator-builder
+#	- $(CONTAINER_TOOL) buildx create --name kivebpf-builder
+#	$(CONTAINER_TOOL) buildx use kivebpf-builder
 #	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
-#	- $(CONTAINER_TOOL) buildx rm hive-operator-builder
+#	- $(CONTAINER_TOOL) buildx rm kivebpf-builder
 #	rm Dockerfile.cross
 
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image hive-k8s-operator=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image kive-k8s-operator=${IMG}
 	$(KUSTOMIZE) build config/default > dist/install-${ENV}.yaml
 
 ##@ Deployment
@@ -213,7 +213,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image hive-k8s-operator=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image kive-k8s-operator=${IMG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
@@ -306,7 +306,7 @@ endif
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image hive-k8s-operator=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image kive-k8s-operator=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	$(OPERATOR_SDK) bundle validate ./bundle
 
@@ -372,15 +372,15 @@ create-cluster-local: ## Create a new local cluster with kind
 
 .PHONY: delete-cluster-local
 delete-cluster-local: ## Delete the local cluster with kind
-	kubectl config delete-cluster kind-hive || :
-	kind delete cluster --name hive
+	kubectl config delete-cluster kind-kive || :
+	kind delete cluster --name kive
 
 .PHONY: kill-pods
 kill-pods: ## Kill pods in cluster
-	@NAMESPACE="hive-operator-system"; \
+	@NAMESPACE="kivebpf-system"; \
 	NAME=$$(kubectl get pods -n $$NAMESPACE -o name); \
 	kubectl delete $$NAME -n $$NAMESPACE
-	kubectl delete HiveData --all --all-namespaces
+	kubectl delete KiveData --all --all-namespaces
 
 INTERFACE?=
 
@@ -454,8 +454,8 @@ $(HTML_DIR)/%.html: ${DOCS_DIR}/%.md  ${HTML_INTRO} ${HTML_OUTRO} | ${HTML_DIR}
 	cat ${HTML_OUTRO} >> $@
 	sed -i 's/\.md/\.html/g' $@
 	sed -i 's/docs\/images/images/g' $@
-	sed -i 's/..\/config/https:\/\/github.com\/San7o\/hive-operator\/tree\/main\/config/g' $@
-	sed -i 's/..\/hack/https:\/\/github.com\/San7o\/hive-operator\/tree\/main\/hack/g' $@
+	sed -i 's/..\/config/https:\/\/github.com\/San7o\/kivebpf\/tree\/main\/config/g' $@
+	sed -i 's/..\/hack/https:\/\/github.com\/San7o\/kivebpf\/tree\/main\/hack/g' $@
 
 $(HTML_DIR):
 	mkdir -p ${HTML_DIR}

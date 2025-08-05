@@ -32,9 +32,9 @@ file.
 Change the license document in all files.
 
 *** Discover [6/6][100%]                                         :discover:
-**** DONE Refactor =hive= to =hive policy=
+**** DONE Refactor =kive= to =kive policy=
 - State "DONE"       from "TODO"       [2025-04-26 Sat 17:51]
-Refactor the CRD from =hive= to =hive policy= in the
+Refactor the CRD from =kive= to =kive policy= in the
 file name and resources.
 **** DONE Setup Custom Resource Definition
 - State "DONE"       from "TODO"       [2025-03-18 Tue 14:48]
@@ -46,9 +46,9 @@ does not exist.
 
 The API would look something like this:
 #+begin_src yaml
-kind: HivePolicy
+kind: KivePolicy
 metadata:
-  name: hive-sample-policy
+  name: kive-sample-policy
 spec:
   monitors:
     - path: /run/secrets/token
@@ -59,7 +59,7 @@ spec:
         container: my-ctr
 #+end_src
 
-This should be defined in the =api/v1alpha1/hive_types.go=
+This should be defined in the =api/v2alpha1/kive_types.go=
 and fetched in the discover controller.
 **** DONE Filter pods
 - State "DONE"       from "TODO"       [2025-03-19 Wed 14:19]
@@ -71,14 +71,14 @@ number of containers in the node.
 **** DONE Filters with multiple entries
 - State "DONE"       from "TODO"       [2025-03-19 Wed 14:52]
 Allow multiple entries in the match filters.
-**** DONE Reconcile: Update HiveData CRD when HivePolicy is modified
+**** DONE Reconcile: Update KiveData CRD when KivePolicy is modified
 - State "DONE"       from "TODO"       [2025-04-25 Fri 13:48]
-Update the Loader's CRD accordingly. When a HivePolicy is added,
-the corresponding HiveData resources are generated. When a
-HivePolicy is deleted, it should delete Its corresponding
-HiveDatas. Similarly for updates. To handle deletions and
-updates, we delegate to the reconciliation of HiveData, which
-will check if each HiveData referst to a HivePolicy.2
+Update the Loader's CRD accordingly. When a KivePolicy is added,
+the corresponding KiveData resources are generated. When a
+KivePolicy is deleted, it should delete Its corresponding
+KiveDatas. Similarly for updates. To handle deletions and
+updates, we delegate to the reconciliation of KiveData, which
+will check if each KiveData referst to a KivePolicy.2
 
 This taks depends on the Loader's CRD to be defined.
 **** DONE Move housekeeping to main
@@ -115,7 +115,7 @@ so that when the beat stop, It is considered dead and the
 lock is leased.
 
 I may use the alpha implementation in the first release of
-Hive.
+Kive.
 Check out other solutions such as
 https://github.com/bpfman/bpfman
 
@@ -136,7 +136,7 @@ kind cluster, vm cluster...)
 When a change happens to the custom resource, the eBPF program's
 map should be updated accordingly, with only the entries that
 match the kernel-id of the loader's machine.
-**** DONE Watch: Update HiveData when pods are modified
+**** DONE Watch: Update KiveData when pods are modified
 - State "DONE"       from "TODO"       [2025-04-27 Sun 12:49]
 Create / Remove / Update the loader's CRD on pod events or
 change the status of the resource if possible.
@@ -158,10 +158,10 @@ the variable.
 - State "DONE"       from "TODO"       [2025-04-08 Tue 18:35]
 The leader should read the eBPF's output and log to standard
 output.
-**** DONE Match labels when comparing HiveData and HivePolicy during reconciliation
+**** DONE Match labels when comparing KiveData and KivePolicy during reconciliation
 - State "DONE"       from "TODO"       [2025-04-29 Tue 11:46]
-The HiveData resource should have the same =match= section
-as HivePolicy.
+The KiveData resource should have the same =match= section
+as KivePolicy.
 **** DONE Rich log information
 - State "DONE"       from "TODO"       [2025-04-29 Tue 11:46]
 Add additional logging information such as pod name, label,
@@ -169,8 +169,8 @@ namespace, and more to the logged information after an eBPF
 output.
 **** DONE Resend reconcile request when container is not ready
 - State "DONE"       from "TODO"       [2025-04-28 Mon 18:10]
-During the Hive Policy reconciliation, if a container is not
-ready it is skipped and the HiveData won't be created. This can
+During the Kive Policy reconciliation, if a container is not
+ready it is skipped and the KiveData won't be created. This can
 be solved by sending another reconciliation request if the status
 is not ready. It will keep looping until the container will be
 ready.
@@ -220,7 +220,7 @@ Create an official container image on the docker registry.
 *** TODO Helm package
 Create an official helm chart for the application.
 *** TODO Integrate with Koney
-Integrate Hive with Koney
+Integrate Kive with Koney
 ** Optional - Refinement [3/6][50%]                             :refinement:
 *** DONE Log to an external service
 Instead of logging to stdout, the operator may log to a socket
@@ -228,7 +228,7 @@ provided by the user or to a standard socket.
 
 Alternatively, the operator could notify an external service when
 there is something to log with the "GetUrl" action. The user API
-could look like the following in an HivePolicy:
+could look like the following in an KivePolicy:
 #+begin_src yaml
   actions:
     - action: Post
@@ -237,7 +237,7 @@ could look like the following in an HivePolicy:
 
 *** DONE Allow multiple values in match fields
 - State "DONE"       from "TODO"       [2025-08-02 Sat 19:11]
-When specifying a Hive Policy, the user should be able to
+When specifying a Kive Policy, the user should be able to
 specify multiple values for each match field (pod name and
 namespaces). Kubernetes does not support this natively so multiple
 request for each combination of fields should be executed, greately

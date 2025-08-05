@@ -22,10 +22,10 @@ import (
 )
 
 // Namespace for testing
-const testNamespaceName = "hive-test"
+const testNamespaceName = "kive-test"
 
 // Namespace used by the operator
-const operatorNamespace = "hive-operator-system"
+const operatorNamespace = "kivebpf-system"
 
 // Maximum time for the operator to reconcile ruccessfully
 const reconcileTimeout = 2 * time.Second
@@ -36,7 +36,7 @@ const timeout = 30 * time.Second
 var (
 	Client          client.Client
 	ctx             context.Context
-	InitialHiveData int
+	InitialKiveData int
 )
 
 var testNamespace = &corev1.Namespace{

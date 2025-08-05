@@ -22,13 +22,13 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
-	container "github.com/San7o/hive-operator/internal/controller/container"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
-func HiveTrapHashID(hiveTrap hivev1alpha1.HiveTrap) (string, error) {
+func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap) (string, error) {
 
-	jsonPolicy, err := json.Marshal(hiveTrap)
+	jsonPolicy, err := json.Marshal(kiveTrap)
 	if err != nil {
 		return "", fmt.Errorf("TrapHashID Error Json Marshal: %w", err)
 	}
@@ -40,10 +40,10 @@ func HiveTrapHashID(hiveTrap hivev1alpha1.HiveTrap) (string, error) {
 	return shaPolicy[:63], nil
 }
 
-func NewHiveDataName(inode uint64, containerStatus corev1.ContainerStatus) string {
+func NewKiveDataName(inode uint64, containerStatus corev1.ContainerStatus) string {
 
 	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)
-	return strconv.FormatUint(inode, 10) + "-hive-data-" + containerID
+	return strconv.FormatUint(inode, 10) + "-kive-data-" + containerID
 }
 
 func RegexMatch(regex string, containerName string) (bool, error) {
@@ -60,27 +60,27 @@ func RegexMatch(regex string, containerName string) (bool, error) {
 	return compiledRegex.Match([]byte(containerName)), nil
 }
 
-func HiveDataTrapCmp(hiveData hivev1alpha1.HiveData, hiveTrap hivev1alpha1.HiveTrap) (bool, error) {
+func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveTrap) (bool, error) {
 
-	trapID, err := HiveTrapHashID(hiveTrap)
+	trapID, err := KiveTrapHashID(kiveTrap)
 	if err != nil {
-		return false, fmt.Errorf("HiveDataTrapCmp Error Hash ID: %w", err)
+		return false, fmt.Errorf("KiveDataTrapCmp Error Hash ID: %w", err)
 	}
-	return hiveData.ObjectMeta.Labels[TrapIdLabel] == trapID, nil
+	return kiveData.ObjectMeta.Labels[TrapIdLabel] == trapID, nil
 }
 
-func HiveDataContainerCmp(hiveData hivev1alpha1.HiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
+func KiveDataContainerCmp(kiveData kivev2alpha1.KiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
 
-	if hiveData.Annotations["pod_name"] != pod.Name {
+	if kiveData.Annotations["pod_name"] != pod.Name {
 		return false
 	}
-	if hiveData.Annotations["namespace"] != pod.Namespace {
+	if kiveData.Annotations["namespace"] != pod.Namespace {
 		return false
 	}
-	if hiveData.Annotations["container_name"] != containerStatus.Name {
+	if kiveData.Annotations["container_name"] != containerStatus.Name {
 		return false
 	}
-	if hiveData.Annotations["container_id"] != containerStatus.ContainerID {
+	if kiveData.Annotations["container_id"] != containerStatus.ContainerID {
 		return false
 	}
 

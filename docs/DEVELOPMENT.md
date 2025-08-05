@@ -8,7 +8,7 @@ please read the [USAGE](./USAGE.md) document.
 ## Setup a local cluster
 
 To use an operator, you need a kubernetes cluster. In the [official
-repository](https://github.com/San7o/hive-operator) you can find the
+repository](https://github.com/San7o/kivebpf) you can find the
 script [hack/registry-cluster.sh](../hack/registry-cluster.sh) which will
 create a local cluster using
 [kind](https://github.com/kubernetes-sigs/kind) with one control node
@@ -19,7 +19,7 @@ If you are using Kind, or any other method where the node runs inside
 a container, you need to mount `/proc` inside the node at
 `/host/real/proc`. The script above already does it. This is needed
 because the eBPF program runs in the host kernel and the operator
-needs to access the host procfs to generate the `HiveAlert`. If you do
+needs to access the host procfs to generate the `KiveAlert`. If you do
 not do this, the operator will gracefully report a message and some
 fields in the alert will remain empty (namely, `cwd`). If you are
 using virtual machines / real nodes or hypervisors (likely in
@@ -164,7 +164,7 @@ will explain how to use the operator.
 ## Testing
 
 To run end to end tests, first make sure that you have a cluster
-running with the operator deployed, and that there is not `HivePolicy`
+running with the operator deployed, and that there is not `KivePolicy`
 present. Then, simply run:
 
 ```bash
@@ -173,7 +173,7 @@ make test
 
 ## Useful commands
 
-When building a new docker image, you want the hive pods to update to
+When building a new docker image, you want the kive pods to update to
 the new version. The pods are already configured to fetch the latest
 version of the image in the local test docker repository, to do so you
 just need to kill them. You can use the following command:
@@ -182,8 +182,8 @@ just need to kill them. You can use the following command:
 make kill-pods
 ```
 
-This will also remove all the `HiveData` resources so that you start
-with a clean configuration, as if you just applied the `HivePolicies`.
+This will also remove all the `KiveData` resources so that you start
+with a clean configuration, as if you just applied the `KivePolicies`.
 
 To completely remove the operator from the cluster, run:
 

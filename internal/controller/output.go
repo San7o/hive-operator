@@ -21,7 +21,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	hivebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
+	kivebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -31,7 +31,7 @@ func Output(client client.Reader) {
 	log := logger.FromContext(ctx)
 
 	for {
-		alert, err := hivebpf.ReadAlert(ctx, client)
+		alert, err := kivebpf.ReadAlert(ctx, client)
 		if err != nil {
 			log.Error(err, "Output Error Read alert")
 			continue
@@ -48,7 +48,7 @@ func Output(client client.Reader) {
 				log.Error(err, "Output Error Post Callback")
 			}
 		} else {
-			log.Info("Access Detected", "HiveAlert", string(jsonAlert))
+			log.Info("Access Detected", "KiveAlert", string(jsonAlert))
 		}
 	}
 }

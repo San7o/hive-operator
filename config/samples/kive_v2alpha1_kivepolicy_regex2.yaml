@@ -1,0 +1,18 @@
+apiVersion: kivebpf.san7o.github.io/v2alpha1
+kind: KivePolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: kivebpf
+  finalizers:
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy-regex2
+  namespace: kivebpf-system
+spec:
+  traps:
+    - path: /regex2.txt
+      create: true
+      mode: 444
+      matchAny:
+        - pod: nginx-pod
+          namespace: default
+          container-name: "123.*"

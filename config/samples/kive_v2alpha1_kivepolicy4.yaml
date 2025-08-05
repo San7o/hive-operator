@@ -1,0 +1,13 @@
+apiVersion: kivebpf.san7o.github.io/v2alpha1
+kind: KivePolicy
+metadata:
+  labels:
+    app.kubernetes.io/name: kivebpf
+  finalizers:
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy4
+  namespace: kivebpf-system
+spec:
+  traps:
+    - path: /test.txt
+      create: true

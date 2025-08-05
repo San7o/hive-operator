@@ -7,29 +7,29 @@ instructions, otherwise you can fetch the operator from the official
 docker registry by deploying it with:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/San7o/hive-operator/refs/heads/main/dist/install-remote.yaml
+kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
 ```
 
 Once you have the operator deployed, you can instruct It to log
-accesses to files via **HivePolicies**. An `HivePolicy` is a custom
+accesses to files via **KivePolicies**. An `KivePolicy` is a custom
 kubernetes resource that contains information about which file[s] to
 trace and in which pods.  The operator will parse this policy every
 time one is added / removed / updated and It will configure the eBPF
 program to monitor the right files.
 
-An example `HivePolicy` is located in [config/samples/hive_v1alpha1_hivepolicy.yaml](../config/samples/hive_v1alpha1_hivepolicy.yaml).
+An example `KivePolicy` is located in [config/samples/kive_v2alpha1_kivepolicy.yaml](../config/samples/kive_v2alpha1_kivepolicy.yaml).
 More examples can be found in the same directory.
 
 ```yaml
-apiVersion: hive-operator.com/v1alpha1
-kind: HivePolicy
+apiVersion: kivebpf.san7o.github.io/v2alpha1
+kind: KivePolicy
 metadata:
   labels:
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: kivebpf
   finalizers:
-    - hive-operator.com/finalizer
-  name: hive-sample-policy
-  namespace: hive-operator-system
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy
+  namespace: kivebpf-system
 spec:
   traps:
     - path: /secret.txt
@@ -51,14 +51,14 @@ You can load it to the kubernetes cluster using the **apply** command
 of [kubectl](https://kubernetes.io/docs/reference/kubectl/):
 
 ```bash
-kubectl apply -f config/samples/hive_v1alpha1_hivepolicy.yaml
+kubectl apply -f config/samples/kive_v2alpha1_kivepolicy.yaml
 ```
 
 The operator will log some information when a policy is created /
 deleted / updated.
 
 It it now time to test this policy. First, we need to create a pod
-that matches the `match` fields in the `HivePolicy`. This repository
+that matches the `match` fields in the `KivePolicy`. This repository
 provides an nginx pod in
 [hack/k8s-manifests/sample-nginx-pod.yaml](../hack/k8s-manifests/sample-nginx-pod.yaml)
 with the right characteristics, you can load it with kubectl:
@@ -75,14 +75,14 @@ sudo kubectl exec -it nginx-pod -- cat /secret.txt
 ```
 
 You should expect to see some logging information on the standard
-output of one of the hive pods, like this (prettified):
+output of one of the kive pods, like this (prettified):
 
 ```json
 2025-08-02T16:51:19Z    INFO    Access Detected
 {
-  "HiveAlert": {
+  "KiveAlert": {
     "timestamp": "2025-08-02T16:51:19Z",
-    "hive_policy_name": "hive-sample-policy",
+    "kive_policy_name": "kive-sample-policy",
     "metadata": {
       "path": "/secret.txt",
       "inode": 16256084,
@@ -98,7 +98,7 @@ output of one of the hive pods, like this (prettified):
       }
     },
     "node": {
-      "name": "hive-worker"
+      "name": "kive-worker"
     },
     "process": {
       "pid": 176928,
@@ -114,7 +114,7 @@ output of one of the hive pods, like this (prettified):
 
 Note that only the leader pod in the kernel where the file resides
 will output the information, so you may need to check the standard
-output of all the hive pods. This happens because the data is logged
+output of all the kive pods. This happens because the data is logged
 in the same node where the eBPF program noticed the access (to
 understand how the operator works under the hood, read the
 [DESIGN](./DESIGN.md) document), we will later see how you can easily
@@ -123,7 +123,7 @@ gather all the logs in a single place using [callbacks](#callback).
 You may have seen a message like this just above the alert:
 
 ```
-Could not read /host/proc/176917/cwd while generating an HiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in /host/real/proc
+Could not read /host/proc/176917/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in /host/real/proc
 ```
 
 If you setup the cluster correctly, the problem here is that the `cat`
@@ -148,21 +148,21 @@ You can ask the operator to use send data to an endpoint by setting
 the `callback` filed in a trap like this:
 
 ```yaml
-apiVersion: hive-operator.com/v1alpha1
-kind: HivePolicy
+apiVersion: kivebpf.san7o.github.io/v2alpha1
+kind: KivePolicy
 metadata:
   labels:
-    app.kubernetes.io/name: hive-operator
+    app.kubernetes.io/name: kivebpf
   finalizers:
-    - hive-operator.com/finalizer
-  name: hive-sample-policy
-  namespace: hive-operator-system
+    - kivebpf.san7o.github.io/finalizer
+  name: kive-sample-policy
+  namespace: kivebpf-system
 spec:
   traps:
     - path: /secret.txt
       create: true
       mode: 444
-      callback: "http://callback-service.hive-operator-system.svc.cluster.local:9376/ingest"  # HERE
+      callback: "http://callback-service.kivebpf-system.svc.cluster.local:9376/ingest"  # HERE
       matchAny:
       - pod: nginx-pod
         namespace: default
@@ -171,5 +171,5 @@ spec:
 ```
 
 If a callback is set on a trap, then the operator will make an HTTP
-POST request to that endpoint with the `HiveAlert` as json data and
+POST request to that endpoint with the `KiveAlert` as json data and
 will stop logging to the standard output.

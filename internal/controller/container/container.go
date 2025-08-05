@@ -18,7 +18,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 )
 
 const (
@@ -51,7 +51,7 @@ type Runtime interface {
 	IsConnected() bool
 	Connect(ctx context.Context) error
 	Disconnect() error
-	GetContainerData(ctx context.Context, id ContainerID, hiveTrap hivev1alpha1.HiveTrap) (ContainerData, error)
+	GetContainerData(ctx context.Context, id ContainerID, kiveTrap kivev2alpha1.KiveTrap) (ContainerData, error)
 }
 
 var (
@@ -64,7 +64,7 @@ func init() {
 	}
 }
 
-func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatus, hiveTrap hivev1alpha1.HiveTrap) (ContainerData, error) {
+func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatus, kiveTrap kivev2alpha1.KiveTrap) (ContainerData, error) {
 
 	if !containerStatus.Ready {
 		return ContainerData{ShouldRequeue: true}, nil
@@ -86,7 +86,7 @@ func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatu
 		}
 	}
 
-	containerData, err := runtime.GetContainerData(ctx, containerId, hiveTrap)
+	containerData, err := runtime.GetContainerData(ctx, containerId, kiveTrap)
 	if err == nil {
 		containerData.ID = containerStatus.ContainerID
 		containerData.Name = containerStatus.Name

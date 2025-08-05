@@ -17,8 +17,8 @@ import (
 	"os"
 	"strings"
 
-	controller "github.com/San7o/hive-operator/internal/controller"
-	ebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
+	controller "github.com/San7o/kivebpf/internal/controller"
+	ebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"

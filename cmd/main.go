@@ -33,11 +33,12 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	hivev1alpha1 "github.com/San7o/hive-operator/api/v1alpha1"
-	"github.com/San7o/hive-operator/internal/controller"
-	hive "github.com/San7o/hive-operator/internal/controller"
-	hivecontainer "github.com/San7o/hive-operator/internal/controller/container"
-	hivebpf "github.com/San7o/hive-operator/internal/controller/ebpf"
+	kivev1 "github.com/San7o/kivebpf/api/v1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	"github.com/San7o/kivebpf/internal/controller"
+	kive "github.com/San7o/kivebpf/internal/controller"
+	kivecontainer "github.com/San7o/kivebpf/internal/controller/container"
+	kivebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -48,24 +49,24 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
-	utilruntime.Must(hivev1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kivev2alpha1.AddToScheme(scheme))
+	utilruntime.Must(kivev1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
 	var metricsAddr string
-	var hivePolicyProbeAddr string
-	var hiveDataProbeAddr string
-	var hivePodProbeAddr string
+	var kivePolicyProbeAddr string
+	var kiveDataProbeAddr string
+	var kivePodProbeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&hivePolicyProbeAddr, "hive-policy-health-probe-bind-address", ":8081", "The address the hive policy endpoint binds to.")
-	flag.StringVar(&hiveDataProbeAddr, "hive-data-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
-	flag.StringVar(&hivePodProbeAddr, "hive-pod-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
+	flag.StringVar(&kivePolicyProbeAddr, "kive-policy-health-probe-bind-address", ":8081", "The address the kive policy endpoint binds to.")
+	flag.StringVar(&kiveDataProbeAddr, "kive-data-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
+	flag.StringVar(&kivePodProbeAddr, "kive-pod-health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
 	flag.BoolVar(&secureMetrics, "metrics-secure", true,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
@@ -78,13 +79,13 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	kernelIDBytes, err := os.ReadFile(hive.KernelIDPath)
+	kernelIDBytes, err := os.ReadFile(kive.KernelIDPath)
 	if err != nil {
-		setupLog.Error(err, "Cannot read kerrnel boot ID at"+hive.KernelIDPath)
+		setupLog.Error(err, "Cannot read kerrnel boot ID at"+kive.KernelIDPath)
 		os.Exit(1)
 	}
-	hive.KernelID = string(kernelIDBytes)
-	hive.KernelID = strings.TrimSpace(hive.KernelID)
+	kive.KernelID = string(kernelIDBytes)
+	kive.KernelID = strings.TrimSpace(kive.KernelID)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -134,136 +135,180 @@ func main() {
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
-	// HiveData manager
-	hiveDataMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	// Managers
+	// Multiple managers are neded for each resource type since they
+	// need to run different leader elections.
+
+	// KiveData manager
+	kiveDataMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: hiveDataProbeAddr,
+		HealthProbeBindAddress: kiveDataProbeAddr,
 		LeaderElection:         true,
-		LeaderElectionID:       hive.KernelID,
+		LeaderElectionID:       kive.KernelID,
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start hiveData manager")
+		setupLog.Error(err, "unable to start kiveData manager")
 		os.Exit(1)
 	}
 
-	// Hive manager
-	hivePolicyMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	// Kive manager
+	kivePolicyMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: hivePolicyProbeAddr,
+		HealthProbeBindAddress: kivePolicyProbeAddr,
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start hive manager")
+		setupLog.Error(err, "unable to start kive manager")
 		os.Exit(1)
 	}
 
 	// Pod manager
-	hivePodMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	kivePodMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: hivePodProbeAddr,
+		HealthProbeBindAddress: kivePodProbeAddr,
 		LeaderElection:         true,
-		LeaderElectionID:       "hive",
+		LeaderElectionID:       "kive",
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start hivePod manager")
+		setupLog.Error(err, "unable to start kivePod manager")
 		os.Exit(1)
 	}
 
-	if err = (&controller.HivePolicyReconciler{
-		Client:         hivePolicyMgr.GetClient(),
-		UncachedClient: hivePolicyMgr.GetAPIReader(),
-		Scheme:         hivePolicyMgr.GetScheme(),
-	}).SetupWithManager(hivePolicyMgr); err != nil {
-		setupLog.Error(err, "unable to create HivePolicy controller", "controller", "HivePolicy")
+	if err = (&controller.KivePolicyReconciler{
+		Client:         kivePolicyMgr.GetClient(),
+		UncachedClient: kivePolicyMgr.GetAPIReader(),
+		Scheme:         kivePolicyMgr.GetScheme(),
+	}).SetupWithManager(kivePolicyMgr); err != nil {
+		setupLog.Error(err, "unable to create KivePolicy controller", "controller", "KivePolicy")
 		os.Exit(1)
 	}
 
-	if err = (&controller.HiveDataReconciler{
-		Client:         hiveDataMgr.GetClient(),
-		UncachedClient: hiveDataMgr.GetAPIReader(),
-		Scheme:         hiveDataMgr.GetScheme(),
-	}).SetupWithManager(hiveDataMgr); err != nil {
-		setupLog.Error(err, "unable to create HiveData controller", "controller", "HiveData")
+	if err = (&controller.KiveDataReconciler{
+		Client:         kiveDataMgr.GetClient(),
+		UncachedClient: kiveDataMgr.GetAPIReader(),
+		Scheme:         kiveDataMgr.GetScheme(),
+	}).SetupWithManager(kiveDataMgr); err != nil {
+		setupLog.Error(err, "unable to create KiveData controller", "controller", "KiveData")
 		os.Exit(1)
 	}
 
-	if err = (&controller.HivePodReconciler{
-		Client: hivePodMgr.GetClient(),
-	}).SetupWithManager(hivePodMgr); err != nil {
-		setupLog.Error(err, "unable to create HivePod controller", "controller", "HivePod")
+	if err = (&controller.KivePodReconciler{
+		Client: kivePodMgr.GetClient(),
+	}).SetupWithManager(kivePodMgr); err != nil {
+		setupLog.Error(err, "unable to create KivePod controller", "controller", "KivePod")
 		os.Exit(1)
 	}
+
+	err = ctrl.NewWebhookManagedBy(kivePodMgr).
+		For(&kivev2alpha1.KivePolicy{}).
+		Complete()
+	if err != nil {
+		setupLog.Error(err, "unable to start webhook of KivePolicy")
+		os.Exit(1)
+	}
+
+	err = ctrl.NewWebhookManagedBy(kivePodMgr).
+		For(&kivev2alpha1.KiveData{}).
+		Complete()
+	if err != nil {
+		setupLog.Error(err, "unable to start webhook of KiveData")
+		os.Exit(1)
+	}
+
+	/*
+		// Mutate and Validate are not needed but are a good addition. They
+		// will be supported in the future.
+		if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+			// Using the pod manager for the webhook
+			if err = (&kivev2alpha1.KivePolicy{}).SetupMutateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KivePolicyMutate")
+				os.Exit(1)
+			}
+			if err = (&kivev2alpha1.KivePolicy{}).SetupValidateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KivePolicyValidate")
+				os.Exit(1)
+			}
+			if err = (&kivev2alpha1.KiveData{}).SetupMutateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KiveDataMutate")
+				os.Exit(1)
+			}
+			if err = (&kivev2alpha1.KiveData{}).SetupValidateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KiveDataValidate")
+				os.Exit(1)
+			}
+		}
+	*/
 
 	// +kubebuilder:scaffold:builder
 
-	if err := hivePolicyMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err := kivePolicyMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := hivePolicyMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err := kivePolicyMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
-	if err := hiveDataMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err := kiveDataMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := hiveDataMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err := kiveDataMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
-	if err := hivePodMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err := kivePodMgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := hivePodMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err := kivePodMgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting hive managers")
+	setupLog.Info("starting kive managers")
 
 	go func() {
-		if err := hivePolicyMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "Error running HivePolicy manager")
+		if err := kivePolicyMgr.Start(context.Background()); err != nil {
+			setupLog.Error(err, "Error running KivePolicy manager")
 			os.Exit(1)
 		}
 	}()
 
 	go func() {
-		if err := hivePodMgr.Start(context.Background()); err != nil {
-			setupLog.Error(err, "Error running HivePod manager")
+		if err := kivePodMgr.Start(context.Background()); err != nil {
+			setupLog.Error(err, "Error running KivePod manager")
 			os.Exit(1)
 		}
 	}()
 
-	hiveDataMgrCtx := ctrl.SetupSignalHandler()
+	kiveDataMgrCtx := ctrl.SetupSignalHandler()
 
 	// Unload the eBPF program when leadership is lost
 	go func() {
-		<-hiveDataMgrCtx.Done() // Wait until leadership is lost
-		setupLog.Info("HiveData manager lost leadership")
+		<-kiveDataMgrCtx.Done() // Wait until leadership is lost
+		setupLog.Info("KiveData manager lost leadership")
 
-		hivebpf.UnloadEbpf(context.Background())
+		kivebpf.UnloadEbpf(context.Background())
 	}()
 
-	if err := hiveDataMgr.Start(hiveDataMgrCtx); err != nil {
-		setupLog.Error(err, "Error running HiveData manager")
+	if err := kiveDataMgr.Start(kiveDataMgrCtx); err != nil {
+		setupLog.Error(err, "Error running KiveData manager")
 		os.Exit(1)
 	}
 
 	// Cleanup
-	if err := hivecontainer.CloseConnections(); err != nil {
+	if err := kivecontainer.CloseConnections(); err != nil {
 		setupLog.Error(err, "Error closing connections")
 	}
-	if err := hivebpf.UnloadEbpf(context.Background()); err != nil {
+	if err := kivebpf.UnloadEbpf(context.Background()); err != nil {
 		setupLog.Error(err, "Error unloading eBPF programs")
 	}
 	return
