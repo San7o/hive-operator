@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 )
 
 type KivePodReconciler struct {
@@ -45,7 +45,7 @@ func (r *KivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 	log := log.FromContext(ctx)
 	log.Info("Pod watch event triggered.")
 
-	kiveDataList := &kivev1alpha1.KiveDataList{}
+	kiveDataList := &kivev2alpha1.KiveDataList{}
 	err := r.Client.List(ctx, kiveDataList)
 	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
@@ -94,7 +94,7 @@ Data:
 	// Trigger a KivePolicy reconciliation event to handle
 	// pod creation. If a pod is not yet ready, the KiveData
 	// Reconciliation should loop until all the pods are ready.
-	kivePolicyList := &kivev1alpha1.KivePolicyList{}
+	kivePolicyList := &kivev2alpha1.KivePolicyList{}
 	err = r.Client.List(ctx, kivePolicyList)
 	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get Kive Policy resource: %w", err)

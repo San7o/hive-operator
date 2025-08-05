@@ -15,9 +15,11 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -25,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
@@ -68,7 +70,7 @@ func (r *KivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	log.Info("KivePolicy reconcile triggered.")
 
-	kivePolicyList := &kivev1alpha1.KivePolicyList{}
+	kivePolicyList := &kivev2alpha1.KivePolicyList{}
 	err = r.Client.List(ctx, kivePolicyList)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KivePolicy resource: %w", err)
@@ -81,11 +83,14 @@ Policy:
 
 		// Check if this policy is being deleted
 		if !kivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
-			if controllerutil.ContainsFinalizer(&kivePolicy, kivev1alpha1.KivePolicyFinalizerName) {
+			if controllerutil.ContainsFinalizer(&kivePolicy, kivev2alpha1.KivePolicyFinalizerName) {
 				deleted = true
-				controllerutil.RemoveFinalizer(&kivePolicy, kivev1alpha1.KivePolicyFinalizerName)
-				if err := r.Update(ctx, &kivePolicy); err != nil {
-					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
+				kivePolicyCopy := kivePolicy.DeepCopy()
+				controllerutil.RemoveFinalizer(kivePolicyCopy, kivev2alpha1.KivePolicyFinalizerName)
+				if err := r.Update(ctx, kivePolicyCopy); err != nil {
+					if apierrors.IsConflict(err) || strings.Contains(err.Error(), "Precondition failed") {
+						log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
+					}
 					continue Policy
 				}
 			}
@@ -112,7 +117,7 @@ Policy:
 				labels := client.MatchingLabels{
 					TrapIdLabel: trapID,
 				}
-				kiveDataList := &kivev1alpha1.KiveDataList{}
+				kiveDataList := &kivev2alpha1.KiveDataList{}
 				err = r.Client.List(ctx, kiveDataList, labels)
 				if err != nil { // Fatal
 					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
@@ -191,15 +196,15 @@ Policy:
 
 						// Here we are crating a new KiveData since an already existing
 						// one for this Pod and this KivePolicy has not been found
-						kiveData := &kivev1alpha1.KiveData{
+						kiveData := &kivev2alpha1.KiveData{
 							TypeMeta: metav1.TypeMeta{
 								Kind:       "KiveData",
-								APIVersion: "kivebpf.san7o.github.io/v1alpha1",
+								APIVersion: "kivebpf.san7o.github.io/v2alpha1",
 							},
 							ObjectMeta: metav1.ObjectMeta{
 								// Give it an unique name
 								Name:      NewKiveDataName(inode, containerStatus),
-								Namespace: kivev1alpha1.Namespace,
+								Namespace: kivev2alpha1.Namespace,
 								// Annotations are used as information for the KiveAlert
 								Annotations: map[string]string{
 									"kive_policy_name": kivePolicy.Name,
@@ -217,7 +222,7 @@ Policy:
 									TrapIdLabel: trapID,
 								},
 							},
-							Spec: kivev1alpha1.KiveDataSpec{
+							Spec: kivev2alpha1.KiveDataSpec{
 								InodeNo:  containerData.Ino,
 								KernelID: KernelID,
 							},
@@ -243,7 +248,7 @@ Policy:
 	// KiveData that does not belong anymore to a KivePolicy.
 	// We trigger a reconciliation by updating an annotation with the
 	// current time.
-	kiveDataList := &kivev1alpha1.KiveDataList{}
+	kiveDataList := &kivev2alpha1.KiveDataList{}
 	err = r.Client.List(ctx, kiveDataList)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
@@ -296,6 +301,6 @@ func (r *KivePolicyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kivev1alpha1.KivePolicy{}).
+		For(&kivev2alpha1.KivePolicy{}).
 		Complete(r)
 }

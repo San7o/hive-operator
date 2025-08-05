@@ -14,7 +14,84 @@ spec:
     singular: kivepolicy
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              traps:
+                description: List of traps
+                items:
+                  properties:
+                    callback:
+                      description: Send an HTTP POST request to this endpoint if specified
+                      type: string
+                    create:
+                      description: Whether to create the file or not if It cannot
+                        be found
+                      type: boolean
+                    matchAny:
+                      description: Match any of the following items (logical OR)
+                      items:
+                        description: Match all the following optional filds (logical
+                          AND)
+                        properties:
+                          container-name:
+                            description: |-
+                              Filter container by name, can be a regex with syntax described at
+                              https://golang.org/s/re2syntax
+                            type: string
+                          ip:
+                            description: Filter pods by IP
+                            type: string
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: Filter pods per label
+                            type: object
+                          namespace:
+                            description: Filter pods per namespace
+                            type: string
+                          pod:
+                            description: Filter pod by name
+                            type: string
+                        type: object
+                      type: array
+                    mode:
+                      description: The permissions of the file to be created if create
+                        is set to ture
+                      format: int32
+                      type: integer
+                    path:
+                      description: Specifies which path to check
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: v2alpha1
     schema:
       openAPIV3Schema:
         properties:

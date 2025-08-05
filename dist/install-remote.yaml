@@ -22,7 +22,7 @@ spec:
     singular: kivedata
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v2alpha1
     schema:
       openAPIV3Schema:
         properties:
@@ -75,7 +75,7 @@ spec:
     singular: kivepolicy
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v2alpha1
     schema:
       openAPIV3Schema:
         properties:

@@ -22,11 +22,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
-func KiveTrapHashID(kiveTrap kivev1alpha1.KiveTrap) (string, error) {
+func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap) (string, error) {
 
 	jsonPolicy, err := json.Marshal(kiveTrap)
 	if err != nil {
@@ -60,7 +60,7 @@ func RegexMatch(regex string, containerName string) (bool, error) {
 	return compiledRegex.Match([]byte(containerName)), nil
 }
 
-func KiveDataTrapCmp(kiveData kivev1alpha1.KiveData, kiveTrap kivev1alpha1.KiveTrap) (bool, error) {
+func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveTrap) (bool, error) {
 
 	trapID, err := KiveTrapHashID(kiveTrap)
 	if err != nil {
@@ -69,7 +69,7 @@ func KiveDataTrapCmp(kiveData kivev1alpha1.KiveData, kiveTrap kivev1alpha1.KiveT
 	return kiveData.ObjectMeta.Labels[TrapIdLabel] == trapID, nil
 }
 
-func KiveDataContainerCmp(kiveData kivev1alpha1.KiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
+func KiveDataContainerCmp(kiveData kivev2alpha1.KiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
 
 	if kiveData.Annotations["pod_name"] != pod.Name {
 		return false

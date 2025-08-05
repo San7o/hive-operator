@@ -23,7 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev1 "github.com/San7o/kivebpf/api/v1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 )
 
 func NewClient() (client.Client, error) {
@@ -32,9 +33,11 @@ func NewClient() (client.Client, error) {
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("NewClient Error add core scheme: %w", err)
 	}
-
-	if err := kivev1alpha1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("NewClient Error add KivePolicy scheme: %w", err)
+	if err := kivev2alpha1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("NewClient Error add Kive v2alpha1 scheme: %w", err)
+	}
+	if err := kivev1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("NewClient Error add Kive v1 scheme: %w", err)
 	}
 
 	cfg, err := config.GetConfig()
@@ -52,7 +55,7 @@ func NewClient() (client.Client, error) {
 
 func CleanKivePolicies(ctx context.Context, c client.Client) error {
 
-	var kivePolicyList kivev1alpha1.KivePolicyList
+	var kivePolicyList kivev2alpha1.KivePolicyList
 	if err := c.List(ctx, &kivePolicyList, client.InNamespace(testNamespaceName)); err != nil {
 		return err
 	}

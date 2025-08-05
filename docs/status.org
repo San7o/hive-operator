@@ -59,7 +59,7 @@ spec:
         container: my-ctr
 #+end_src
 
-This should be defined in the =api/v1alpha1/kive_types.go=
+This should be defined in the =api/v2alpha1/kive_types.go=
 and fetched in the discover controller.
 **** DONE Filter pods
 - State "DONE"       from "TODO"       [2025-03-19 Wed 14:19]

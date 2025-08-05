@@ -33,7 +33,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev1 "github.com/San7o/kivebpf/api/v1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 	"github.com/San7o/kivebpf/internal/controller"
 	kive "github.com/San7o/kivebpf/internal/controller"
 	kivecontainer "github.com/San7o/kivebpf/internal/controller/container"
@@ -48,8 +49,8 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
-	utilruntime.Must(kivev1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kivev2alpha1.AddToScheme(scheme))
+	utilruntime.Must(kivev1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -134,6 +135,10 @@ func main() {
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
+	// Managers
+	// Multiple managers are neded for each resource type since they
+	// need to run different leader elections.
+
 	// KiveData manager
 	kiveDataMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -198,6 +203,46 @@ func main() {
 		setupLog.Error(err, "unable to create KivePod controller", "controller", "KivePod")
 		os.Exit(1)
 	}
+
+	err = ctrl.NewWebhookManagedBy(kivePodMgr).
+		For(&kivev2alpha1.KivePolicy{}).
+		Complete()
+	if err != nil {
+		setupLog.Error(err, "unable to start webhook of KivePolicy")
+		os.Exit(1)
+	}
+
+	err = ctrl.NewWebhookManagedBy(kivePodMgr).
+		For(&kivev2alpha1.KiveData{}).
+		Complete()
+	if err != nil {
+		setupLog.Error(err, "unable to start webhook of KiveData")
+		os.Exit(1)
+	}
+
+	/*
+		// Mutate and Validate are not needed but are a good addition. They
+		// will be supported in the future.
+		if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+			// Using the pod manager for the webhook
+			if err = (&kivev2alpha1.KivePolicy{}).SetupMutateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KivePolicyMutate")
+				os.Exit(1)
+			}
+			if err = (&kivev2alpha1.KivePolicy{}).SetupValidateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KivePolicyValidate")
+				os.Exit(1)
+			}
+			if err = (&kivev2alpha1.KiveData{}).SetupMutateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KiveDataMutate")
+				os.Exit(1)
+			}
+			if err = (&kivev2alpha1.KiveData{}).SetupValidateWebhookWithManager(kivePodMgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "KiveDataValidate")
+				os.Exit(1)
+			}
+		}
+	*/
 
 	// +kubebuilder:scaffold:builder
 

@@ -17,9 +17,12 @@ resources:
   controller: true
   domain: kivebpf.san7o.github.io
   group: kive
-  kind: Kive
-  path: github.com/San7o/kivebpf/api/v1alpha1
-  version: v1alpha1
+  kind: KivePolicy
+  path: github.com/San7o/kivebpf/api/v2alpha1
+  version: v2alpha1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -27,6 +30,25 @@ resources:
   domain: kivebpf.san7o.github.io
   group: kive
   kind: KiveData
-  path: github.com/San7o/kivebpf/api/v1alpha1
-  version: v1alpha1
+  path: github.com/San7o/kivebpf/api/v2alpha1
+  version: v2alpha1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kivebpf.san7o.github.io
+  group: kive
+  kind: KivePolicy
+  path: github.com/San7o/kivebpf/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kivebpf.san7o.github.io
+  group: kive
+  kind: KiveData
+  path: github.com/San7o/kivebpf/api/v1
+  version: v1
 version: "3"

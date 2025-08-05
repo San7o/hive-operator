@@ -17,11 +17,11 @@ trace and in which pods.  The operator will parse this policy every
 time one is added / removed / updated and It will configure the eBPF
 program to monitor the right files.
 
-An example `KivePolicy` is located in [config/samples/kive_v1alpha1_kivepolicy.yaml](../config/samples/kive_v1alpha1_kivepolicy.yaml).
+An example `KivePolicy` is located in [config/samples/kive_v2alpha1_kivepolicy.yaml](../config/samples/kive_v2alpha1_kivepolicy.yaml).
 More examples can be found in the same directory.
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v1alpha1
+apiVersion: kivebpf.san7o.github.io/v2alpha1
 kind: KivePolicy
 metadata:
   labels:
@@ -51,7 +51,7 @@ You can load it to the kubernetes cluster using the **apply** command
 of [kubectl](https://kubernetes.io/docs/reference/kubectl/):
 
 ```bash
-kubectl apply -f config/samples/kive_v1alpha1_kivepolicy.yaml
+kubectl apply -f config/samples/kive_v2alpha1_kivepolicy.yaml
 ```
 
 The operator will log some information when a policy is created /
@@ -148,7 +148,7 @@ You can ask the operator to use send data to an endpoint by setting
 the `callback` filed in a trap like this:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v1alpha1
+apiVersion: kivebpf.san7o.github.io/v2alpha1
 kind: KivePolicy
 metadata:
   labels:

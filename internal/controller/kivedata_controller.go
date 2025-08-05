@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 	kivebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 )
 
@@ -48,13 +48,13 @@ func (r *KiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		go Output(r.UncachedClient)
 	}
 
-	kiveDataList := &kivev1alpha1.KiveDataList{}
+	kiveDataList := &kivev2alpha1.KiveDataList{}
 	err := r.Client.List(ctx, kiveDataList)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get Kive Data resource: %w", err)
 	}
 
-	kivePolicyList := &kivev1alpha1.KivePolicyList{}
+	kivePolicyList := &kivev2alpha1.KivePolicyList{}
 	err = r.Client.List(ctx, kivePolicyList)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KivePolicy resource: %w", err)
@@ -91,7 +91,7 @@ Data:
 					continue Trap
 				}
 				if found {
-					break Trap
+					break Policy
 				}
 			}
 		}
@@ -132,6 +132,6 @@ Data:
 func (r *KiveDataReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kivev1alpha1.KiveData{}).
+		For(&kivev2alpha1.KiveData{}).
 		Complete(r)
 }

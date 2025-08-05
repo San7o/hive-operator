@@ -24,25 +24,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 )
 
 var _ = Describe("ContainerName Regex", Ordered, func() {
 	var err error
 
-	var kiveTestPolicy = &kivev1alpha1.KivePolicy{
+	var kiveTestPolicy = &kivev2alpha1.KivePolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "kive-policy-test-regex",
 			Namespace:  testNamespaceName,
-			Finalizers: []string{kivev1alpha1.KivePolicyFinalizerName},
+			Finalizers: []string{kivev2alpha1.KivePolicyFinalizerName},
 		},
-		Spec: kivev1alpha1.KivePolicySpec{
-			Traps: []kivev1alpha1.KiveTrap{
+		Spec: kivev2alpha1.KivePolicySpec{
+			Traps: []kivev2alpha1.KiveTrap{
 				{
 					Path:   "/regex",
 					Create: true,
-					MatchAny: []kivev1alpha1.KiveTrapMatch{
-						kivev1alpha1.KiveTrapMatch{
+					MatchAny: []kivev2alpha1.KiveTrapMatch{
+						kivev2alpha1.KiveTrapMatch{
 							PodName:       "test-pod",
 							Namespace:     "kive-test",
 							ContainerName: "test-ngi.*",
@@ -88,7 +88,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 		It("Should not have any KivePolicy", func() {
 
 			By("Getting KivePolicy")
-			var kivePolicyList kivev1alpha1.KivePolicyList
+			var kivePolicyList kivev2alpha1.KivePolicyList
 			err := Client.List(ctx, &kivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -100,7 +100,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 		It("Should not have any KiveData", func() {
 
 			By("Getting KiveData")
-			var kiveDataList kivev1alpha1.KiveDataList
+			var kiveDataList kivev2alpha1.KiveDataList
 			err := Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -119,7 +119,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 			time.Sleep(reconcileTimeout)
 
 			By("Getting KivePolicy")
-			var kivePolicyList kivev1alpha1.KivePolicyList
+			var kivePolicyList kivev2alpha1.KivePolicyList
 			err := Client.List(ctx, &kivePolicyList, client.InNamespace(testNamespaceName))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -128,7 +128,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 			}
 
 			By("Getting KiveData")
-			var kiveDataList kivev1alpha1.KiveDataList
+			var kiveDataList kivev2alpha1.KiveDataList
 			err = Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -169,7 +169,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 			time.Sleep(reconcileTimeout)
 
 			By("Getting KiveData")
-			var kiveDataList kivev1alpha1.KiveDataList
+			var kiveDataList kivev2alpha1.KiveDataList
 			if err := Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace)); err != nil {
 				Expect(fmt.Errorf("List KiveData: %w", err)).NotTo(HaveOccurred())
 			}
@@ -215,7 +215,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 			time.Sleep(reconcileTimeout)
 
 			By("Getting the KiveData")
-			var kiveDataList kivev1alpha1.KiveDataList
+			var kiveDataList kivev2alpha1.KiveDataList
 			err := Client.List(ctx, &kiveDataList, client.InNamespace(operatorNamespace))
 			Expect(err).NotTo(HaveOccurred())
 

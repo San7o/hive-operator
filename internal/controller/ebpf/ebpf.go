@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
@@ -127,22 +127,22 @@ func ReadEbpfData() (bpfLogData, error) {
 	return data, nil
 }
 
-func ReadAlert(ctx context.Context, cli client.Reader) (kivev1alpha1.KiveAlert, error) {
+func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, error) {
 
 	if RingbuffReader == nil {
-		return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
+		return kivev2alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Ringbuffer not inizialized")
 	}
 
 	log := log.FromContext(ctx)
 	data, err := ReadEbpfData() // Hangs
 	if err != nil {
-		return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
+		return kivev2alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Reading Ebpf Data: %w", err)
 	}
 
-	kiveDataList := &kivev1alpha1.KiveDataList{}
+	kiveDataList := &kivev2alpha1.KiveDataList{}
 	err = cli.List(ctx, kiveDataList)
 	if err != nil {
-		return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Failed to get Kive Data resource: %w", err)
+		return kivev2alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error Failed to get Kive Data resource: %w", err)
 	}
 
 	for _, kiveData := range kiveDataList.Items {
@@ -163,29 +163,29 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev1alpha1.KiveAlert, 
 				// error is handled gracefully
 				log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
 			}
-			out := kivev1alpha1.KiveAlert{
+			out := kivev2alpha1.KiveAlert{
 				Timestamp:      time.Now().Format(time.RFC3339),
 				KivePolicyName: kiveData.Annotations["kive_policy_name"],
-				Metadata: kivev1alpha1.KiveAlertMetadata{
+				Metadata: kivev2alpha1.KiveAlertMetadata{
 					Path:     kiveData.Annotations["path"],
 					Inode:    data.Ino,
 					Mask:     data.Mask,
 					KernelID: kiveData.Spec.KernelID,
 					Callback: kiveData.ObjectMeta.Annotations["callback"],
 				},
-				Pod: kivev1alpha1.PodMetadata{
+				Pod: kivev2alpha1.PodMetadata{
 					Name:      kiveData.Annotations["pod_name"],
 					Namespace: kiveData.Annotations["namespace"],
-					Container: kivev1alpha1.ContainerMetadata{
+					Container: kivev2alpha1.ContainerMetadata{
 						Id:   kiveData.Annotations["container_id"],
 						Name: kiveData.Annotations["container_name"],
 					},
 					Ip: kiveData.Annotations["ip"],
 				},
-				Node: kivev1alpha1.NodeMetadata{
+				Node: kivev2alpha1.NodeMetadata{
 					Name: kiveData.Annotations["node_name"],
 				},
-				Process: kivev1alpha1.ProcessMetadata{
+				Process: kivev2alpha1.ProcessMetadata{
 					Pid:    data.Pid,
 					Tgid:   data.Tgid,
 					Uid:    data.Uid,
@@ -199,5 +199,5 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev1alpha1.KiveAlert, 
 		}
 	}
 
-	return kivev1alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error eBPF data received but no corresponsing kiveData was found")
+	return kivev2alpha1.KiveAlert{}, fmt.Errorf("ReadAlert Error eBPF data received but no corresponsing kiveData was found")
 }

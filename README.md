@@ -8,7 +8,7 @@ You can specify a path to monitor and in which containers by
 creating an `KivePolicy`. The following is an example policy:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v1alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KivePolicy
 metadata:
   labels:
@@ -100,6 +100,11 @@ kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main
 | Linux Version       | 6.14                      | Tested on linux 6.14.                                  |
 | Architectures       | x86_64                    | The eBPf program works only on x86_64.                 |
 
+You need to have `cert-manager` running in your cluster:
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
 
 # Development
 

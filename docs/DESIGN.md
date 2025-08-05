@@ -325,7 +325,7 @@ A `KivePolicy` resource contains a list of `KiveTrap`, and looks like
 this:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v1alpha1
+apiVersion: kivebpf.san7o.github.io/v2alpha1
 kind: KivePolicy
 metadata:
   labels:
@@ -508,7 +508,7 @@ program to filter certain inodes.
 The schema of the resource looks like the following:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v1alpha1
+apiVersion: kivebpf.san7o.github.io/v2alpha1
 kind: KiveData
 metadata:
   annotations:

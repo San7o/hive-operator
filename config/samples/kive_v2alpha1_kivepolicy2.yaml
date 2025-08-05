@@ -1,15 +1,14 @@
-apiVersion: kivebpf.san7o.github.io/v1alpha1
+apiVersion: kivebpf.san7o.github.io/v2alpha1
 kind: KivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: kivebpf
   finalizers:
     - kivebpf.san7o.github.io/finalizer
-  name: kive-sample-policy3
+  name: kive-sample-policy2
   namespace: kivebpf-system
 spec:
   traps:
-    - path: /etc/shadow
+    - path: /etc/passwd
       matchAny:
-        - matchLabels:
-            security-level: high 
+        - namespace: default

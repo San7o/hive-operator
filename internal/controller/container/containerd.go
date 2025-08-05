@@ -21,7 +21,7 @@ import (
 	containerd "github.com/containerd/containerd"
 	containerdCio "github.com/containerd/containerd/cio"
 
-	kivev1alpha1 "github.com/San7o/kivebpf/api/v1alpha1"
+	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 )
 
 const (
@@ -71,7 +71,7 @@ func (self *Containerd) IsConnected() bool {
 	return self.isConnected
 }
 
-func (self *Containerd) GetContainerData(ctx context.Context, id string, kiveTrap kivev1alpha1.KiveTrap) (ContainerData, error) {
+func (self *Containerd) GetContainerData(ctx context.Context, id string, kiveTrap kivev2alpha1.KiveTrap) (ContainerData, error) {
 
 	attach := containerdCio.NewAttach()
 

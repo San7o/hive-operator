@@ -1,5 +1,5 @@
 # VERSION defines the project version for the bundle.
-VERSION ?= 0.0.1
+VERSION ?= 1.0.0
 
 ENV?=local
 include .env-${ENV}

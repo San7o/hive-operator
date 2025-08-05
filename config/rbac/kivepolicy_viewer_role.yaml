@@ -1,0 +1,23 @@
+# permissions for end users to view kivepolicies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kivebpf
+    app.kubernetes.io/managed-by: kustomize
+  name: kivepolicy-viewer-role
+rules:
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies/status
+  verbs:
+  - get

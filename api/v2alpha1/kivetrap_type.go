@@ -10,7 +10,7 @@
 
 // SPDX-License-Identifier: GPL-2.0-only
 
-package v1alpha1
+package v2alpha1
 
 type KiveTrap struct {
 	// Specifies which path to check

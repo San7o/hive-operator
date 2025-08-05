@@ -30,10 +30,10 @@ information about which file[s] to trace and in which pods. The operator
 will parse this policy every time one is added / removed / updated and
 It will configure the eBPF program to monitor the right files.</p>
 <p>An example <code>KivePolicy</code> is located in <a
-href="https://github.com/San7o/kivebpf/tree/main/config/samples/kive_v1alpha1_kivepolicy.yaml">config/samples/kive_v1alpha1_kivepolicy.yaml</a>.
+href="https://github.com/San7o/kivebpf/tree/main/config/samples/kive_v2alpha1_kivepolicy.yaml">config/samples/kive_v2alpha1_kivepolicy.yaml</a>.
 More examples can be found in the same directory.</p>
 <div class="sourceCode" id="cb2"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v1alpha1</span></span>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v2alpha1</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> KivePolicy</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
@@ -62,7 +62,7 @@ It will create It with <code>mode</code> permissions since
 <strong>apply</strong> command of <a
 href="https://kubernetes.io/docs/reference/kubectl/">kubectl</a>:</p>
 <div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> config/samples/kive_v1alpha1_kivepolicy.yaml</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> config/samples/kive_v2alpha1_kivepolicy.yaml</span></code></pre></div>
 <p>The operator will log some information when a policy is created /
 deleted / updated.</p>
 <p>It it now time to test this policy. First, we need to create a pod
@@ -136,7 +136,7 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="
 <p>You can ask the operator to use send data to an endpoint by setting
 the <code>callback</code> filed in a trap like this:</p>
 <div class="sourceCode" id="cb9"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v1alpha1</span></span>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v2alpha1</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> KivePolicy</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>

@@ -10,7 +10,7 @@
 
 // SPDX-License-Identifier: GPL-2.0-only
 
-package v1alpha1
+package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

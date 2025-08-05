@@ -10,7 +10,9 @@
 
 // SPDX-License-Identifier: GPL-2.0-only
 
-package v1alpha1
+// +kubebuilder:conversion-gen=true
+// +groupName=kivebpf.san7o.github.io
+package v2alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +29,9 @@ type KivePolicySpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:storageversion
+//// +kubebuilder:webhook:path=/mutate-kive-kivepolicy,mutating=true,failurePolicy=fail,groups=kivebpf.san7o.github.io,resources=kivepolicies,verbs=create;update,versions=v1;v2alpha1,name=mutate.kivepolicy.kivebpf.san7o.github.io,admissionReviewVersions=v1,sideEffects=none
+//// +kubebuilder:webhook:path=/validate-kive-kivepolicy,mutating=false,failurePolicy=fail,groups=kivebpf.san7o.github.io,resources=kivepolivies,verbs=create;update,versions=v1;v2alpha1,name=validate.kivepolicy.kivebpf.san7o.github.io,sideEffects=None,admissionReviewVersions=v1
 
 type KivePolicy struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -34,6 +39,8 @@ type KivePolicy struct {
 
 	Spec KivePolicySpec `json:"spec,omitempty"`
 }
+
+func (*KivePolicy) Hub() {}
 
 // +kubebuilder:object:root=true
 
