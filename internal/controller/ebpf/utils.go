@@ -14,6 +14,7 @@ package ebpf
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cilium/ebpf"
 )
@@ -55,4 +56,29 @@ func int8ArrayToString(arr [16]int8) string {
 		b = append(b, byte(c))
 	}
 	return string(b)
+}
+
+func parseCmdline(cmdline string) (binary string, args string) {
+
+	parts := strings.Split(cmdline, "\x00")
+
+	cleaned := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			cleaned = append(cleaned, part)
+		}
+	}
+
+	if len(cleaned) == 0 {
+		return "", ""
+	}
+
+	binary = cleaned[0]
+	if len(cleaned) > 1 {
+		args = strings.Join(cleaned[1:], " ")
+	} else {
+		args = ""
+	}
+
+	return binary, args
 }
