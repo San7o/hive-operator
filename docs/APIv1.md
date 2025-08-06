@@ -13,6 +13,13 @@ type KivePolicy struct {
 	Spec KivePolicySpec `json:"spec,omitempty"`
 }
 
+type KivePolicySpec struct {
+	// Version for KiveAlert output
+	AlertVersion string `json:"alertVersion,omitempty"`
+	// List of traps
+	Traps []KiveTrap `json:"traps,omitempty"`
+}
+
 type KiveTrap struct {
 	// Specifies which path to monitor
 	Path string `json:"path,omitempty"`

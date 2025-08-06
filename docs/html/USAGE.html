@@ -26,8 +26,11 @@ docker registry.</p>
 secure TLS connections:</p>
 <div class="sourceCode" id="cb1"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml</span></code></pre></div>
-<p>To install the operator from the online docker registry, simply
-run:</p>
+<p>To install the operator from the online docker registry, first make
+sure your system is supported by reading the
+<code>Suppoted Environments</code> section in the official <a
+href="https://github.com/San7o/kivebpf/tree/main">README</a>, then
+simply run:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml</span></code></pre></div>
 <p>Once you have the operator deployed, you can instruct It to log

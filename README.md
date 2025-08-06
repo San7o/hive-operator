@@ -86,7 +86,7 @@ the operator in more detail. You can find more examples in
 ## Quick deploy
 
 To deploy the operator, first make sure you have `cert-manager`
-installed for secure TLS connections (requred):
+installed for secure TLS connections (required):
 
 ```bash
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
@@ -107,7 +107,7 @@ kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main
 | Container Runtime   | containerd                | Only `containerd` is supported at the moment.          |
 | Go (for dev build)  | 1.24                      | Required for building the operator.                    |
 | Linux Version       | 6.14                      | Tested on linux 6.14.                                  |
-| Architectures       | x86_64                    | The eBPf program works only on x86_64.                 |
+| Architectures       | x86_64                    | The eBPF program works only on x86_64.                 |
 
 # Development
 

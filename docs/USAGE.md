@@ -13,7 +13,10 @@ connections:
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 ```
 
-To install the operator from the online docker registry, simply run:
+To install the operator from the online docker registry, first make
+sure your system is supported by reading the `Suppoted Environments`
+section in the official
+[README](https://github.com/San7o/kivebpf/tree/main), then simply run:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
