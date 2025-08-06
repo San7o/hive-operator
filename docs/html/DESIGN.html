@@ -8,6 +8,7 @@
   <div class="topnav">
     <a href="./index.html">Kive</a>
     <a href="./DESIGN.html">Design</a>
+    <a href="./APIv1.html">APIv1</a>
     <a href="./USAGE.html">Usage</a>
     <a href="./DEVELOPMENT.html">Development</a>
     <a href="./EBPF-TESTING.html">eBPF Testing</a>
@@ -305,7 +306,7 @@ hence the relationship between a policy and a <code>KiveData</code> is
 <p>A <code>KivePolicy</code> resource contains a list of
 <code>KiveTrap</code>, and looks like this:</p>
 <div class="sourceCode" id="cb1"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v2alpha1</span></span>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v1</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> KivePolicy</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
@@ -315,19 +316,24 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> kive-sample-policy</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> kivebpf-system</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">traps</span><span class="kw">:</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">create</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="dv">444</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">callback</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;http://my-callback.com/alerts&quot;</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">matchAny</span><span class="kw">:</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.0.3</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">container-name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;.*&quot;</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">alertVersion</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;v1&quot;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">traps</span><span class="kw">:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">create</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="dv">444</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">callback</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;http://my-callback.com/alerts&quot;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">matchAny</span><span class="kw">:</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.0.3</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">containerName</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;.*&quot;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
 <p>Each <code>KiveTrap</code> can contain the following fields:</p>
+<p><a name="kivepolicy-resource-alert-version"></a></p>
+<h4 id="alertversion">AlertVersion</h4>
+<p>This field specifies which version of the <code>HiveAlert</code> to
+output. By default, this is set to the lastest stable API.</p>
 <p><a name="kivepolicy-resource-path"></a></p>
 <h4 id="path">Path</h4>
 <p>This is the only non-optional fiels. <code>path</code> is the
@@ -451,42 +457,43 @@ where each <code>KiveData</code> must have an <code>KiveTrap</code>.</p>
 program to filter certain inodes.</p>
 <p>The schema of the resource looks like the following:</p>
 <div class="sourceCode" id="cb4"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v2alpha1</span></span>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> kivebpf.san7o.github.io/v1</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> KiveData</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">annotations</span><span class="kw">:</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">callback</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;&quot;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_id</span><span class="kw">:</span><span class="at"> containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container_name</span><span class="kw">:</span><span class="at"> nginx</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">kive_policy_name</span><span class="kw">:</span><span class="at"> kive-sample-policy</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">node_name</span><span class="kw">:</span><span class="at"> kive-worker2</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pod_ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">10.244.1.2</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pod_name</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">creationTimestamp</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;2025-07-25T08:06:12Z&quot;</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">generation</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> kive-data-nginx-pod-default-13667586</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> kivebpf-system</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">resourceVersion</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;23395&quot;</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uid</span><span class="kw">:</span><span class="at"> 788bcb67-a9de-480d-a179-e40234116459</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">trap-id</span><span class="kw">:</span><span class="at"> c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">inode-no</span><span class="kw">:</span><span class="at"> </span><span class="dv">13667586</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">kernel-id</span><span class="kw">:</span><span class="at"> fc9a30d5-6140-4dd1-b8ef-c638f19ebd71</span></span></code></pre></div>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">kive-alert-version</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">kive-policy-name</span><span class="kw">:</span><span class="at"> kive-sample-policy</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">callback</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-id</span><span class="kw">:</span><span class="at"> containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">container-name</span><span class="kw">:</span><span class="at"> nginx</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">node_name</span><span class="kw">:</span><span class="at"> kive-worker2</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pod_ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">10.244.1.2</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pod_name</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">creationTimestamp</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;2025-07-25T08:06:12Z&quot;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">generation</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> kive-data-nginx-pod-default-13667586</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> kivebpf-system</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">resourceVersion</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;23395&quot;</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">uid</span><span class="kw">:</span><span class="at"> 788bcb67-a9de-480d-a179-e40234116459</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">trap-id</span><span class="kw">:</span><span class="at"> c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">inodeNo</span><span class="kw">:</span><span class="at"> </span><span class="dv">13667586</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">kernelId</span><span class="kw">:</span><span class="at"> fc9a30d5-6140-4dd1-b8ef-c638f19ebd71</span></span></code></pre></div>
 <p>The fields under <code>spec</code> are:</p>
 <ul>
-<li><code>inode-no</code>: The inode number of the file to trace, needed
+<li><code>inodeNo</code>: The inode number of the file to trace, needed
 by the eBPF program.</li>
-<li><code>kernel-id</code>: An unique identifier of a running kernel, to
+<li><code>kernelId</code>: An unique identifier of a running kernel, to
 discriminate which loader controller should handle this
 <code>KiveData</code>.</li>
 </ul>
 <p>The annotations are used as additional information for the
 <code>KiveAlert</code> when an access is detected by the eBPF
 program.</p>
-<p>The <code>trap-id</code> is used to identify which
+<p>The <code>trap-id</code> label is used to identify which
 <code>KiveTrap</code> generated this <code>KiveData</code>.</p>
 <p><a name="kivedata-reconciliation"></a></p>
 <h3 id="kivedata-reconciliation">KiveData Reconciliation</h3>
@@ -529,34 +536,35 @@ to generate an <code>KiveAlert</code>. An example alert is the
 following:</p>
 <div class="sourceCode" id="cb5"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;timestamp&quot;</span><span class="fu">:</span> <span class="st">&quot;2025-08-02T16:51:19Z&quot;</span><span class="fu">,</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;kive_policy_name&quot;</span><span class="fu">:</span> <span class="st">&quot;kive-sample-policy&quot;</span><span class="fu">,</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;path&quot;</span><span class="fu">:</span> <span class="st">&quot;/secret.txt&quot;</span><span class="fu">,</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;inode&quot;</span><span class="fu">:</span> <span class="dv">16256084</span><span class="fu">,</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;mask&quot;</span><span class="fu">:</span> <span class="dv">36</span><span class="fu">,</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;kernel_id&quot;</span><span class="fu">:</span> <span class="st">&quot;2c147a95-23e5-4f99-a2de-67d5e9fdb502&quot;</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;pod&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;nginx-pod&quot;</span><span class="fu">,</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;namespace&quot;</span><span class="fu">:</span> <span class="st">&quot;default&quot;</span><span class="fu">,</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;container&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c&quot;</span><span class="fu">,</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;nginx&quot;</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;node&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;kive-worker&quot;</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;process&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;pid&quot;</span><span class="fu">:</span> <span class="dv">176928</span><span class="fu">,</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;tgid&quot;</span><span class="fu">:</span> <span class="dv">176928</span><span class="fu">,</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;uid&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;gid&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;binary&quot;</span><span class="fu">:</span> <span class="st">&quot;cat&quot;</span><span class="fu">,</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;cwd&quot;</span><span class="fu">:</span> <span class="st">&quot;/&quot;</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;kive-aler-version&quot;</span><span class="fu">:</span> <span class="st">&quot;v1&quot;</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;kive-policy-name&quot;</span><span class="fu">:</span> <span class="st">&quot;kive-sample-policy&quot;</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;timestamp&quot;</span><span class="fu">:</span> <span class="st">&quot;2025-08-02T16:51:19Z&quot;</span><span class="fu">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;path&quot;</span><span class="fu">:</span> <span class="st">&quot;/secret.txt&quot;</span><span class="fu">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;inode&quot;</span><span class="fu">:</span> <span class="dv">16256084</span><span class="fu">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;mask&quot;</span><span class="fu">:</span> <span class="dv">36</span><span class="fu">,</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;kernel-id&quot;</span><span class="fu">:</span> <span class="st">&quot;2c147a95-23e5-4f99-a2de-67d5e9fdb502&quot;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;pod&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;nginx-pod&quot;</span><span class="fu">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;namespace&quot;</span><span class="fu">:</span> <span class="st">&quot;default&quot;</span><span class="fu">,</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;container&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;containerd://0c37512624823392d71e99a12011148db30ba7ea2a74fc7ff8bd5f85bc7b499c&quot;</span><span class="fu">,</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;nginx&quot;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;node&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;kive-worker&quot;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;process&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;pid&quot;</span><span class="fu">:</span> <span class="dv">176928</span><span class="fu">,</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;tgid&quot;</span><span class="fu">:</span> <span class="dv">176928</span><span class="fu">,</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;uid&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;gid&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;binary&quot;</span><span class="fu">:</span> <span class="st">&quot;cat&quot;</span><span class="fu">,</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;cwd&quot;</span><span class="fu">:</span> <span class="st">&quot;/&quot;</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p><a name="pod-controller"></a></p>
 <h2 id="pod-controller">Pod Controller</h2>
 <p>When a pod is changed, we want to update both <code>KiveData</code>

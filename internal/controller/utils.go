@@ -26,7 +26,7 @@ import (
 	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
-func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap) (string, error) {
+func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap, alertVersion string) (string, error) {
 
 	jsonPolicy, err := json.Marshal(kiveTrap)
 	if err != nil {
@@ -35,6 +35,7 @@ func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap) (string, error) {
 
 	sha := sha256.New()
 	sha.Write(jsonPolicy)
+	sha.Write([]byte(alertVersion))
 	shaPolicy := hex.EncodeToString(sha.Sum(nil))
 
 	return shaPolicy[:63], nil
@@ -62,7 +63,7 @@ func RegexMatch(regex string, containerName string) (bool, error) {
 
 func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveTrap) (bool, error) {
 
-	trapID, err := KiveTrapHashID(kiveTrap)
+	trapID, err := KiveTrapHashID(kiveTrap, kiveData.ObjectMeta.Annotations["kive-alert-version"])
 	if err != nil {
 		return false, fmt.Errorf("KiveDataTrapCmp Error Hash ID: %w", err)
 	}

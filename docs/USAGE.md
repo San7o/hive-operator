@@ -17,11 +17,14 @@ trace and in which pods.  The operator will parse this policy every
 time one is added / removed / updated and It will configure the eBPF
 program to monitor the right files.
 
-An example `KivePolicy` is located in [config/samples/kive_v2alpha1_kivepolicy.yaml](../config/samples/kive_v2alpha1_kivepolicy.yaml).
-More examples can be found in the same directory.
+An example `KivePolicy` is located in
+[config/samples/kive_v2alpha1_kivepolicy.yaml](../config/samples/kive_v2alpha1_kivepolicy.yaml).
+More examples can be found in the same directory. Check out the
+reference for [APIv1](./APIv1.md).
+
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v2alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KivePolicy
 metadata:
   labels:
@@ -31,6 +34,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: v1
   traps:
     - path: /secret.txt
       create: true
@@ -81,13 +85,14 @@ output of one of the kive pods, like this (prettified):
 2025-08-02T16:51:19Z    INFO    Access Detected
 {
   "KiveAlert": {
+    "kive-alert-version": "v1",
+    "kive-policy-name": "kive-sample-policy",
     "timestamp": "2025-08-02T16:51:19Z",
-    "kive_policy_name": "kive-sample-policy",
     "metadata": {
       "path": "/secret.txt",
       "inode": 16256084,
       "mask": 36,
-      "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+      "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
     },
     "pod": {
       "name": "nginx-pod",
@@ -148,7 +153,7 @@ You can ask the operator to use send data to an endpoint by setting
 the `callback` filed in a trap like this:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v2alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KivePolicy
 metadata:
   labels:
@@ -158,6 +163,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: v1
   traps:
     - path: /secret.txt
       create: true

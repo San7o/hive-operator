@@ -105,7 +105,7 @@ Policy:
 			// KiveAlerts from the same trap
 			matchedContainers := map[string]bool{}
 
-			trapID, err := KiveTrapHashID(kiveTrap)
+			trapID, err := KiveTrapHashID(kiveTrap, kivePolicy.Spec.AlertVersion)
 			if err != nil {
 				log.Error(err, fmt.Sprintf("Reconcile Error Generate TrapID for Trap at path %s in KivePolicy %s", kiveTrap.Path, kivePolicy.Name))
 				continue Trap
@@ -207,15 +207,16 @@ Policy:
 								Namespace: kivev2alpha1.Namespace,
 								// Annotations are used as information for the KiveAlert
 								Annotations: map[string]string{
-									"kive_policy_name": kivePolicy.Name,
-									"callback":         kiveTrap.Callback,
-									"pod_name":         pod.Name,
-									"namespace":        pod.Namespace,
-									"pod_ip":           pod.Status.PodIPs[0].IP,
-									"path":             kiveTrap.Path,
-									"container_id":     containerData.ID,
-									"container_name":   containerData.Name,
-									"node_name":        pod.Spec.NodeName,
+									"kive-alert-version": kivePolicy.Spec.AlertVersion,
+									"kive-policy-name":   kivePolicy.Name,
+									"callback":           kiveTrap.Callback,
+									"pod-name":           pod.Name,
+									"namespace":          pod.Namespace,
+									"pod-ip":             pod.Status.PodIPs[0].IP,
+									"path":               kiveTrap.Path,
+									"container-id":       containerData.ID,
+									"container-name":     containerData.Name,
+									"node-name":          pod.Spec.NodeName,
 								},
 								Labels: map[string]string{
 									// The trap-id is used to link this KiveData to this trap

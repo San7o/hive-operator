@@ -18,6 +18,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: v1
   traps:
   - path: /secret.txt
     create: true
@@ -26,7 +27,7 @@ spec:
     matchAny:
     - pod: nginx-pod
       namespace: default
-      container-name: ".*"
+      containerName: ".*"
       matchLabels:
         security-level: high
 ```
@@ -44,13 +45,14 @@ following is an example alert:
 
 ```json
 {
+  "kive-alert-version": "v1",
+  "kive-policy-name": "kive-sample-policy",
   "timestamp": "2025-08-02T16:51:19Z",
-  "kive_policy_name": "kive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
     "inode": 16256084,
     "mask": 36,
-    "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+    "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
   },
   "pod": {
     "name": "nginx-pod",

@@ -75,11 +75,11 @@ spec:
           spec:
             description: KiveDataSpec defines the desired state of KiveData
             properties:
-              inode-no:
+              inodeNo:
                 description: The inode number of the file
                 format: int64
                 type: integer
-              kernel-id:
+              kernelId:
                 description: A string to uniquely identify a running kernel
                 type: string
             type: object

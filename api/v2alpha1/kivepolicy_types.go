@@ -23,6 +23,8 @@ const (
 )
 
 type KivePolicySpec struct {
+	// Version for KiveAlert output
+	AlertVersion string `json:"alertVersion,omitempty"`
 	// List of traps
 	Traps []KiveTrap `json:"traps,omitempty"`
 }

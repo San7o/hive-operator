@@ -37,6 +37,9 @@ spec:
             type: object
           spec:
             properties:
+              alertVersion:
+                description: Version for KiveAlert output
+                type: string
               traps:
                 description: List of traps
                 items:
@@ -54,7 +57,7 @@ spec:
                         description: Match all the following optional filds (logical
                           AND)
                         properties:
-                          container-name:
+                          containerName:
                             description: |-
                               Filter container by name, can be a regex with syntax described at
                               https://golang.org/s/re2syntax
@@ -114,6 +117,9 @@ spec:
             type: object
           spec:
             properties:
+              alertVersion:
+                description: Version for KiveAlert output
+                type: string
               traps:
                 description: List of traps
                 items:
@@ -131,7 +137,7 @@ spec:
                         description: Match all the following optional filds (logical
                           AND)
                         properties:
-                          container-name:
+                          containerName:
                             description: |-
                               Filter container by name, can be a regex with syntax described at
                               https://golang.org/s/re2syntax

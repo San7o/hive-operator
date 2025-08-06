@@ -12,6 +12,10 @@
 
 package v2alpha1
 
+var (
+	SupportedKiveAlertVersions = []string{"v1", "v2alpha1"}
+)
+
 // Information about the container
 type ContainerMetadata struct {
 	// Container id
@@ -63,17 +67,19 @@ type KiveAlertMetadata struct {
 	// Unix access permission mask
 	Mask int32 `json:"mask,omitempty"`
 	// ID of the kernel where the alert was triggered
-	KernelID string `json:"kernel_id,omitempty"`
+	KernelID string `json:"kernel-id,omitempty"`
 	// Callback URI
 	Callback string `json:"callback,omitempty"`
 }
 
 // File access alert
 type KiveAlert struct {
+	// KiveAlert version
+	AlertVersion string `json:"kive-alert-version"`
+	// The policy that triggered the alert
+	PolicyName string `json:"kive-policy-name"`
 	// Alert creation time
 	Timestamp string `json:"timestamp,omitempty"` // RFC 3339
-	// The policy that triggered the alert
-	KivePolicyName string `json:"kive_policy_name,omitempty"`
 	// Additional information
 	Metadata KiveAlertMetadata `json:"metadata,omitempty"`
 	// Information about the pod where the file lives

@@ -23,6 +23,7 @@ func (src *KivePolicy) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*v2alpha1.KivePolicy)
 
 	dst.ObjectMeta = *src.ObjectMeta.DeepCopy()
+	dst.Spec.AlertVersion = src.Spec.AlertVersion
 
 	trapsv2 := []v2alpha1.KiveTrap{}
 	for _, trap := range src.Spec.Traps {
@@ -62,6 +63,7 @@ func (dst *KivePolicy) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*v2alpha1.KivePolicy)
 
 	dst.ObjectMeta = *src.ObjectMeta.DeepCopy()
+	dst.Spec.AlertVersion = src.Spec.AlertVersion
 
 	trapsv1 := []KiveTrap{}
 	for _, trap := range src.Spec.Traps {

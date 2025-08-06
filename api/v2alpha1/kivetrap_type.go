@@ -13,29 +13,29 @@
 package v2alpha1
 
 type KiveTrap struct {
-	// Specifies which path to check
+	// Specifies which path to monitor
 	Path string `json:"path,omitempty"`
-	// Whether to create the file or not if It cannot be found
+	// (optional) Whether to create the file or not if It was not found
 	Create bool `json:"create,omitempty"`
-	// The permissions of the file to be created if create is set to ture
+	// (optional) The permissions of the file to be created if create is set to true
 	Mode uint32 `json:"mode,omitempty"`
-	// Send an HTTP POST request to this endpoint if specified
+	// (optional) Send an HTTP POST request to this endpoint
 	Callback string `json:"callback,omitempty"`
-	// Match any of the following items (logical OR)
+	// Match any of the following items (logical OR), at least one must be present
 	MatchAny []KiveTrapMatch `json:"matchAny,omitempty"`
 }
 
-// Match all the following optional filds (logical AND)
+// Match all the following optional fields (logical AND)
 type KiveTrapMatch struct {
-	// Filter pod by name
+	// Filter pods by name
 	PodName string `json:"pod,omitempty"`
 	// Filter container by name, can be a regex with syntax described at
 	// https://golang.org/s/re2syntax
-	ContainerName string `json:"container-name,omitempty"`
-	// Filter pods per namespace
+	ContainerName string `json:"containerName,omitempty"`
+	// Filter pods by namespace
 	Namespace string `json:"namespace,omitempty"`
 	// Filter pods by IP
 	IP string `json:"ip,omitempty"`
-	// Filter pods per label
+	// Filter pods by label
 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 }
