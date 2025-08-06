@@ -45,16 +45,17 @@ spec:
                 items:
                   properties:
                     callback:
-                      description: Send an HTTP POST request to this endpoint if specified
+                      description: (optional) Send an HTTP POST request to this endpoint
                       type: string
                     create:
-                      description: Whether to create the file or not if It cannot
-                        be found
+                      description: (optional) Whether to create the file or not if
+                        It was not found
                       type: boolean
                     matchAny:
-                      description: Match any of the following items (logical OR)
+                      description: Match any of the following items (logical OR),
+                        at least one must be present
                       items:
-                        description: Match all the following optional filds (logical
+                        description: Match all the following optional fields (logical
                           AND)
                         properties:
                           containerName:
@@ -68,23 +69,23 @@ spec:
                           matchLabels:
                             additionalProperties:
                               type: string
-                            description: Filter pods per label
+                            description: Filter pods by label
                             type: object
                           namespace:
-                            description: Filter pods per namespace
+                            description: Filter pods by namespace
                             type: string
                           pod:
-                            description: Filter pod by name
+                            description: Filter pods by name
                             type: string
                         type: object
                       type: array
                     mode:
-                      description: The permissions of the file to be created if create
-                        is set to ture
+                      description: (optional) The permissions of the file to be created
+                        if create is set to true
                       format: int32
                       type: integer
                     path:
-                      description: Specifies which path to check
+                      description: Specifies which path to monitor
                       type: string
                   type: object
                 type: array
@@ -125,16 +126,17 @@ spec:
                 items:
                   properties:
                     callback:
-                      description: Send an HTTP POST request to this endpoint if specified
+                      description: (optional) Send an HTTP POST request to this endpoint
                       type: string
                     create:
-                      description: Whether to create the file or not if It cannot
-                        be found
+                      description: (optional) Whether to create the file or not if
+                        It was not found
                       type: boolean
                     matchAny:
-                      description: Match any of the following items (logical OR)
+                      description: Match any of the following items (logical OR),
+                        at least one must be present
                       items:
-                        description: Match all the following optional filds (logical
+                        description: Match all the following optional fields (logical
                           AND)
                         properties:
                           containerName:
@@ -148,23 +150,23 @@ spec:
                           matchLabels:
                             additionalProperties:
                               type: string
-                            description: Filter pods per label
+                            description: Filter pods by label
                             type: object
                           namespace:
-                            description: Filter pods per namespace
+                            description: Filter pods by namespace
                             type: string
                           pod:
-                            description: Filter pod by name
+                            description: Filter pods by name
                             type: string
                         type: object
                       type: array
                     mode:
-                      description: The permissions of the file to be created if create
-                        is set to ture
+                      description: (optional) The permissions of the file to be created
+                        if create is set to true
                       format: int32
                       type: integer
                     path:
-                      description: Specifies which path to check
+                      description: Specifies which path to monitor
                       type: string
                   type: object
                 type: array

@@ -11,9 +11,20 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: kivebpf-system/kivebpf-serving-cert
     controller-gen.kubebuilder.io/version: v0.16.1
   name: kivedata.kivebpf.san7o.github.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: kivebpf-webhook-service
+          namespace: kivebpf-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: kivebpf.san7o.github.io
   names:
     kind: KiveData
@@ -22,7 +33,7 @@ spec:
     singular: kivedata
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         properties:
@@ -56,6 +67,43 @@ spec:
             type: object
         type: object
     served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: v2alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KiveDataSpec defines the desired state of KiveData
+            properties:
+              inodeNo:
+                description: The inode number of the file
+                format: int64
+                type: integer
+              kernelId:
+                description: A string to uniquely identify a running kernel
+                type: string
+            type: object
+        type: object
+    served: true
     storage: true
     subresources:
       status: {}
@@ -64,9 +112,20 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: kivebpf-system/kivebpf-serving-cert
     controller-gen.kubebuilder.io/version: v0.16.1
   name: kivepolicies.kivebpf.san7o.github.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: kivebpf-webhook-service
+          namespace: kivebpf-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: kivebpf.san7o.github.io
   names:
     kind: KivePolicy
@@ -75,6 +134,87 @@ spec:
     singular: kivepolicy
   scope: Namespaced
   versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              alertVersion:
+                description: Version for KiveAlert output
+                type: string
+              traps:
+                description: List of traps
+                items:
+                  properties:
+                    callback:
+                      description: (optional) Send an HTTP POST request to this endpoint
+                      type: string
+                    create:
+                      description: (optional) Whether to create the file or not if
+                        It was not found
+                      type: boolean
+                    matchAny:
+                      description: Match any of the following items (logical OR),
+                        at least one must be present
+                      items:
+                        description: Match all the following optional fields (logical
+                          AND)
+                        properties:
+                          containerName:
+                            description: |-
+                              Filter container by name, can be a regex with syntax described at
+                              https://golang.org/s/re2syntax
+                            type: string
+                          ip:
+                            description: Filter pods by IP
+                            type: string
+                          matchLabels:
+                            additionalProperties:
+                              type: string
+                            description: Filter pods by label
+                            type: object
+                          namespace:
+                            description: Filter pods by namespace
+                            type: string
+                          pod:
+                            description: Filter pods by name
+                            type: string
+                        type: object
+                      type: array
+                    mode:
+                      description: (optional) The permissions of the file to be created
+                        if create is set to true
+                      format: int32
+                      type: integer
+                    path:
+                      description: Specifies which path to monitor
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
   - name: v2alpha1
     schema:
       openAPIV3Schema:
@@ -98,24 +238,28 @@ spec:
             type: object
           spec:
             properties:
+              alertVersion:
+                description: Version for KiveAlert output
+                type: string
               traps:
                 description: List of traps
                 items:
                   properties:
                     callback:
-                      description: Send an HTTP POST request to this endpoint if specified
+                      description: (optional) Send an HTTP POST request to this endpoint
                       type: string
                     create:
-                      description: Whether to create the file or not if It cannot
-                        be found
+                      description: (optional) Whether to create the file or not if
+                        It was not found
                       type: boolean
                     matchAny:
-                      description: Match any of the following items (logical OR)
+                      description: Match any of the following items (logical OR),
+                        at least one must be present
                       items:
-                        description: Match all the following optional filds (logical
+                        description: Match all the following optional fields (logical
                           AND)
                         properties:
-                          container-name:
+                          containerName:
                             description: |-
                               Filter container by name, can be a regex with syntax described at
                               https://golang.org/s/re2syntax
@@ -126,23 +270,23 @@ spec:
                           matchLabels:
                             additionalProperties:
                               type: string
-                            description: Filter pods per label
+                            description: Filter pods by label
                             type: object
                           namespace:
-                            description: Filter pods per namespace
+                            description: Filter pods by namespace
                             type: string
                           pod:
-                            description: Filter pod by name
+                            description: Filter pods by name
                             type: string
                         type: object
                       type: array
                     mode:
-                      description: The permissions of the file to be created if create
-                        is set to ture
+                      description: (optional) The permissions of the file to be created
+                        if create is set to true
                       format: int32
                       type: integer
                     path:
-                      description: Specifies which path to check
+                      description: Specifies which path to monitor
                       type: string
                   type: object
                 type: array
@@ -306,6 +450,56 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kivepolicy-editor-role
+rules:
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kivepolicy-viewer-role
+rules:
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
   name: kivebpf-manager-role
 rules:
 - apiGroups:
@@ -453,6 +647,22 @@ spec:
   selector:
     control-plane: manager
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-webhook-service
+  namespace: kivebpf-system
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    control-plane: manager
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -488,6 +698,10 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 20
         name: kive-k8s-operator
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         readinessProbe:
           httpGet:
             path: /readyz
@@ -505,6 +719,9 @@ spec:
           privileged: true
           runAsNonRoot: false
         volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
         - mountPath: /run/containerd/containerd.sock
           name: containerd-sock
           readOnly: false
@@ -520,6 +737,10 @@ spec:
       serviceAccountName: kivebpf-manager
       terminationGracePeriodSeconds: 10
       volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
       - hostPath:
           path: /run/containerd/containerd.sock
           type: Socket
@@ -532,3 +753,35 @@ spec:
           path: /host/real/proc
           type: Directory
         name: realproc
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/component: certificate
+    app.kubernetes.io/created-by: kivebpf
+    app.kubernetes.io/instance: serving-cert
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: certificate
+    app.kubernetes.io/part-of: kivebpf
+  name: kivebpf-serving-cert
+  namespace: kivebpf-system
+spec:
+  dnsNames:
+  - kivebpf-webhook-service.kivebpf-system.svc
+  - kivebpf-webhook-service.kivebpf-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: kivebpf-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-selfsigned-issuer
+  namespace: kivebpf-system
+spec:
+  selfSigned: {}

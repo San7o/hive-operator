@@ -85,7 +85,14 @@ the operator in more detail. You can find more examples in
 
 ## Quick deploy
 
-To deploy the operator, simply run:
+To deploy the operator, first make sure you have `cert-manager`
+installed for secure TLS connections (requred):
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
+Then simply install the operator with:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
@@ -101,12 +108,6 @@ kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main
 | Go (for dev build)  | 1.24                      | Required for building the operator.                    |
 | Linux Version       | 6.14                      | Tested on linux 6.14.                                  |
 | Architectures       | x86_64                    | The eBPf program works only on x86_64.                 |
-
-You need to have `cert-manager` running in your cluster:
-
-```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-```
 
 # Development
 
