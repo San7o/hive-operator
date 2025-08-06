@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/cilium/ebpf/link"
@@ -149,6 +150,8 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 		if kiveData.Spec.InodeNo == data.Ino {
 
 			cwd := ""
+			cmdLine := ""
+			readSuccess := true
 			// If the node is a container on some host, then we need to read
 			// the host's procfs which is assumed to be mounted in
 			// /host/real/proc. If this does not exist, either the cluster
@@ -159,13 +162,50 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 			// created using Kind)
 			cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.RealHostProcMountpoint, data.Pid))
 			if err != nil {
-				cwd, _ = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
-				// error is handled gracefully
-				log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+				cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
+				if err != nil {
+					readSuccess = false
+					// error is handled gracefully
+					log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+				}
 			}
+
+			if readSuccess {
+
+				cmdlinePath := fmt.Sprintf("%s/%d/cmdline", container.RealHostProcMountpoint, data.Pid)
+				cmdlineBytes, err := os.ReadFile(cmdlinePath)
+				if err != nil {
+					cmdlinePath = fmt.Sprintf("%s/%d/cmdline", container.ProcMountpoint, data.Pid)
+					cmdlineBytes, err = os.ReadFile(cmdlinePath)
+					if err != nil {
+						// error is handled gracefully
+						log.Info(fmt.Sprintf("Could not read %s/%d/cmdline while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+					}
+				}
+				cmdLine = string(cmdlineBytes)
+			}
+
+			binary := ""
+			args := ""
+			if cmdLine == "" {
+				binary = int8ArrayToString(data.Comm)
+			} else {
+				binary, args = parseCmdline(cmdLine)
+			}
+
+			kiveAlertVersion := kiveData.Annotations["kive-alert-version"]
+			if kiveAlertVersion == "" {
+				kiveAlertVersion = "v1"
+			} else if !slices.Contains(kivev2alpha1.SupportedKiveAlertVersions, kiveAlertVersion) {
+				log.Info(fmt.Sprintf("Generate KiveAlert for KivePolicy %s: version %s is not supported, defaulting to v1",
+					kiveData.Annotations["kive-policy-name"], kiveData.Annotations["version"]))
+				kiveAlertVersion = "v1"
+			}
+
 			out := kivev2alpha1.KiveAlert{
-				Timestamp:      time.Now().Format(time.RFC3339),
-				KivePolicyName: kiveData.Annotations["kive_policy_name"],
+				AlertVersion: kiveAlertVersion,
+				PolicyName:   kiveData.Annotations["kive-policy-name"],
+				Timestamp:    time.Now().Format(time.RFC3339),
 				Metadata: kivev2alpha1.KiveAlertMetadata{
 					Path:     kiveData.Annotations["path"],
 					Inode:    data.Ino,
@@ -174,24 +214,25 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 					Callback: kiveData.ObjectMeta.Annotations["callback"],
 				},
 				Pod: kivev2alpha1.PodMetadata{
-					Name:      kiveData.Annotations["pod_name"],
+					Name:      kiveData.Annotations["pod-name"],
 					Namespace: kiveData.Annotations["namespace"],
 					Container: kivev2alpha1.ContainerMetadata{
-						Id:   kiveData.Annotations["container_id"],
-						Name: kiveData.Annotations["container_name"],
+						Id:   kiveData.Annotations["container-id"],
+						Name: kiveData.Annotations["container-name"],
 					},
 					Ip: kiveData.Annotations["ip"],
 				},
 				Node: kivev2alpha1.NodeMetadata{
-					Name: kiveData.Annotations["node_name"],
+					Name: kiveData.Annotations["node-name"],
 				},
 				Process: kivev2alpha1.ProcessMetadata{
-					Pid:    data.Pid,
-					Tgid:   data.Tgid,
-					Uid:    data.Uid,
-					Gid:    data.Gid,
-					Binary: int8ArrayToString(data.Comm),
-					Cwd:    cwd,
+					Pid:       data.Pid,
+					Tgid:      data.Tgid,
+					Uid:       data.Uid,
+					Gid:       data.Gid,
+					Binary:    binary,
+					Cwd:       cwd,
+					Arguments: args,
 				},
 			}
 

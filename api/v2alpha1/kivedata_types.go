@@ -21,9 +21,9 @@ import (
 // KiveDataSpec defines the desired state of KiveData
 type KiveDataSpec struct {
 	// The inode number of the file
-	InodeNo uint64 `json:"inode-no,omitempty"`
+	InodeNo uint64 `json:"inodeNo,omitempty"`
 	// A string to uniquely identify a running kernel
-	KernelID string `json:"kernel-id,omitempty"`
+	KernelID string `json:"kernelId,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -18,6 +18,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: v1
   traps:
   - path: /secret.txt
     create: true
@@ -26,7 +27,7 @@ spec:
     matchAny:
     - pod: nginx-pod
       namespace: default
-      container-name: ".*"
+      containerName: ".*"
       matchLabels:
         security-level: high
 ```
@@ -44,13 +45,14 @@ following is an example alert:
 
 ```json
 {
+  "kive-alert-version": "v1",
+  "kive-policy-name": "kive-sample-policy",
   "timestamp": "2025-08-02T16:51:19Z",
-  "kive_policy_name": "kive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
     "inode": 16256084,
     "mask": 36,
-    "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+    "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
   },
   "pod": {
     "name": "nginx-pod",
@@ -68,8 +70,9 @@ following is an example alert:
     "tgid": 176928,
     "uid": 0,
     "gid": 0,
-    "binary": "cat",
-    "cwd": "/"
+    "binary": "/usr/bin/cat",
+    "cwd": "/",
+    "arguments": "/secret.txt -"
   }
 }
 ```
@@ -83,7 +86,14 @@ the operator in more detail. You can find more examples in
 
 ## Quick deploy
 
-To deploy the operator, simply run:
+To deploy the operator, first make sure you have `cert-manager`
+installed for secure TLS connections (required):
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
+Then simply install the operator with:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
@@ -98,13 +108,7 @@ kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main
 | Container Runtime   | containerd                | Only `containerd` is supported at the moment.          |
 | Go (for dev build)  | 1.24                      | Required for building the operator.                    |
 | Linux Version       | 6.14                      | Tested on linux 6.14.                                  |
-| Architectures       | x86_64                    | The eBPf program works only on x86_64.                 |
-
-You need to have `cert-manager` running in your cluster:
-
-```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
-```
+| Architectures       | x86_64                    | The eBPF program works only on x86_64.                 |
 
 # Development
 

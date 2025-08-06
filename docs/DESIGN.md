@@ -325,7 +325,7 @@ A `KivePolicy` resource contains a list of `KiveTrap`, and looks like
 this:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v2alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KivePolicy
 metadata:
   labels:
@@ -335,6 +335,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: "v1"
   traps:
     - path: /secret.txt
       create: true
@@ -344,12 +345,20 @@ spec:
       - pod: nginx-pod
         namespace: default
         ip: 192.168.0.3
-        container-name: ".*"
+        containerName: ".*"
         matchLabels:
           security-level: high
 ```
 
 Each `KiveTrap` can contain the following fields:
+
+
+<a name="kivepolicy-resource-alert-version"></a>
+
+#### AlertVersion
+
+This field specifies which version of the `HiveAlert` to output. By
+default, this is set to the lastest stable API.
 
 <a name="kivepolicy-resource-path"></a>
 
@@ -508,14 +517,15 @@ program to filter certain inodes.
 The schema of the resource looks like the following:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v2alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KiveData
 metadata:
   annotations:
+    kive-alert-version: v1
+    kive-policy-name: kive-sample-policy
     callback: ""
-    container_id: containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5
-    container_name: nginx
-    kive_policy_name: kive-sample-policy
+    container-id: containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5
+    container-name: nginx
     namespace: default
     node_name: kive-worker2
     path: /secret.txt
@@ -530,22 +540,22 @@ metadata:
   labels:
       trap-id: c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee
 spec:
-  inode-no: 13667586
-  kernel-id: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
+  inodeNo: 13667586
+  kernelId: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
 ```
 
 The fields under `spec` are:
 
-- `inode-no`: The inode number of the file to trace, needed by the
+- `inodeNo`: The inode number of the file to trace, needed by the
   eBPF program.
-- `kernel-id`: An unique identifier of a running kernel, to discriminate
+- `kernelId`: An unique identifier of a running kernel, to discriminate
   which loader controller should handle this `KiveData`.
 
 The annotations are used as additional information for the `KiveAlert`
 when an access is detected by the eBPF program.
 
-The `trap-id` is used to identify which `KiveTrap` generated this
-`KiveData`.
+The `trap-id` label is used to identify which `KiveTrap` generated
+this `KiveData`.
 
 <a name="kivedata-reconciliation"></a>
 
@@ -595,13 +605,14 @@ to generate an `KiveAlert`. An example alert is the following:
 
 ```json
 {
+  "kive-aler-version": "v1",
+  "kive-policy-name": "kive-sample-policy",
   "timestamp": "2025-08-02T16:51:19Z",
-  "kive_policy_name": "kive-sample-policy",
   "metadata": {
     "path": "/secret.txt",
     "inode": 16256084,
     "mask": 36,
-    "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+    "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
   },
   "pod": {
     "name": "nginx-pod",
@@ -619,8 +630,9 @@ to generate an `KiveAlert`. An example alert is the following:
     "tgid": 176928,
     "uid": 0,
     "gid": 0,
-    "binary": "cat",
-    "cwd": "/"
+    "binary": "/usr/bin/cat",
+    "cwd": "/",
+    "arguments": "/secret.txt -"
   }
 }
 ```

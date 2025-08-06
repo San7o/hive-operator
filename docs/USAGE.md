@@ -4,7 +4,19 @@ This document explains how to interact with the operator. You should
 have the operator deployed first: to use a local development build
 please read the [DEVELOPMENT](./DEVELOPMENT.md) document for
 instructions, otherwise you can fetch the operator from the official
-docker registry by deploying it with:
+docker registry.
+
+Either way, you need to have `cert-manager` installed for secure TLS
+connections:
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
+To install the operator from the online docker registry, first make
+sure your system is supported by reading the `Suppoted Environments`
+section in the official
+[README](https://github.com/San7o/kivebpf/tree/main), then simply run:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
@@ -17,11 +29,14 @@ trace and in which pods.  The operator will parse this policy every
 time one is added / removed / updated and It will configure the eBPF
 program to monitor the right files.
 
-An example `KivePolicy` is located in [config/samples/kive_v2alpha1_kivepolicy.yaml](../config/samples/kive_v2alpha1_kivepolicy.yaml).
-More examples can be found in the same directory.
+An example `KivePolicy` is located in
+[config/samples/kive_v2alpha1_kivepolicy.yaml](../config/samples/kive_v2alpha1_kivepolicy.yaml).
+More examples can be found in the same directory. Check out the
+reference for [APIv1](./APIv1.md).
+
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v2alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KivePolicy
 metadata:
   labels:
@@ -31,6 +46,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: v1
   traps:
     - path: /secret.txt
       create: true
@@ -81,13 +97,14 @@ output of one of the kive pods, like this (prettified):
 2025-08-02T16:51:19Z    INFO    Access Detected
 {
   "KiveAlert": {
+    "kive-alert-version": "v1",
+    "kive-policy-name": "kive-sample-policy",
     "timestamp": "2025-08-02T16:51:19Z",
-    "kive_policy_name": "kive-sample-policy",
     "metadata": {
       "path": "/secret.txt",
       "inode": 16256084,
       "mask": 36,
-      "kernel_id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+      "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
     },
     "pod": {
       "name": "nginx-pod",
@@ -132,7 +149,7 @@ with the process. Those missing informations will simply be empty
 values in the output and do not cause the operator to break. Try to
 keep the process alive and see that the warning does not appear and
 you get additional information such as the current working directory
-(cwd):
+(cwd) and the arguments to the binary:
 
 ```bash
 sudo kubectl exec -it nginx-pod -- cat /secret.txt -
@@ -148,7 +165,7 @@ You can ask the operator to use send data to an endpoint by setting
 the `callback` filed in a trap like this:
 
 ```yaml
-apiVersion: kivebpf.san7o.github.io/v2alpha1
+apiVersion: kivebpf.san7o.github.io/v1
 kind: KivePolicy
 metadata:
   labels:
@@ -158,6 +175,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
+  alertVersion: v1
   traps:
     - path: /secret.txt
       create: true

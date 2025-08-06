@@ -146,6 +146,13 @@ make docker
 
 ## Deploy the operator
 
+Before deploying the operator, make sure you have `cert-manager`
+installed for secure TLS connections (required):
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
 If you just want to load *only* the custom resources, run:
 
 ```bash
