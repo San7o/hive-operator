@@ -140,7 +140,7 @@ information associated with the process. Those missing informations will
 simply be empty values in the output and do not cause the operator to
 break. Try to keep the process alive and see that the warning does not
 appear and you get additional information such as the current working
-directory (cwd):</p>
+directory (cwd) and the arguments to the binary:</p>
 <div class="sourceCode" id="cb9"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> kubectl exec <span class="at">-it</span> nginx-pod <span class="at">--</span> cat /secret.txt <span class="at">-</span></span></code></pre></div>
 <p>Support for getting the process information is in the work.</p>

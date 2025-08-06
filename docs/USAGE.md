@@ -149,7 +149,7 @@ with the process. Those missing informations will simply be empty
 values in the output and do not cause the operator to break. Try to
 keep the process alive and see that the warning does not appear and
 you get additional information such as the current working directory
-(cwd):
+(cwd) and the arguments to the binary:
 
 ```bash
 sudo kubectl exec -it nginx-pod -- cat /secret.txt -

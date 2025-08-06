@@ -630,8 +630,9 @@ to generate an `KiveAlert`. An example alert is the following:
     "tgid": 176928,
     "uid": 0,
     "gid": 0,
-    "binary": "cat",
-    "cwd": "/"
+    "binary": "/usr/bin/cat",
+    "cwd": "/",
+    "arguments": "/secret.txt -"
   }
 }
 ```
