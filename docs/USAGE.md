@@ -4,7 +4,16 @@ This document explains how to interact with the operator. You should
 have the operator deployed first: to use a local development build
 please read the [DEVELOPMENT](./DEVELOPMENT.md) document for
 instructions, otherwise you can fetch the operator from the official
-docker registry by deploying it with:
+docker registry.
+
+Either way, you need to have `cert-manager` installed for secure TLS
+connections:
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
+To install the operator from the online docker registry, simply run:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml
