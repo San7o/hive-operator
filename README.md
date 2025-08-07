@@ -95,7 +95,8 @@ installed for secure TLS connections (required):
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 ```
 
-Then simply install the operator with:
+Then simply install the operator with from the [official docker
+repository](https://hub.docker.com/repository/docker/giovann103/kivebpf/general):
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml

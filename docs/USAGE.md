@@ -3,8 +3,8 @@
 This document explains how to interact with the operator. You should
 have the operator deployed first: to use a local development build
 please read the [DEVELOPMENT](./DEVELOPMENT.md) document for
-instructions, otherwise you can fetch the operator from the official
-docker registry.
+instructions, otherwise you can fetch the operator from the
+[official docker registry](https://hub.docker.com/repository/docker/giovann103/kivebpf/general).
 
 Either way, you need to have `cert-manager` installed for secure TLS
 connections:
