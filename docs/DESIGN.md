@@ -335,7 +335,7 @@ metadata:
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
-  alertVersion: "v1"
+  alertVersion: v1
   traps:
     - path: /secret.txt
       create: true
@@ -348,6 +348,8 @@ spec:
         containerName: ".*"
         matchLabels:
           security-level: high
+      metadata:
+          severity: high
 ```
 
 Each `KiveTrap` can contain the following fields:
@@ -380,6 +382,13 @@ UNIX permissions given to the file to be created via the `mode` field.
 
 If present, the operator will send json-encoded data to the callback
 via an HTTP POST request.
+
+<a name="kivepolicy-resource-metadata"></a>
+
+#### Metadata
+
+Optional additional information regarding the trap. It is a list of
+key value pairs.
 
 <a name="kivepolicy-resource-matchany"></a>
 

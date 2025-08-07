@@ -21,6 +21,8 @@ type KiveTrap struct {
 	Mode uint32 `json:"mode,omitempty"`
 	// (optional) Send an HTTP POST request to this endpoint
 	Callback string `json:"callback,omitempty"`
+	// (optional) Additional information for this trap
+	Metadata map[string]string `json:"metadata,omitempty"`
 	// Match any of the following items (logical OR), at least one must be present
 	MatchAny []KiveTrapMatch `json:"matchAny,omitempty"`
 }

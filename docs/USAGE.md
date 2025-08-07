@@ -56,6 +56,8 @@ spec:
         namespace: default
         matchLabels:
           security-level: high
+      metadata:
+          severity: medium
 ```
 
 This sample policy will trace the file `/secret.txt` in the pods with

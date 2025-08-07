@@ -30,6 +30,8 @@ spec:
       containerName: ".*"
       matchLabels:
         security-level: high
+    metadata:
+      alert-level: critical
 ```
 
 This sets up a trap on the path `/secret.txt` in the matched

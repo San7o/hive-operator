@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: kive-k8s-operator
+    app.kubernetes.io/name: kivebpf
     control-plane: manager
   name: kivebpf-system
 ---
@@ -199,6 +199,11 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metadata:
+                      additionalProperties:
+                        type: string
+                      description: (optional) Additional information for this trap
+                      type: object
                     mode:
                       description: (optional) The permissions of the file to be created
                         if create is set to true
@@ -280,6 +285,11 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metadata:
+                      additionalProperties:
+                        type: string
+                      description: (optional) Additional information for this trap
+                      type: object
                     mode:
                       description: (optional) The permissions of the file to be created
                         if create is set to true
@@ -690,14 +700,14 @@ spec:
         - --kive-pod-health-probe-bind-address=:8083
         command:
         - /manager
-        image: giovann103/kive-k8s-operator:latest
+        image: giovann103/kivebpf:latest
         livenessProbe:
           httpGet:
             path: /healthz
             port: 8081
           initialDelaySeconds: 15
           periodSeconds: 20
-        name: kive-k8s-operator
+        name: kivebpf
         ports:
         - containerPort: 9443
           name: webhook-server
