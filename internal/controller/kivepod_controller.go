@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	ebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 )
 
 type KivePodReconciler struct {
@@ -83,6 +84,12 @@ Data:
 		}
 
 		if !found {
+
+			err = ebpf.RemoveInode(kiveData.Spec.InodeNo)
+			if err != nil {
+				log.Error(err, "Error Remove Inode from eBPF map before deleting KiveData")
+			}
+
 			if err := r.Client.Delete(ctx, &kiveData); err != nil {
 				log.Error(err, fmt.Sprintf("Reconcile Error Deleting KiveData %s after pod event", kiveData.Name))
 				continue Data
