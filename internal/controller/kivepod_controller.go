@@ -43,6 +43,7 @@ type KivePodReconciler struct {
 func (r *KivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 
 	log := log.FromContext(ctx)
+	shouldRequeue := false
 	log.Info("Pod watch event triggered.")
 
 	kiveDataList := &kivev2alpha1.KiveDataList{}
@@ -68,16 +69,14 @@ Data:
 
 	Pod:
 		for _, pod := range podList.Items {
-			if kiveData.Annotations["pod_name"] == pod.Name &&
+			if kiveData.Annotations["pod-name"] == pod.Name &&
 				kiveData.Annotations["namespace"] == pod.Namespace &&
-				kiveData.Annotations["pod_ip"] == pod.Status.PodIPs[0].IP &&
-				// If the pod has terminated or has failed, we want to
-				// remove the KiveData so that it will be regenerated
-				// later during the reconciliation of KivePolicy. This
-				// is needed because the inode number or kernel id may
-				// change when a pod gets restarted / rescheduled.
-				pod.Status.Phase != corev1.PodSucceeded &&
-				pod.Status.Phase != corev1.PodFailed {
+				kiveData.Annotations["pod-ip"] == pod.Status.PodIPs[0].IP {
+
+				if pod.Status.Phase != corev1.PodSucceeded &&
+					pod.Status.Phase != corev1.PodFailed {
+					shouldRequeue = true
+				}
 				found = true
 				break Pod
 			}
@@ -88,6 +87,8 @@ Data:
 				log.Error(err, fmt.Sprintf("Reconcile Error Deleting KiveData %s after pod event", kiveData.Name))
 				continue Data
 			}
+
+			log.Info("Deleted KiveData")
 		}
 	}
 
@@ -97,21 +98,22 @@ Data:
 	kivePolicyList := &kivev2alpha1.KivePolicyList{}
 	err = r.Client.List(ctx, kivePolicyList)
 	if err != nil { // Fatal
-		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get Kive Policy resource: %w", err)
+		return reconcile.Result{Requeue: shouldRequeue}, fmt.Errorf("Reconcile Error Failed to get Kive Policy resource: %w", err)
 	}
-	if len(kivePolicyList.Items) != 0 {
-		kivePolicy := kivePolicyList.Items[0]
-		orig := kivePolicy.DeepCopy()
-		if kivePolicy.Annotations == nil {
-			kivePolicy.Annotations = map[string]string{}
-		}
-		kivePolicy.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
-		if err = r.Patch(ctx, &kivePolicy, client.MergeFrom(orig)); err != nil {
-			log.Error(err, fmt.Sprintf("Reconcile Error Patch KivePolicy %s", kivePolicy.Name))
-			return ctrl.Result{}, nil
-		}
+	if len(kivePolicyList.Items) == 0 {
+		return ctrl.Result{Requeue: shouldRequeue}, nil
 	}
-	return reconcile.Result{}, nil
+	kivePolicy := kivePolicyList.Items[0]
+	orig := kivePolicy.DeepCopy()
+	if kivePolicy.Annotations == nil {
+		kivePolicy.Annotations = map[string]string{}
+	}
+	kivePolicy.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
+	if err = r.Patch(ctx, &kivePolicy, client.MergeFrom(orig)); err != nil {
+		log.Error(err, fmt.Sprintf("Reconcile Error Patch KivePolicy %s", kivePolicy.Name))
+	}
+
+	return reconcile.Result{Requeue: shouldRequeue}, nil
 }
 
 func (r *KivePodReconciler) SetupWithManager(mgr ctrl.Manager) error {

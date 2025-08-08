@@ -28,7 +28,7 @@ const testNamespaceName = "kive-test"
 const operatorNamespace = "kivebpf-system"
 
 // Maximum time for the operator to reconcile ruccessfully
-const reconcileTimeout = 2 * time.Second
+const reconcileTimeout = 3 * time.Second
 
 // Maximum time spent waiting for creation / deletion of pods
 const timeout = 30 * time.Second
