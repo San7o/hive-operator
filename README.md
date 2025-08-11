@@ -1,6 +1,7 @@
 # kivebpf
 
-Kive is an eBPF-powered file access monitoring Kubernetes operator.
+Kive is a free and open source eBPF-powered file access monitoring
+Kubernetes operator.
 
 # Basic Usage
 
