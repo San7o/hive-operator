@@ -5,7 +5,7 @@ Kive is an eBPF-powered file access monitoring Kubernetes operator.
 # Basic Usage
 
 You can specify a path to monitor and in which containers by
-creating an `KivePolicy`. The following is an example policy:
+creating a `KivePolicy`. The following is an example policy:
 
 ```yaml
 apiVersion: kivebpf.san7o.github.io/v1

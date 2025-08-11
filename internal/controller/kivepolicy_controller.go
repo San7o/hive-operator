@@ -15,7 +15,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -79,13 +78,15 @@ Policy:
 
 		// Check if this policy is being deleted
 		if !kivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
+
 			if controllerutil.ContainsFinalizer(&kivePolicy, kivev2alpha1.KivePolicyFinalizerName) {
+
 				kivePolicyCopy := kivePolicy.DeepCopy()
 				controllerutil.RemoveFinalizer(kivePolicyCopy, kivev2alpha1.KivePolicyFinalizerName)
-				if err := r.Update(ctx, kivePolicyCopy); err != nil {
-					if apierrors.IsConflict(err) || strings.Contains(err.Error(), "Precondition failed") {
-						log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
-					}
+
+				err := r.Update(ctx, kivePolicyCopy)
+				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
 				}
 			}
 			continue Policy
@@ -212,7 +213,7 @@ Policy:
 						}
 
 						err = r.Client.Patch(ctx, kiveData, client.Apply, client.ForceOwnership, client.FieldOwner("kivepolicy-controller"))
-						if err != nil {
+						if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 							log.Error(err, fmt.Sprintf("Reconcile Error patch KiveData resource %s", kiveData.Name))
 							continue Container
 						}
@@ -243,7 +244,7 @@ Policy:
 	}
 	kiveData.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
 	err = r.Patch(ctx, &kiveData, client.MergeFrom(orig))
-	if err != nil {
+	if err != nil && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 		log.Error(err, fmt.Sprintf("Reconcile Error Patch KiveData %s", kiveData.Name))
 	}
 	return ctrl.Result{}, nil
