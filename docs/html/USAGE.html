@@ -20,8 +20,9 @@
 <p>This document explains how to interact with the operator. You should
 have the operator deployed first: to use a local development build
 please read the <a href="./DEVELOPMENT.html">DEVELOPMENT</a> document for
-instructions, otherwise you can fetch the operator from the official
-docker registry.</p>
+instructions, otherwise you can fetch the operator from the <a
+href="https://hub.docker.com/repository/docker/giovann103/kivebpf/general">official
+docker registry</a>.</p>
 <p>Either way, you need to have <code>cert-manager</code> installed for
 secure TLS connections:</p>
 <div class="sourceCode" id="cb1"><pre
@@ -63,7 +64,9 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">pod</span><span class="kw">:</span><span class="at"> nginx-pod</span></span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">severity</span><span class="kw">:</span><span class="at"> medium</span></span></code></pre></div>
 <p>This sample policy will trace the file <code>/secret.txt</code> in
 the pods with name <code>nginx-pod</code> in the namespace
 <code>default</code> and with the label

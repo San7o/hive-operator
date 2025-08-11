@@ -16,6 +16,10 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -90,14 +94,39 @@ Data:
 					log.Error(err, fmt.Sprintf("Reconcile Error Failed compare KiveData %s and Trap with path %s", kiveData.Name, kiveTrap.Path))
 					continue Trap
 				}
-				if found {
-					break Policy
+
+				if !found {
+					continue Trap
+				}
+
+				// Check that container exists
+				matchingFields := client.MatchingFields{}
+				matchingFields["metadata.name"] = kiveData.Annotations["pod-name"]
+				matchingFields["metadata.namespace"] = kiveData.Annotations["namespace"]
+				matchingFields["spec.nodeName"] = kiveData.Annotations["node-name"]
+				podList := &corev1.PodList{}
+				err = r.UncachedClient.List(ctx, podList, matchingFields)
+				if err != nil {
+					log.Error(err, "Reconcile Error Failed to list pods")
+					continue Trap
+				}
+
+				found = false
+				for _, pod := range podList.Items {
+					for _, containerStatus := range pod.Status.ContainerStatuses {
+						if KiveDataContainerCmp(kiveData, pod, containerStatus) {
+							found = true
+							break Policy
+						}
+					}
 				}
 			}
 		}
 
 		if !found {
-			if err := r.Client.Delete(ctx, &kiveData); err != nil {
+
+			err := r.Client.Delete(ctx, &kiveData)
+			if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 				log.Error(err, fmt.Sprintf("Reconciler Error Delete KiveData %s", kiveData.Name))
 				continue Data
 			}
@@ -130,6 +159,32 @@ Data:
 }
 
 func (r *KiveDataReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	// Index pod name, namespace and ip so we can query a pod
+	fieldIndexer := mgr.GetFieldIndexer()
+	err := fieldIndexer.IndexField(context.Background(), &corev1.Pod{}, "metadata.name",
+		func(rawObj client.Object) []string {
+			return []string{rawObj.GetName()}
+		})
+	if err != nil {
+		return fmt.Errorf("SetupWithManager Error Index Pod Name: %w", err)
+	}
+
+	err = fieldIndexer.IndexField(context.Background(), &corev1.Pod{}, "metadata.namespace",
+		func(rawObj client.Object) []string {
+			return []string{rawObj.GetNamespace()}
+		})
+	if err != nil {
+		return fmt.Errorf("SetupWithManager Error Index Pod Namespace: %w", err)
+	}
+
+	err = fieldIndexer.IndexField(context.Background(), &corev1.Pod{}, "spec.nodeName",
+		func(rawObj client.Object) []string {
+			return []string{rawObj.GetNamespace()}
+		})
+	if err != nil {
+		return fmt.Errorf("SetupWithManager Error Index Pod NodeName: %w", err)
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kivev2alpha1.KiveData{}).

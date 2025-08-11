@@ -33,6 +33,11 @@ func (src *KivePolicy) ConvertTo(dstRaw conversion.Hub) error {
 		trapv2.Create = trap.Create
 		trapv2.Mode = trap.Mode
 		trapv2.Callback = trap.Callback
+		trapv2.Metadata = map[string]string{}
+
+		for key, value := range trap.Metadata {
+			trapv2.Metadata[key] = value
+		}
 
 		matchesv2 := []v2alpha1.KiveTrapMatch{}
 
@@ -73,6 +78,10 @@ func (dst *KivePolicy) ConvertFrom(srcRaw conversion.Hub) error {
 		trapv1.Create = trap.Create
 		trapv1.Mode = trap.Mode
 		trapv1.Callback = trap.Callback
+
+		for key, value := range trap.Metadata {
+			trapv1.Metadata[key] = value
+		}
 
 		matchesv1 := []KiveTrapMatch{}
 

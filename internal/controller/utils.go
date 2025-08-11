@@ -28,23 +28,23 @@ import (
 
 func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap, alertVersion string) (string, error) {
 
-	jsonPolicy, err := json.Marshal(kiveTrap)
+	jsonTrap, err := json.Marshal(kiveTrap)
 	if err != nil {
 		return "", fmt.Errorf("TrapHashID Error Json Marshal: %w", err)
 	}
 
 	sha := sha256.New()
-	sha.Write(jsonPolicy)
+	sha.Write(jsonTrap)
 	sha.Write([]byte(alertVersion))
 	shaPolicy := hex.EncodeToString(sha.Sum(nil))
 
 	return shaPolicy[:63], nil
 }
 
-func NewKiveDataName(inode uint64, containerStatus corev1.ContainerStatus) string {
+func NewKiveDataName(inode uint64, pod corev1.Pod, containerStatus corev1.ContainerStatus) string {
 
 	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)
-	return strconv.FormatUint(inode, 10) + "-kive-data-" + containerID
+	return strconv.FormatUint(inode, 10) + "-kive-data-" + pod.Name + "-" + containerID
 }
 
 func RegexMatch(regex string, containerName string) (bool, error) {
@@ -72,16 +72,16 @@ func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveT
 
 func KiveDataContainerCmp(kiveData kivev2alpha1.KiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {
 
-	if kiveData.Annotations["pod_name"] != pod.Name {
+	if kiveData.Annotations["pod-name"] != pod.Name {
 		return false
 	}
 	if kiveData.Annotations["namespace"] != pod.Namespace {
 		return false
 	}
-	if kiveData.Annotations["container_name"] != containerStatus.Name {
+	if kiveData.Annotations["container-name"] != containerStatus.Name {
 		return false
 	}
-	if kiveData.Annotations["container_id"] != containerStatus.ContainerID {
+	if kiveData.Annotations["container-id"] != containerStatus.ContainerID {
 		return false
 	}
 

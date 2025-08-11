@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   labels:
     control-plane: manager
-    app.kubernetes.io/name: kive-k8s-operator
+    app.kubernetes.io/name: kivebpf
     app.kubernetes.io/managed-by: kustomize
   name: system
 ---
@@ -38,8 +38,8 @@ spec:
           - --kive-data-health-probe-bind-address=:8082
           - --kive-pod-health-probe-bind-address=:8083
           # - --metrics-bind-address=0  # Disable metrics (default)
-        image: kive-k8s-operator
-        name: kive-k8s-operator
+        image: kivebpf
+        name: kivebpf
         securityContext:
           runAsNonRoot: false
           privileged: true

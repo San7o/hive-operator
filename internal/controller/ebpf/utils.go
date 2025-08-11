@@ -47,6 +47,31 @@ func ResetTracedInodes(index uint32) error {
 	return nil
 }
 
+/*
+ *  Remove an inode from the map
+ */
+func RemoveInode(inode uint64) error {
+
+	var value uint64
+	for i := 0; i < MapMaxEntries; i++ {
+		key := uint32(i)
+
+		err := Objs.TracedInodes.Lookup(&key, &value)
+		if err != nil {
+			continue
+		}
+
+		if value == inode {
+			var zero uint64 = 0
+			if err := Objs.TracedInodes.Update(&key, &zero, ebpf.UpdateAny); err != nil {
+				return fmt.Errorf("RemoveInode: failed to clear key %d: %v", key, err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func int8ArrayToString(arr [16]int8) string {
 	b := make([]byte, 0, len(arr))
 	for _, c := range arr {

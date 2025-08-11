@@ -15,27 +15,27 @@ package v1
 // Information about the container
 type ContainerMetadata struct {
 	// Container id
-	Id string `json:"id,omitempty"`
+	Id string `json:"id"`
 	// Container name
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 }
 
 // Information about the pod where the file lives
 type PodMetadata struct {
 	// Pod name
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// Pod namespace
-	Namespace string `json:"namespace,omitempty"`
+	Namespace string `json:"namespace"`
 	// Pod ip
-	Ip string `json:"ip,omitempty"`
+	Ip string `json:"ip"`
 	// Information about the container
-	Container ContainerMetadata `json:"container,omitempty"`
+	Container ContainerMetadata `json:"container"`
 }
 
 // Information about the node
 type NodeMetadata struct {
 	// Name of the node
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 }
 
 // Information related to the process that accessed the file
@@ -49,25 +49,25 @@ type ProcessMetadata struct {
 	// Group ID
 	Gid uint32 `json:"gid"`
 	// Process binary
-	Binary string `json:"binary,omitempty"`
+	Binary string `json:"binary"`
 	// Current Working Directory
 	Cwd string `json:"cwd"`
 	// Arguments to the Binary
-	Arguments string `json:"arguments,omitempty"`
+	Arguments string `json:"arguments"`
 }
 
 // Additional information
 type KiveAlertMetadata struct {
 	// File path
-	Path string `json:"path,omitempty"`
+	Path string `json:"path"`
 	// Inode number of the file
-	Inode uint64 `json:"inode,omitempty"`
+	Inode uint64 `json:"inode"`
 	// Unix access permission mask
-	Mask int32 `json:"mask,omitempty"`
+	Mask int32 `json:"mask"`
 	// ID of the kernel where the alert was triggered
-	KernelID string `json:"kernel-id,omitempty"`
+	KernelID string `json:"kernel-id"`
 	// Callback URI
-	Callback string `json:"callback,omitempty"`
+	Callback string `json:"callback"`
 }
 
 // File access alert
@@ -75,15 +75,15 @@ type KiveAlert struct {
 	// KiveAlert version
 	AlertVersion string `json:"kive-alert-version"`
 	// The policy that triggered the alert
-	PolicyName string `json:"kive-policy-name,omitempty"`
+	PolicyName string `json:"kive-policy-name"`
 	// Alert creation time
-	Timestamp string `json:"timestamp,omitempty"` // RFC 3339
+	Timestamp string `json:"timestamp"` // RFC 3339
 	// Additional information
-	Metadata KiveAlertMetadata `json:"metadata,omitempty"`
+	Metadata KiveAlertMetadata `json:"metadata"`
 	// Information about the pod where the file lives
-	Pod PodMetadata `json:"pod,omitempty"`
+	Pod PodMetadata `json:"pod"`
 	// Information about the node
-	Node NodeMetadata `json:"node,omitempty"`
+	Node NodeMetadata `json:"node"`
 	// Information about the process that accessed the file
-	Process ProcessMetadata `json:"process,omitempty"`
+	Process ProcessMetadata `json:"process"`
 }

@@ -316,7 +316,7 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> kive-sample-policy</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> kivebpf-system</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">alertVersion</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;v1&quot;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">alertVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">traps</span><span class="kw">:</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /secret.txt</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">create</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
@@ -328,7 +328,9 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.0.3</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">containerName</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;.*&quot;</span></span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">severity</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
 <p>Each <code>KiveTrap</code> can contain the following fields:</p>
 <p><a name="kivepolicy-resource-alert-version"></a></p>
 <h4 id="alertversion">AlertVersion</h4>
@@ -348,6 +350,10 @@ specify the UNIX permissions given to the file to be created via the
 <h4 id="callback">Callback</h4>
 <p>If present, the operator will send json-encoded data to the callback
 via an HTTP POST request.</p>
+<p><a name="kivepolicy-resource-metadata"></a></p>
+<h4 id="metadata">Metadata</h4>
+<p>Optional additional information regarding the trap. It is a list of
+key value pairs.</p>
 <p><a name="kivepolicy-resource-matchany"></a></p>
 <h4 id="matchany">MatchAny</h4>
 <p>The <code>matchAny</code> field contains a list of match blocks which

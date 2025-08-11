@@ -36,7 +36,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # catalog-push' will build and push both
 # kivebpf.san7o.github.io/kivebpf-bundle:$VERSION and
 # kivebpf.san7o.github.io/kivebpf-catalog:$VERSION.
-IMAGE_TAG_BASE ?= localhost:5001/kive-k8s-operator
+IMAGE_TAG_BASE ?= localhost:5001/kivebpf
 
 # BUNDLE_IMG defines the image:tag used for the bundle.  You can use
 # it as an arg. (E.g make bundle-build
@@ -48,7 +48,7 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 
 # Docker registry image
-IMG ?= localhost:5001/kive-k8s-operator:latest
+IMG ?= ${IMAGE_TAG_BASE}:latest
 
 # USE_IMAGE_DIGESTS defines if images are resolved via tags or digests
 # You can enable this value if you would like to use SHA Based Digests
@@ -152,9 +152,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build
 docker-build: ## Build the operator docker image
-	docker rmi kive-k8s-operator ${IMG} &2>/dev/null || :
-	docker build -t kive-k8s-operator .
-	docker tag kive-k8s-operator ${IMG}
+	docker rmi kivebpf ${IMG} &2>/dev/null || :
+	docker build -t kivebpf .
+	docker tag kivebpf ${IMG}
 
 # If you wish to build the manager image targeting other platforms you
 # can use the --platform flag.  (i.e. docker build --platform
@@ -194,7 +194,7 @@ docker-build: ## Build the operator docker image
 .PHONY: build-installer
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
-	cd config/manager && $(KUSTOMIZE) edit set image kive-k8s-operator=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image kivebpf=${IMG}
 	$(KUSTOMIZE) build config/default > dist/install-${ENV}.yaml
 
 ##@ Deployment
@@ -213,7 +213,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image kive-k8s-operator=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image kivebpf=${IMG}
 	$(KUSTOMIZE) build config/default | $(KUBECTL) apply -f -
 
 .PHONY: undeploy
@@ -306,7 +306,7 @@ endif
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image kive-k8s-operator=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image kivebpf=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	$(OPERATOR_SDK) bundle validate ./bundle
 

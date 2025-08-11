@@ -79,6 +79,11 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metadata:
+                      additionalProperties:
+                        type: string
+                      description: (optional) Additional information for this trap
+                      type: object
                     mode:
                       description: (optional) The permissions of the file to be created
                         if create is set to true
@@ -160,6 +165,11 @@ spec:
                             type: string
                         type: object
                       type: array
+                    metadata:
+                      additionalProperties:
+                        type: string
+                      description: (optional) Additional information for this trap
+                      type: object
                     mode:
                       description: (optional) The permissions of the file to be created
                         if create is set to true

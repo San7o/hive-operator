@@ -5,7 +5,11 @@
 </div>
 
 <h2 id="quick-deploy">Deploy</h2>
-<p>To deploy the operator from the official docker repository, simply run:</p>
+
+<p>To deploy the operator from the <a href="https://hub.docker.com/repository/docker/giovann103/kivebpf/general">official docker repository</a>, first make sure you have cert-manager installed:</p
+<div class="sourceCode" id="cb1"><pre
+                                   class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml</span></code></pre></div>
+<p>Then simply run:</p>
 <div class="sourceCode" id="cb3"><pre
                                    class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml</span></code></pre></div>
 
@@ -37,7 +41,9 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">container-name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;.*&quot;</span></span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span></code></pre></div>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">security-level</span><span class="kw">:</span><span class="at"> high</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">severity</span><span class="kw">:</span><span class="at"> medium</span></span></code></pre></div>
 <p>This sets up a trap on the path <code>/secret.txt</code> in the
 matched containers, creating it with <code>mode</code> permissions if it
 does not exist. The match groups under the <code>matchAny</code> field

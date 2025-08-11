@@ -5,7 +5,7 @@ Kive is an eBPF-powered file access monitoring Kubernetes operator.
 # Basic Usage
 
 You can specify a path to monitor and in which containers by
-creating an `KivePolicy`. The following is an example policy:
+creating a `KivePolicy`. The following is an example policy:
 
 ```yaml
 apiVersion: kivebpf.san7o.github.io/v1
@@ -30,6 +30,8 @@ spec:
       containerName: ".*"
       matchLabels:
         security-level: high
+    metadata:
+      alert-level: critical
 ```
 
 This sets up a trap on the path `/secret.txt` in the matched
@@ -93,7 +95,8 @@ installed for secure TLS connections (required):
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 ```
 
-Then simply install the operator with:
+Then simply install the operator with from the [official docker
+repository](https://hub.docker.com/repository/docker/giovann103/kivebpf/general):
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main/dist/install-remote.yaml

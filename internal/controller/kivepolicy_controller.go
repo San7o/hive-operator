@@ -15,7 +15,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -64,14 +63,10 @@ func (r *KivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	log := log.FromContext(ctx)
 	var err error = nil
-	// deleted is set to true when an KivePolicy is in deletion. This is
-	// used to trigger a reconcile on KiveData
-	var deleted bool = false
-
 	log.Info("KivePolicy reconcile triggered.")
 
 	kivePolicyList := &kivev2alpha1.KivePolicyList{}
-	err = r.Client.List(ctx, kivePolicyList)
+	err = r.UncachedClient.List(ctx, kivePolicyList)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KivePolicy resource: %w", err)
 	}
@@ -83,15 +78,15 @@ Policy:
 
 		// Check if this policy is being deleted
 		if !kivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
+
 			if controllerutil.ContainsFinalizer(&kivePolicy, kivev2alpha1.KivePolicyFinalizerName) {
-				deleted = true
+
 				kivePolicyCopy := kivePolicy.DeepCopy()
 				controllerutil.RemoveFinalizer(kivePolicyCopy, kivev2alpha1.KivePolicyFinalizerName)
-				if err := r.Update(ctx, kivePolicyCopy); err != nil {
-					if apierrors.IsConflict(err) || strings.Contains(err.Error(), "Precondition failed") {
-						log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
-					}
-					continue Policy
+
+				err := r.Update(ctx, kivePolicyCopy)
+				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
 				}
 			}
 			continue Policy
@@ -118,7 +113,7 @@ Policy:
 					TrapIdLabel: trapID,
 				}
 				kiveDataList := &kivev2alpha1.KiveDataList{}
-				err = r.Client.List(ctx, kiveDataList, labels)
+				err = r.UncachedClient.List(ctx, kiveDataList, labels)
 				if err != nil { // Fatal
 					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
 				}
@@ -126,14 +121,15 @@ Policy:
 				// Get Pods that match this KiveTrap
 				labelMap := make(client.MatchingLabels)
 				labelMap = kiveTrapMatch.MatchLabels
+
 				matchingFields := client.MatchingFields{}
-				if len(kiveTrapMatch.PodName) != 0 {
+				if kiveTrapMatch.PodName != "" {
 					matchingFields["metadata.name"] = kiveTrapMatch.PodName
 				}
-				if len(kiveTrapMatch.Namespace) != 0 {
+				if kiveTrapMatch.Namespace != "" {
 					matchingFields["metadata.namespace"] = kiveTrapMatch.Namespace
 				}
-				if len(kiveTrapMatch.IP) != 0 {
+				if kiveTrapMatch.IP != "" {
 					matchingFields["metadata.podIP"] = kiveTrapMatch.IP
 				}
 				podList := &corev1.PodList{}
@@ -157,24 +153,11 @@ Policy:
 							continue Container
 						}
 
-						found := false
-					Data:
-						for _, kiveData := range kiveDataList.Items {
-							if KiveDataContainerCmp(kiveData, pod, containerStatus) {
-								found = true
-								break Data
-							}
-						}
-
-						if found {
-							continue Container
-						}
-
 						if pod.Status.Phase != corev1.PodRunning {
 							return ctrl.Result{Requeue: true}, nil
 						}
 
-						matchID := pod.Name + pod.Namespace + containerStatus.ContainerID
+						matchID := pod.Name + pod.Namespace + containerStatus.Name
 						if _, ok := matchedContainers[matchID]; ok {
 							// This container was already registered
 							continue Container
@@ -203,7 +186,7 @@ Policy:
 							},
 							ObjectMeta: metav1.ObjectMeta{
 								// Give it an unique name
-								Name:      NewKiveDataName(inode, containerStatus),
+								Name:      NewKiveDataName(inode, pod, containerStatus),
 								Namespace: kivev2alpha1.Namespace,
 								// Annotations are used as information for the KiveAlert
 								Annotations: map[string]string{
@@ -230,7 +213,7 @@ Policy:
 						}
 
 						err = r.Client.Patch(ctx, kiveData, client.Apply, client.ForceOwnership, client.FieldOwner("kivepolicy-controller"))
-						if err != nil {
+						if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 							log.Error(err, fmt.Sprintf("Reconcile Error patch KiveData resource %s", kiveData.Name))
 							continue Container
 						}
@@ -241,34 +224,29 @@ Policy:
 		}
 	}
 
-	if !deleted {
-		return ctrl.Result{}, nil
-	}
-
 	// Force a reconciliation for KiveData, which will delete any
 	// KiveData that does not belong anymore to a KivePolicy.
 	// We trigger a reconciliation by updating an annotation with the
 	// current time.
 	kiveDataList := &kivev2alpha1.KiveDataList{}
-	err = r.Client.List(ctx, kiveDataList)
+	err = r.UncachedClient.List(ctx, kiveDataList)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
 	}
 
-	if len(kiveDataList.Items) != 0 {
-		kiveData := kiveDataList.Items[0]
-		orig := kiveData.DeepCopy()
-		if kiveData.Annotations == nil {
-			kiveData.Annotations = map[string]string{}
-		}
-		kiveData.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
-		err = r.Patch(ctx, &kiveData, client.MergeFrom(orig))
-		if err != nil {
-			log.Error(err, fmt.Sprintf("Reconcile Error Patch KiveData %s", kiveData.Name))
-			return ctrl.Result{}, nil
-		}
+	if len(kiveDataList.Items) == 0 {
+		return ctrl.Result{}, nil
 	}
-
+	kiveData := kiveDataList.Items[0]
+	orig := kiveData.DeepCopy()
+	if kiveData.Annotations == nil {
+		kiveData.Annotations = map[string]string{}
+	}
+	kiveData.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
+	err = r.Patch(ctx, &kiveData, client.MergeFrom(orig))
+	if err != nil && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+		log.Error(err, fmt.Sprintf("Reconcile Error Patch KiveData %s", kiveData.Name))
+	}
 	return ctrl.Result{}, nil
 }
 
