@@ -201,16 +201,9 @@ the inode number is an identifier in a filesystem, but It has no meaning
 on another filesystem and may aswell point to a different file.</p>
 <p>To solve this problem, we can use both the inode number and the
 device id as unique identifiers. Even if a filesystem is binded onto
-another, from the user perspective the binded filesystem and the
-filesystem onto which the binded one is mounted have different inode
-numbers so the key remains unique.</p>
-<p>Yet, fome filesystems may handle things differently, namely BTRFS.
-Indeed BTRFS may choose to have multiple internal device ids for the
-filesystem. When <code>stat</code> is called, a call to a BTRFS function
-is done, which we cannot do in an eBPF program therefore we cannot
-access the userspace device id number. I got this issue during testing
-and there appears not to be a solution, therefore we will fallback to
-only inode numbers.</p>
+another, the binded filesystem and the filesystem onto which the binded
+one is mounted have different inode numbers so the key remains
+unique.</p>
 <p>In our application, the entity that is responsible to get the inode
 number is the <em>discover controller</em>. The loader controller and
 the discover controller share information through a
@@ -276,8 +269,8 @@ kernel, more info below).</p></li>
 <li><p>reacting to CRUD operations on <code>KivePolicy</code> resource,
 which will:</p>
 <ul>
-<li>Fetch the information of a file such as the inode number from the
-matched contianers, hence the name <em>discover</em></li>
+<li>Fetch the information of a file such as the inode number and device
+id from the matched contianers, hence the name <em>discover</em></li>
 <li>Create <code>KiveData</code> resources with the previously fetched
 information</li>
 </ul></li>
@@ -487,11 +480,14 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">trap-id</span><span class="kw">:</span><span class="at"> c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee</span></span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">inodeNo</span><span class="kw">:</span><span class="at"> </span><span class="dv">13667586</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">kernelId</span><span class="kw">:</span><span class="at"> fc9a30d5-6140-4dd1-b8ef-c638f19ebd71</span></span></code></pre></div>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">devId</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">kernelId</span><span class="kw">:</span><span class="at"> fc9a30d5-6140-4dd1-b8ef-c638f19ebd71</span></span></code></pre></div>
 <p>The fields under <code>spec</code> are:</p>
 <ul>
-<li><code>inodeNo</code>: The inode number of the file to trace, needed
-by the eBPF program.</li>
+<li><code>inodeNo</code>: The inode number of the file to monitor,
+needed by the eBPF program.</li>
+<li><code>devId</code>: The device id associated with the file to
+monitor.</li>
 <li><code>kernelId</code>: An unique identifier of a running kernel, to
 discriminate which loader controller should handle this
 <code>KiveData</code>.</li>

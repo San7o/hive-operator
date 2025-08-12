@@ -201,17 +201,8 @@ file.
 
 To solve this problem, we can use both the inode number and the device
 id as unique identifiers. Even if a filesystem is binded onto another,
-from the user perspective the binded filesystem and the filesystem
-onto which the binded one is mounted have different inode numbers so
-the key remains unique.
-
-Yet, fome filesystems may handle things differently, namely BTRFS.
-Indeed BTRFS may choose to have multiple internal device ids for the
-filesystem. When `stat` is called, a call to a BTRFS function is done,
-which we cannot do in an eBPF program therefore we cannot access the
-userspace device id number. I got this issue during testing and there
-appears not to be a solution, therefore we will fallback to only inode
-numbers.
+the binded filesystem and the filesystem onto which the binded one is
+mounted have different inode numbers so the key remains unique.
 
 In our application, the entity that is responsible to get the inode
 number is the *discover controller*. The loader controller and the
@@ -290,8 +281,8 @@ the following:
 
 - reacting to CRUD operations on `KivePolicy` resource, which will:
 
-  - Fetch the information of a file such as the inode number from the
-    matched contianers, hence the name *discover*
+  - Fetch the information of a file such as the inode number and
+    device id from the matched contianers, hence the name *discover*
   - Create `KiveData` resources with the previously fetched information
 
 The `KiveData` resource is specified later in [KiveData resource](#kivedata-resource).
@@ -550,13 +541,15 @@ metadata:
       trap-id: c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee
 spec:
   inodeNo: 13667586
+  devId: 3
   kernelId: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
 ```
 
 The fields under `spec` are:
 
-- `inodeNo`: The inode number of the file to trace, needed by the
+- `inodeNo`: The inode number of the file to monitor, needed by the
   eBPF program.
+- `devId`: The device id associated with the file to monitor.
 - `kernelId`: An unique identifier of a running kernel, to discriminate
   which loader controller should handle this `KiveData`.
 
