@@ -58,13 +58,17 @@ func main() {
 	}
 	defer ebpf.UnloadEbpf(ctx)
 
-	ino, err := GetInode("LICENSE.md")
+	ino, dev, err := GetInodeDev("LICENSE.md")
 	if err != nil {
 		log.Error(err, "Error Get Inode")
 	}
 
-	var key uint32 = 0
-	err = ebpf.UpdateTracedInodes(key, ino)
+	key := ebpf.BpfMapKey{
+		Inode: ino,
+		Dev:   dev,
+	}
+
+	err = ebpf.AddInode(key)
 	if err != nil {
 		log.Error(err, "Error Update map")
 	}
@@ -78,6 +82,6 @@ func main() {
 			log.Error(err, "Error Read Ebpf data")
 		}
 
-		log.Info("Received Data", "pid", data.Pid, "inode", data.Ino)
+		log.Info("Received Data", "pid", data.Pid, "inode", data.Ino, "dev", data.Dev)
 	}
 }

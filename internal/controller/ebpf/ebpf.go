@@ -44,6 +44,8 @@ var (
 	Loaded         bool            = false
 )
 
+type BpfMapKey = bpfMapKey
+
 /*
  *  Loads the eBPF objects, the eBPF program and opens the ring
  *  buffer.

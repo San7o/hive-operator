@@ -17,6 +17,11 @@ import (
 	"strings"
 )
 
+const (
+	MINORBITS = 20
+	MINORMASK = (1 << MINORBITS) - 1
+)
+
 func SplitContainerRuntimeID(input ContainerName) (ContainerName, ContainerID, error) {
 	// input is of the form "<type>://<container_id>".
 	// For example, the type could be "containerd"
@@ -37,4 +42,14 @@ func IsContainerRuntimeSupported(runtime string) bool {
 		}
 	}
 	return false
+}
+
+func UserDevToKernelDev(userdev uint64) uint32 {
+	major := ((userdev & 0x00000000000fff00) >> 8) |
+		((userdev & 0xfffff00000000000) >> 32)
+
+	minor := (userdev & 0x00000000000000ff) |
+		((userdev & 0x00000ffffff00000) >> 12)
+
+	return uint32((major << 20) | minor)
 }

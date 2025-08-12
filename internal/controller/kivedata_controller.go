@@ -23,10 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
-	kivebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
+	ebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 )
 
 type KiveDataReconciler struct {
@@ -44,9 +45,9 @@ func (r *KiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	log := logger.FromContext(ctx)
 	log.Info("KiveData reconcile triggered.")
 
-	if !kivebpf.Loaded {
+	if !ebpf.Loaded {
 		log.Info("Loading eBPF program")
-		if err := kivebpf.LoadEbpf(ctx); err != nil { // Fatal
+		if err := ebpf.LoadEbpf(ctx); err != nil { // Fatal
 			return ctrl.Result{}, fmt.Errorf("Reconcile Error Load eBPF program: %w", err)
 		}
 		go Output(r.UncachedClient)
@@ -64,8 +65,6 @@ func (r *KiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KivePolicy resource: %w", err)
 	}
 
-	var it uint32 = 0
-
 	// Check if each KiveData (referring to this kernel id) does have a
 	// corresponding KivePolicy. If it does, then we update the eBPF
 	// map with the information from the KiveData. If it doesn't, then
@@ -75,6 +74,28 @@ Data:
 	for _, kiveData := range kiveDataList.Items {
 
 		if kiveData.Spec.KernelID != KernelID {
+			continue Data
+		}
+
+		// Check if this KiveData is being deleted
+		if !kiveData.ObjectMeta.DeletionTimestamp.IsZero() {
+
+			if controllerutil.ContainsFinalizer(&kiveData, kivev2alpha1.KiveDataFinalizerName) {
+
+				kiveDataCopy := kiveData.DeepCopy()
+				controllerutil.RemoveFinalizer(kiveDataCopy, kivev2alpha1.KiveDataFinalizerName)
+
+				err := ebpf.RemoveInode(ebpf.BpfMapKey{Inode: kiveData.Spec.InodeNo, Dev: kiveData.Spec.DevID})
+				if err != nil {
+					log.Error(err, fmt.Sprintf("Reconcile Error Remove Inode in Finalizer of KiveData %s", kiveData.Name))
+				}
+
+				err = r.Update(ctx, kiveDataCopy)
+				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KiveData %s", kiveData.Name))
+				}
+
+			}
 			continue Data
 		}
 
@@ -124,7 +145,6 @@ Data:
 		}
 
 		if !found {
-
 			err := r.Client.Delete(ctx, &kiveData)
 			if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 				log.Error(err, fmt.Sprintf("Reconciler Error Delete KiveData %s", kiveData.Name))
@@ -135,24 +155,11 @@ Data:
 			continue Data
 		}
 
-		if it > kivebpf.MapMaxEntries {
-			log.Error(fmt.Errorf("Number of Traced inodes exceeds the maximum number %d", kivebpf.MapMaxEntries), "Reconcile Error")
-			continue Data
-		}
-
-		err = kivebpf.UpdateTracedInodes(it, uint64(kiveData.Spec.InodeNo))
+		err = ebpf.AddInode(ebpf.BpfMapKey{Inode: kiveData.Spec.InodeNo, Dev: kiveData.Spec.DevID})
 		if err != nil {
 			log.Error(err, fmt.Sprintf("Reconcile Error Update map with inode %d for KiveData %s", kiveData.Spec.InodeNo, kiveData.Name))
 			continue Data
 		}
-		it++
-	}
-
-	// Fill the rest of the eBPF map with zeros so that we do not leave
-	// old values that where there before.
-	if err = kivebpf.ResetTracedInodes(it); err != nil {
-		log.Error(err, fmt.Sprintf("Reconcile Error Update map with empty values"))
-		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil

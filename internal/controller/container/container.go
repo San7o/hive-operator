@@ -34,13 +34,14 @@ const (
 type ContainerName = string
 type ContainerID = string
 type Ino = uint64
-type Dev = uint64
+type Dev = uint32
 type Pid = uint32
 
 type ContainerData struct {
-	Ino  Ino
-	ID   string
-	Name ContainerName
+	Ino   Ino
+	DevID Dev
+	ID    string
+	Name  ContainerName
 	// If true, ContainerData should be requested again later
 	ShouldRequeue bool
 	// False if an inode was not found, used for improved error messages
