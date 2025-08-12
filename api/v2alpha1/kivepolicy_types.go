@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	KivePolicyFinalizerName = "kivebpf.san7o.github.io/finalizer"
+	KivePolicyFinalizerName = "kivepolicy.kivebpf.san7o.github.io/finalizer"
 )
 
 type KivePolicySpec struct {

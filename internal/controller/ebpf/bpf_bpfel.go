@@ -19,10 +19,19 @@ type bpfLogData struct {
 	Tgid uint32
 	Uid  uint32
 	Gid  uint32
+	Dev  uint32
+	_    [4]byte
 	Ino  uint64
 	Mask int32
 	Comm [16]int8
 	_    [4]byte
+}
+
+type bpfMapKey struct {
+	_     structs.HostLayout
+	Inode uint64
+	Dev   uint32
+	_     [4]byte
 }
 
 // loadBpf returns the embedded CollectionSpec for bpf.

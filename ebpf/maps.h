@@ -10,10 +10,15 @@
 
 #define MAP_MAX_ENTRIES 1024
 
+struct map_key {
+  long unsigned int inode;
+  dev_t dev;
+};
+
 struct {
-  __uint(type, BPF_MAP_TYPE_ARRAY);
-  __type(key, __u32);
-  __type(value, long unsigned int);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct map_key);
+  __type(value, u8);
   __uint(max_entries, MAP_MAX_ENTRIES);
 } traced_inodes SEC(".maps"); 
 

@@ -41,10 +41,16 @@ func KiveTrapHashID(kiveTrap kivev2alpha1.KiveTrap, alertVersion string) (string
 	return shaPolicy[:63], nil
 }
 
-func NewKiveDataName(inode uint64, pod corev1.Pod, containerStatus corev1.ContainerStatus) string {
+func NewKiveDataName(inode uint64, dev uint32, pod corev1.Pod, containerStatus corev1.ContainerStatus) string {
 
 	_, containerID, _ := container.SplitContainerRuntimeID(containerStatus.ContainerID)
-	return strconv.FormatUint(inode, 10) + "-kive-data-" + pod.Name + "-" + containerID
+	return strconv.FormatUint(inode, 10) +
+		"-" +
+		strconv.FormatUint(uint64(dev), 10) +
+		"-kive-data-" +
+		pod.Name +
+		"-" +
+		containerID
 }
 
 func RegexMatch(regex string, containerName string) (bool, error) {

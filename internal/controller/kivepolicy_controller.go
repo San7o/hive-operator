@@ -88,6 +88,8 @@ Policy:
 				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
 				}
+
+				log.Info("Successfully deleted KivePolicy", "name", kivePolicyCopy.Name)
 			}
 			continue Policy
 		}
@@ -176,6 +178,7 @@ Policy:
 							continue Container
 						}
 						inode := containerData.Ino
+						dev := containerData.DevID
 
 						// Here we are crating a new KiveData since an already existing
 						// one for this Pod and this KivePolicy has not been found
@@ -186,7 +189,7 @@ Policy:
 							},
 							ObjectMeta: metav1.ObjectMeta{
 								// Give it an unique name
-								Name:      NewKiveDataName(inode, pod, containerStatus),
+								Name:      NewKiveDataName(inode, dev, pod, containerStatus),
 								Namespace: kivev2alpha1.Namespace,
 								// Annotations are used as information for the KiveAlert
 								Annotations: map[string]string{
@@ -205,9 +208,11 @@ Policy:
 									// The trap-id is used to link this KiveData to this trap
 									TrapIdLabel: trapID,
 								},
+								Finalizers: []string{kivev2alpha1.KiveDataFinalizerName},
 							},
 							Spec: kivev2alpha1.KiveDataSpec{
-								InodeNo:  containerData.Ino,
+								InodeNo:  inode,
+								DevID:    dev,
 								KernelID: KernelID,
 							},
 						}

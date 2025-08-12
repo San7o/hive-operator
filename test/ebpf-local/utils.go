@@ -15,21 +15,26 @@ package main
 import (
 	"fmt"
 	"syscall"
+
+	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
-func GetInode(Target string) (uint64, error) {
+func GetInodeDev(Target string) (uint64, uint32, error) {
 
 	fd, err := syscall.Open(Target, syscall.O_RDONLY, 444)
 	if err != nil {
-		return 0, fmt.Errorf("GetInode Error Open: %w", err)
+		return 0, 0, fmt.Errorf("GetInode Error Open: %w", err)
 	}
 	defer syscall.Close(fd)
 
 	var stat syscall.Stat_t
 	err = syscall.Fstat(fd, &stat)
 	if err != nil {
-		return 0, fmt.Errorf("GetInode Error Fstat: %w", err)
+		return 0, 0, fmt.Errorf("GetInode Error Fstat: %w", err)
 	}
 
-	return stat.Ino, nil
+	fmt.Printf("Inode: %d\n", stat.Ino)
+	fmt.Printf("Dev: %d\n", container.UserDevToKernelDev(stat.Dev))
+
+	return stat.Ino, container.UserDevToKernelDev(stat.Dev), nil
 }

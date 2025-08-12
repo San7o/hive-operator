@@ -20,53 +20,27 @@ import (
 )
 
 /*
- *  Update element at index with value in the TracedInodes map.
+ *  Add an entry to the map
  */
-func UpdateTracedInodes(index uint32, value uint64) error {
+func AddInode(mapKey BpfMapKey) error {
 
-	err := Objs.TracedInodes.Update(index, value, ebpf.UpdateAny)
+	one := uint8(1)
+	err := Objs.TracedInodes.Update(mapKey, one, ebpf.UpdateAny)
 	if err != nil {
-		return fmt.Errorf("UpdateTracedInodes Error: %w", err)
+		return fmt.Errorf("AddInode Error: %w", err)
 	}
 
 	return nil
 }
 
 /*
- * Fills a map with zeroes from index to MapMaxEntries.
+ *  Remove an entry from the map
  */
-func ResetTracedInodes(index uint32) error {
+func RemoveInode(mapKey BpfMapKey) error {
 
-	for ; index < MapMaxEntries; index++ {
-		err := UpdateTracedInodes(index, uint64(0))
-		if err != nil {
-			return fmt.Errorf("ResetMap Error: %w", err)
-		}
-	}
-
-	return nil
-}
-
-/*
- *  Remove an inode from the map
- */
-func RemoveInode(inode uint64) error {
-
-	var value uint64
-	for i := 0; i < MapMaxEntries; i++ {
-		key := uint32(i)
-
-		err := Objs.TracedInodes.Lookup(&key, &value)
-		if err != nil {
-			continue
-		}
-
-		if value == inode {
-			var zero uint64 = 0
-			if err := Objs.TracedInodes.Update(&key, &zero, ebpf.UpdateAny); err != nil {
-				return fmt.Errorf("RemoveInode: failed to clear key %d: %v", key, err)
-			}
-		}
+	err := Objs.TracedInodes.Delete(mapKey)
+	if err != nil {
+		return fmt.Errorf("RemoveInode Error: %w", err)
 	}
 
 	return nil

@@ -38,6 +38,10 @@ spec:
           spec:
             description: KiveDataSpec defines the desired state of KiveData
             properties:
+              dev-id:
+                description: The device number of the inode
+                format: int32
+                type: integer
               inode-no:
                 description: The inode number of the file
                 format: int64
@@ -75,6 +79,10 @@ spec:
           spec:
             description: KiveDataSpec defines the desired state of KiveData
             properties:
+              dev-id:
+                description: The device number of the inode
+                format: int32
+                type: integer
               inodeNo:
                 description: The inode number of the file
                 format: int64

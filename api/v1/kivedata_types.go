@@ -16,10 +16,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	KiveDataFinalizerName = "kivedata.kivebpf.san7o.github.io/finalizer"
+)
+
 // KiveDataSpec defines the desired state of KiveData
 type KiveDataSpec struct {
 	// The inode number of the file
 	InodeNo uint64 `json:"inode-no,omitempty"`
+	// The device number of the inode
+	DevID uint32 `json:"dev-id,omitempty"`
 	// A string to uniquely identify a running kernel
 	KernelID string `json:"kernel-id,omitempty"`
 }

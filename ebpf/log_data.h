@@ -11,6 +11,7 @@ struct log_data {
 	gid_t tgid;               /* thread group id */
 	uid_t uid;                /* user id */
 	gid_t gid;                /* group id */
+  dev_t dev;                /* device id */
 	long unsigned int ino;    /* inode number */
 	int mask;                 /* Octal representation of file permissions */
   char comm[TASK_COMM_LEN]; /* name of the executable of the task */

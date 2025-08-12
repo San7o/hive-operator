@@ -14,7 +14,7 @@
  *  Fill and send struct log_data to the ring buffer.
  */
 static __always_inline void
-kprobe_output(long unsigned int inode, int mask)
+kprobe_output(long unsigned int inode, dev_t dev, int mask)
 {
   struct log_data data;
   
@@ -26,6 +26,7 @@ kprobe_output(long unsigned int inode, int mask)
   data.gid = uid_gid >> 32;
   data.uid = (gid_t) uid_gid;
   data.ino = inode;
+  data.dev = dev;
   data.mask = mask;
   bpf_get_current_comm(data.comm, TASK_COMM_LEN);
 		
@@ -46,27 +47,17 @@ int kprobe_inode_permission(struct pt_regs *ctx)
     int mask = (int) PT_REGS_PARM3(ctx);
 
     long unsigned int ino = BPF_CORE_READ(inode, i_ino);
-    long unsigned int *map_inode = NULL;
+    dev_t dev = BPF_CORE_READ(inode, i_sb, s_dev);
+    struct map_key key = {
+      .inode = ino,
+      .dev   = dev,
+    };
 
-    __u32 i = 0;
-    bpf_for(i, 0, MAP_MAX_ENTRIES) {
-      map_inode = bpf_map_lookup_elem(&traced_inodes, &i);
-      if (map_inode && *map_inode == ino)
-      {
-        kprobe_output(*map_inode, mask);
-        return 0;
-      }
+    if (bpf_map_lookup_elem(&traced_inodes, &key))
+    {
+      kprobe_output(ino, dev, mask);
+      return 0;
     }
-
-    // Test output
-    /* struct log_data data; */
-		/* data.pid = 123; */
-		/* data.tgid = 123; */
-		/* data.uid = 123; */
-		/* data.gid = 123; */
-		/* data.ino = ino; */
-		/* data.mask = mask; */
-    /* bpf_ringbuf_output(&rb, &data, sizeof(struct log_data), 0); */
     
     return 0;
 }

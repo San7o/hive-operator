@@ -87,13 +87,17 @@ func (self *Containerd) GetContainerData(ctx context.Context, id string, kiveTra
 				return ContainerData{}, err
 			}
 
-			inode, err := getInode(task.Pid(),
+			inode, dev, err := getInodeDev(task.Pid(),
 				kiveTrap.Path, kiveTrap.Create, kiveTrap.Mode)
 			if err != nil {
 				return ContainerData{}, err
 			}
 
-			return ContainerData{Ino: inode, IsFound: true}, nil
+			return ContainerData{
+				Ino:     inode,
+				DevID:   UserDevToKernelDev(dev),
+				IsFound: true,
+			}, nil
 		}
 	}
 
@@ -105,7 +109,7 @@ func (self *Containerd) GetContainerData(ctx context.Context, id string, kiveTra
  *  container where the file lives. Creates the file with mode
  *  permissions if create is set to true.
  */
-func getInode(pid Pid, path string, create bool, mode uint32) (Ino, error) {
+func getInodeDev(pid Pid, path string, create bool, mode uint32) (Ino, uint64, error) {
 	pidStr := strconv.FormatUint(uint64(pid), 10)
 	target := ProcMountpoint + separator + pidStr +
 		separator + "root" + separator + path
@@ -114,15 +118,15 @@ func getInode(pid Pid, path string, create bool, mode uint32) (Ino, error) {
 	if create {
 		fd, err := syscall.Creat(target, mode)
 		if err != nil {
-			return uint64(0), err
+			return uint64(0), uint64(0), err
 		}
 		syscall.Close(fd)
 	}
 
 	err := syscall.Stat(target, &stat)
 	if err != nil {
-		return uint64(0), err
+		return uint64(0), uint64(0), err
 	}
 
-	return stat.Ino, nil
+	return stat.Ino, stat.Dev, nil
 }
