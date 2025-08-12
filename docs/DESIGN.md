@@ -322,7 +322,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kivebpf
   finalizers:
-    - kivebpf.san7o.github.io/finalizer
+    - kivepolicy.kivebpf.san7o.github.io/finalizer
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
@@ -520,6 +520,8 @@ The schema of the resource looks like the following:
 apiVersion: kivebpf.san7o.github.io/v1
 kind: KiveData
 metadata:
+  finalizers:
+  - kivedata.kivebpf.san7o.github.io/finalizer
   annotations:
     kive-alert-version: v1
     kive-policy-name: kive-sample-policy

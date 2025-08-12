@@ -38,8 +38,7 @@ func AddInode(mapKey BpfMapKey) error {
  */
 func RemoveInode(mapKey BpfMapKey) error {
 
-	zero := uint8(0)
-	err := Objs.TracedInodes.Update(mapKey, zero, ebpf.UpdateAny)
+	err := Objs.TracedInodes.Delete(mapKey)
 	if err != nil {
 		return fmt.Errorf("RemoveInode Error: %w", err)
 	}

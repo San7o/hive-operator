@@ -42,7 +42,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kivebpf
   finalizers:
-    - kivebpf.san7o.github.io/finalizer
+    - kivepolicy.kivebpf.san7o.github.io/finalizer
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
@@ -173,7 +173,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kivebpf
   finalizers:
-    - kivebpf.san7o.github.io/finalizer
+    - kivepolicy.kivebpf.san7o.github.io/finalizer
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:

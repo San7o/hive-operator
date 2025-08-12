@@ -95,6 +95,8 @@ Data:
 					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KiveData %s", kiveData.Name))
 				}
 
+				log.Info("Successfully deleted KiveData", "name", kiveDataCopy.Name)
+
 			}
 			continue Data
 		}

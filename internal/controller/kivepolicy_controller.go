@@ -88,6 +88,8 @@ Policy:
 				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
 					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
 				}
+
+				log.Info("Successfully deleted KivePolicy", "name", kivePolicyCopy.Name)
 			}
 			continue Policy
 		}
