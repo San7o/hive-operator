@@ -334,7 +334,7 @@ spec:
       - pod: nginx-pod
         namespace: default
         ip: 192.168.0.3
-        containerName: ".*"
+        containerName: "regex: .*"
         matchLabels:
           security-level: high
       metadata:
