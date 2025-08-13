@@ -71,8 +71,14 @@ spec:
                         properties:
                           containerName:
                             description: |-
-                              Filter container by name, can be a regex with syntax described at
-                              https://golang.org/s/re2syntax
+                              Filter container by name.
+                               - if this field is prepended by "regex:", the rest of the string
+                                 will represent a regular expression matched with go regexp
+                                 library (https://golang.org/s/re2syntax)
+                               - if the field is prepended by "glob:", then this is a
+                                 filesystem-style regex, as described in go filepath.Match
+                                 library (https://pkg.go.dev/path/filepath#Match)
+                               - otherwise, the name of the container will be compared exactly
                             type: string
                           ip:
                             description: Filter pods by IP
@@ -157,8 +163,14 @@ spec:
                         properties:
                           containerName:
                             description: |-
-                              Filter container by name, can be a regex with syntax described at
-                              https://golang.org/s/re2syntax
+                              Filter container by name.
+                               - if this field is prepended by "regex:", the rest of the string
+                                 will represent a regular expression matched with go regexp
+                                 library (https://golang.org/s/re2syntax)
+                               - if the fiels is prepended by "glob:", then this is a
+                                 filesystem-style regex, as described in go filepath.Match
+                                 library (https://pkg.go.dev/path/filepath#Match)
+                               - otherwise, the name of the container will be compared exactly
                             type: string
                           ip:
                             description: Filter pods by IP

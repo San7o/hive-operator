@@ -52,6 +52,7 @@ metadata:
             "creationTimestamp": "2025-07-25T08:06:12Z",
             "generation": 1,
             "labels": {
+              "kernel-id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71",
               "trap-id": "c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee"
             },
             "name": "kive-data-nginx-pod-default-13667586",
@@ -60,8 +61,8 @@ metadata:
             "uid": "788bcb67-a9de-480d-a179-e40234116459"
           },
           "spec": {
-            "inode-no": 13667586,
-            "kernel-id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71"
+            "dev-id": 513,
+            "inode-no": 13667586
           }
         },
         {
@@ -109,7 +110,7 @@ metadata:
                 "create": true,
                 "matchAny": [
                   {
-                    "container-name": ".*",
+                    "containerName": "regex:ngi.*",
                     "namespace": "default"
                   }
                 ],
@@ -135,7 +136,7 @@ metadata:
                 "create": true,
                 "matchAny": [
                   {
-                    "container-name": "123.*",
+                    "containerName": "regex:123.*",
                     "namespace": "default",
                     "pod": "nginx-pod"
                   }
@@ -215,7 +216,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-08-13T15:28:06Z"
+    createdAt: "2025-08-13T20:24:31Z"
     operators.operatorframework.io.bundle.channels.v1: stable,alpha
     operators.operatorframework.io.bundle.default.channel.v1: stable
     operators.operatorframework.io/builder: operator-sdk-v1.39.1

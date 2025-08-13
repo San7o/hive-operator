@@ -24,8 +24,6 @@ type KiveDataSpec struct {
 	InodeNo uint64 `json:"inodeNo,omitempty"`
 	// The device number of the inode
 	DevID uint32 `json:"dev-id,omitempty"`
-	// A string to uniquely identify a running kernel
-	KernelID string `json:"kernelId,omitempty"`
 	// (optional) Additional information
 	Metadata map[string]string `json:"metadata,omitempty"`
 }

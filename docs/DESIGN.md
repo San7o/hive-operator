@@ -390,7 +390,13 @@ items matched with a logical AND, which include:
 
 - `pod`: the name of the pod
 - `namespace`: the namespace of the pod
-- `container-name`: a regex to match the name of containers
+- `container-name`: the name of the container, or a patter to match the
+  name. There are three possible cases:
+  - if this field is prepended by `regex:`, the rest of the string
+    will represent a regular expression
+  - if the fiels is prepended by `glob:`, then this is a
+    filesystem-style regex, as described in go `filepath.Match`.
+  - otherwise, the name of the container will be compared exactly
 - `ip`: the ipv4 of the pod
 - `matchLabels`: a list of labels and values
 
@@ -538,12 +544,12 @@ metadata:
   uid: 788bcb67-a9de-480d-a179-e40234116459
   labels:
       trap-id: c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee
+      kernelId: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
 spec:
   inodeNo: 13667586
   devId: 3
   metadata:
     severity: critical
-  kernelId: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
 ```
 
 The fields under `spec` are:
@@ -552,14 +558,15 @@ The fields under `spec` are:
   eBPF program.
 - `devId`: The device id associated with the file to monitor.
 - `metadata`: Additional information to report in the alert.
-- `kernelId`: An unique identifier of a running kernel, to discriminate
-  which loader controller should handle this `KiveData`.
 
 The annotations are used as additional information for the `KiveAlert`
 when an access is detected by the eBPF program.
 
 The `trap-id` label is used to identify which `KiveTrap` generated
+this `KiveData`. The label `kernelId` is an unique identifier of a
+running kernel, to discriminate which loader controller should handle
 this `KiveData`.
+
 
 <a name="kivedata-reconciliation"></a>
 

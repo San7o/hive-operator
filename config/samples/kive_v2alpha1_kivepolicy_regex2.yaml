@@ -13,4 +13,4 @@ spec:
       matchAny:
         - pod: nginx-pod
           namespace: default
-          container-name: "123.*"
+          containerName: "regex:123.*"

@@ -44,7 +44,7 @@ var _ = Describe("ContainerName Regex", Ordered, func() {
 						kivev2alpha1.KiveTrapMatch{
 							PodName:       "test-pod",
 							Namespace:     "kive-test",
-							ContainerName: "test-ngi.*",
+							ContainerName: "regex:test-ngi.*",
 						},
 					},
 				},

@@ -57,9 +57,6 @@ spec:
                 description: The inode number of the file
                 format: int64
                 type: integer
-              kernel-id:
-                description: A string to uniquely identify a running kernel
-                type: string
               metadata:
                 additionalProperties:
                   type: string
@@ -103,9 +100,6 @@ spec:
                 description: The inode number of the file
                 format: int64
                 type: integer
-              kernelId:
-                description: A string to uniquely identify a running kernel
-                type: string
               metadata:
                 additionalProperties:
                   type: string

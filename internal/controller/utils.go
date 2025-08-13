@@ -17,8 +17,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -59,12 +61,26 @@ func RegexMatch(regex string, containerName string) (bool, error) {
 		return true, nil
 	}
 
-	compiledRegex, err := regexp.Compile(regex)
-	if err != nil {
-		return false, fmt.Errorf("RegexMatch Error compiling regex: %w", err)
+	if strings.HasPrefix(regex, "regex:") {
+
+		compiledRegex, err := regexp.Compile(strings.TrimPrefix(regex, "regex:"))
+		if err != nil {
+			return false, fmt.Errorf("RegexMatch Error compiling regex: %w", err)
+		}
+
+		return compiledRegex.Match([]byte(containerName)), nil
+
+	} else if strings.HasPrefix(regex, "glob:") {
+
+		result, err := filepath.Match(strings.TrimPrefix(regex, "glob:"), containerName)
+		if err != nil {
+			return false, fmt.Errorf("RegexMatch Error compiling regex: %w", err)
+		}
+		return result, nil
 	}
 
-	return compiledRegex.Match([]byte(containerName)), nil
+	// Direct comparison
+	return regex == containerName, nil
 }
 
 func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveTrap) (bool, error) {
@@ -73,7 +89,7 @@ func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveT
 	if err != nil {
 		return false, fmt.Errorf("KiveDataTrapCmp Error Hash ID: %w", err)
 	}
-	return kiveData.ObjectMeta.Labels[TrapIdLabel] == trapID, nil
+	return kiveData.ObjectMeta.Labels[TrapIDLabel] == trapID, nil
 }
 
 func KiveDataContainerCmp(kiveData kivev2alpha1.KiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {

@@ -25,6 +25,7 @@ import (
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	comm "github.com/San7o/kivebpf/internal/controller/comm"
 	ebpf "github.com/San7o/kivebpf/internal/controller/ebpf"
 )
 
@@ -55,8 +56,11 @@ func (r *KiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		go Output(r.UncachedClient)
 	}
 
+	kiveDataLabels := client.MatchingLabels{
+		comm.KernelIDLabel: KernelID,
+	}
 	kiveDataList := &kivev2alpha1.KiveDataList{}
-	err := r.Client.List(ctx, kiveDataList)
+	err := r.Client.List(ctx, kiveDataList, kiveDataLabels)
 	if err != nil { // Fatal
 		return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get Kive Data resource: %w", err)
 	}
@@ -74,10 +78,6 @@ func (r *KiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// deleted.
 Data:
 	for _, kiveData := range kiveDataList.Items {
-
-		if kiveData.Spec.KernelID != KernelID {
-			continue Data
-		}
 
 		// Check if there is a finalizer
 		if !controllerutil.ContainsFinalizer(&kiveData, KiveDataFinalizerName) {
@@ -107,8 +107,7 @@ Data:
 
 				err := ebpf.RemoveInode(ebpf.BpfMapKey{Inode: kiveData.Spec.InodeNo, Dev: kiveData.Spec.DevID})
 				if err != nil {
-					log.Error(err, fmt.Sprintf("Reconcile Error Remove Inode during deletion of KiveData %s", kiveData.Name))
-					return ctrl.Result{Requeue: true}, nil
+					log.Info("Reconcile Error Remove Inode during deletion of KiveData %s: %w", kiveData.Name, err)
 				}
 
 				controllerutil.RemoveFinalizer(kiveDataCopy, KiveDataFinalizerName)

@@ -25,7 +25,6 @@ func (src *KiveData) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.InodeNo = src.Spec.InodeNo
 	dst.Spec.DevID = src.Spec.DevID
-	dst.Spec.KernelID = src.Spec.KernelID
 
 	return nil
 }
@@ -38,7 +37,6 @@ func (dst *KiveData) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.Spec.InodeNo = src.Spec.InodeNo
 	dst.Spec.DevID = src.Spec.DevID
-	dst.Spec.KernelID = src.Spec.KernelID
 
 	return nil
 }
