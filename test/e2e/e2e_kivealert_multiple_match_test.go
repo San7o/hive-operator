@@ -230,9 +230,9 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 		})
 
 		sinceTime := time.Now().UTC()
-		
+
 		It("Should have generated an KiveAlert", func() {
-			
+
 			maxIt := 10
 			it := 0
 			for ; it < maxIt; it++ {
@@ -252,7 +252,7 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 		})
 
 		sinceTime = time.Now().UTC()
-		
+
 		It("Should have created the file in the matched pod2", func() {
 			cmd := exec.Command("kubectl", "exec", "-n", testNamespaceName, testPod2.Name, "--", "cat", kiveTestPolicy.Spec.Traps[0].Path)
 			fmt.Printf("Executing: %s", cmd.String())

@@ -188,7 +188,7 @@ var _ = Describe("KiveAlert Multiple Traps", Ordered, func() {
 		})
 
 		sinceTime := time.Now().UTC()
-		
+
 		It("Should have created the file in the matched pod", func() {
 			cmd := exec.Command("kubectl", "exec", "-n", testNamespaceName, testPod.Name, "--", "cat", kiveTestPolicy.Spec.Traps[0].Path)
 			fmt.Printf("Executing: %s", cmd.String())
