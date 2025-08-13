@@ -146,8 +146,8 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 
 			By("Waiting for pod cration")
 			key := client.ObjectKeyFromObject(&testPod)
-			deadline := time.Now().Add(timeout)
-			for time.Now().Before(deadline) {
+			deadline := time.Now().UTC().Add(timeout)
+			for time.Now().UTC().Before(deadline) {
 				var p corev1.Pod
 				if err := Client.Get(ctx, key, &p); err != nil {
 					Expect(fmt.Errorf("Get Pod Pod: %w", err)).NotTo(HaveOccurred())
@@ -177,7 +177,7 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 			}
 		})
 
-		sinceTime := time.Now()
+		sinceTime := time.Now().UTC()
 
 		It("Should have created the file in the matched pod", func() {
 			cmd := exec.Command("kubectl", "exec", "-n", testNamespaceName, testPod.Name, "--", "cat", kiveTestPolicy.Spec.Traps[0].Path)

@@ -77,7 +77,7 @@ func GetContainerData(ctx context.Context, containerStatus corev1.ContainerStatu
 	}
 	supported := IsContainerRuntimeSupported(runtimeName)
 	if !supported {
-		return ContainerData{}, fmt.Errorf("GetContainerData Error: Container runtime %s is not suported.", runtimeName)
+		return ContainerData{}, fmt.Errorf("GetContainerData Error: Container runtime %s is not supported.", runtimeName)
 	}
 	runtime := ContainerRuntimes[runtimeName]
 

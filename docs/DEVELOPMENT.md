@@ -25,6 +25,12 @@ make create-cluster-local
 You can delete the cluster with `delete-cluster.sh` or with
 `make delete-cluster-local` when you do not need It anymore.
 
+On minikube:
+
+```bash
+minikube start --container-runtime=containerd
+```
+
 ## Dev Environments
 
 For convenience, this project uses different environments to manage
