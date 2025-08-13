@@ -3,8 +3,6 @@ kind: KivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: kivebpf
-  finalizers:
-    - kivepolicy.kivebpf.san7o.github.io/finalizer
   name: kive-sample-policy-regex
   namespace: kivebpf-system
 spec:

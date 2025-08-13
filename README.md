@@ -14,8 +14,6 @@ kind: KivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: kivebpf
-  finalizers:
-    - kivepolicy.kivebpf.san7o.github.io/finalizer
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
@@ -56,6 +54,9 @@ following is an example alert:
     "inode": 16256084,
     "mask": 36,
     "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+  },
+  "custom-metadata": {
+    "alert-level": "critical"
   },
   "pod": {
     "name": "nginx-pod",

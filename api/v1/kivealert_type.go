@@ -80,6 +80,8 @@ type KiveAlert struct {
 	Timestamp string `json:"timestamp"` // RFC 3339
 	// Additional information
 	Metadata KiveAlertMetadata `json:"metadata"`
+	// User specified metadata (from KivePolicy)
+	CustomMetadata map[string]string `json:"custom-metadata"`
 	// Information about the pod where the file lives
 	Pod PodMetadata `json:"pod"`
 	// Information about the node

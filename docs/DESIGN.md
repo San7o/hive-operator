@@ -321,8 +321,6 @@ kind: KivePolicy
 metadata:
   labels:
     app.kubernetes.io/name: kivebpf
-  finalizers:
-    - kivepolicy.kivebpf.san7o.github.io/finalizer
   name: kive-sample-policy
   namespace: kivebpf-system
 spec:
@@ -340,7 +338,7 @@ spec:
         matchLabels:
           security-level: high
       metadata:
-          severity: high
+          severity: critical
 ```
 
 Each `KiveTrap` can contain the following fields:
@@ -379,7 +377,8 @@ via an HTTP POST request.
 #### Metadata
 
 Optional additional information regarding the trap. It is a list of
-key value pairs.
+key value pairs. The metadata will be reported in the `KiveAlert`
+under the `custom-metadata` item.
 
 <a name="kivepolicy-resource-matchany"></a>
 
@@ -520,8 +519,6 @@ The schema of the resource looks like the following:
 apiVersion: kivebpf.san7o.github.io/v1
 kind: KiveData
 metadata:
-  finalizers:
-  - kivedata.kivebpf.san7o.github.io/finalizer
   annotations:
     kive-alert-version: v1
     kive-policy-name: kive-sample-policy
@@ -544,6 +541,8 @@ metadata:
 spec:
   inodeNo: 13667586
   devId: 3
+  metadata:
+    severity: critical
   kernelId: fc9a30d5-6140-4dd1-b8ef-c638f19ebd71
 ```
 
@@ -552,6 +551,7 @@ The fields under `spec` are:
 - `inodeNo`: The inode number of the file to monitor, needed by the
   eBPF program.
 - `devId`: The device id associated with the file to monitor.
+- `metadata`: Additional information to report in the alert.
 - `kernelId`: An unique identifier of a running kernel, to discriminate
   which loader controller should handle this `KiveData`.
 
@@ -617,6 +617,9 @@ to generate an `KiveAlert`. An example alert is the following:
     "inode": 16256084,
     "mask": 36,
     "kernel-id": "2c147a95-23e5-4f99-a2de-67d5e9fdb502"
+  },
+  "custom-metadata": {
+    "severity": "critical",
   },
   "pod": {
     "name": "nginx-pod",

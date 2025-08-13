@@ -49,6 +49,11 @@ spec:
               kernel-id:
                 description: A string to uniquely identify a running kernel
                 type: string
+              metadata:
+                additionalProperties:
+                  type: string
+                description: (optional) Additional information
+                type: object
             type: object
         type: object
     served: true
@@ -90,6 +95,11 @@ spec:
               kernelId:
                 description: A string to uniquely identify a running kernel
                 type: string
+              metadata:
+                additionalProperties:
+                  type: string
+                description: (optional) Additional information
+                type: object
             type: object
         type: object
     served: true

@@ -17,8 +17,6 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,6 +33,10 @@ type KiveDataReconciler struct {
 	UncachedClient client.Reader
 	Scheme         *runtime.Scheme
 }
+
+const (
+	KiveDataFinalizerName = "kivedata.kivebpf.san7o.github.io/finalizer"
+)
 
 // +kubebuilder:rbac:groups=kivebpf.san7o.github.io,resources=kivedata,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kivebpf.san7o.github.io,resources=kivedata/status,verbs=get;update;patch
@@ -77,25 +79,51 @@ Data:
 			continue Data
 		}
 
+		// Check if there is a finalizer
+		if !controllerutil.ContainsFinalizer(&kiveData, KiveDataFinalizerName) {
+
+			kiveDataCopy := kiveData.DeepCopy()
+			controllerutil.AddFinalizer(kiveDataCopy, KiveDataFinalizerName)
+			err := r.Client.Patch(ctx, kiveDataCopy, client.MergeFrom(&kiveData))
+			if err != nil {
+
+				// Try again
+				log.Info("Reconcile Could not add finalizer to KiveData, trying again", "name", kiveData.Name, "error", err)
+				return ctrl.Result{Requeue: true}, nil
+			} else {
+
+				// Patch causes reconciliation, so we return from this one
+				log.Info("Successfully added finalizer to KiveData", "name", kiveData.Name)
+				return ctrl.Result{}, nil
+			}
+		}
+
 		// Check if this KiveData is being deleted
 		if !kiveData.ObjectMeta.DeletionTimestamp.IsZero() {
 
-			if controllerutil.ContainsFinalizer(&kiveData, kivev2alpha1.KiveDataFinalizerName) {
+			if controllerutil.ContainsFinalizer(&kiveData, KiveDataFinalizerName) {
 
 				kiveDataCopy := kiveData.DeepCopy()
-				controllerutil.RemoveFinalizer(kiveDataCopy, kivev2alpha1.KiveDataFinalizerName)
 
 				err := ebpf.RemoveInode(ebpf.BpfMapKey{Inode: kiveData.Spec.InodeNo, Dev: kiveData.Spec.DevID})
 				if err != nil {
-					log.Error(err, fmt.Sprintf("Reconcile Error Remove Inode in Finalizer of KiveData %s", kiveData.Name))
+					log.Error(err, fmt.Sprintf("Reconcile Error Remove Inode during deletion of KiveData %s", kiveData.Name))
+					return ctrl.Result{Requeue: true}, nil
 				}
 
-				err = r.Update(ctx, kiveDataCopy)
-				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
-					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KiveData %s", kiveData.Name))
+				controllerutil.RemoveFinalizer(kiveDataCopy, KiveDataFinalizerName)
+
+				err = r.Client.Patch(ctx, kiveDataCopy, client.MergeFrom(&kiveData))
+				if err != nil {
+
+					// Try again
+					log.Info("Reconcile Error Update finalizer for KiveData,, trying again", "name", kiveData.Name, "error", err)
+					return ctrl.Result{Requeue: true}, nil
 				}
 
+				// Patch causes reconciliation, so we return from this one
 				log.Info("Successfully deleted KiveData", "name", kiveDataCopy.Name)
+				return ctrl.Result{}, nil
 
 			}
 			continue Data
@@ -148,12 +176,12 @@ Data:
 
 		if !found {
 			err := r.Client.Delete(ctx, &kiveData)
-			if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+			if err != nil {
 				log.Error(err, fmt.Sprintf("Reconciler Error Delete KiveData %s", kiveData.Name))
 				continue Data
 			}
 
-			log.Info("Deleted KiveData")
+			log.Info("Deleting KiveData")
 			continue Data
 		}
 

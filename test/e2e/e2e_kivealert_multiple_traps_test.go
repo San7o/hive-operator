@@ -32,9 +32,8 @@ var _ = Describe("KiveAlert Multiple Traps", Ordered, func() {
 
 	var kiveTestPolicy = &kivev2alpha1.KivePolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "kive-policy-test-multiple",
-			Namespace:  testNamespaceName,
-			Finalizers: []string{kivev2alpha1.KivePolicyFinalizerName},
+			Name:      "kive-policy-test-multiple",
+			Namespace: testNamespaceName,
 		},
 
 		Spec: kivev2alpha1.KivePolicySpec{

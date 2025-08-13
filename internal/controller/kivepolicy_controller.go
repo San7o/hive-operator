@@ -18,7 +18,6 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,8 +30,7 @@ import (
 )
 
 const (
-	KernelIDPath = "/proc/sys/kernel/random/boot_id"
-	TrapIdLabel  = "trap-id"
+	KivePolicyFinalizerName = "kivepolicy.kivebpf.san7o.github.io/finalizer"
 )
 
 var (
@@ -76,20 +74,43 @@ func (r *KivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 Policy:
 	for _, kivePolicy := range kivePolicyList.Items {
 
+		// Check if there is a finalizer
+		if !controllerutil.ContainsFinalizer(&kivePolicy, KivePolicyFinalizerName) {
+
+			kivePolicyCopy := kivePolicy.DeepCopy()
+			controllerutil.AddFinalizer(kivePolicyCopy, KivePolicyFinalizerName)
+			err := r.Client.Patch(ctx, kivePolicyCopy, client.MergeFrom(&kivePolicy))
+			if err != nil {
+
+				// Try again
+				log.Info("Reconcile Could not add finalizer for KivePolicy, trying again", "name", kivePolicy.Name, "error", err)
+				return ctrl.Result{Requeue: true}, nil
+			} else {
+
+				// Patch causes reconciliation, so we return from this one
+				log.Info("Successfully added finalizer to KivePolicy", "name", kivePolicy.Name)
+				return ctrl.Result{}, nil
+			}
+		}
+
 		// Check if this policy is being deleted
 		if !kivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
 
-			if controllerutil.ContainsFinalizer(&kivePolicy, kivev2alpha1.KivePolicyFinalizerName) {
+			if controllerutil.ContainsFinalizer(&kivePolicy, KivePolicyFinalizerName) {
 
 				kivePolicyCopy := kivePolicy.DeepCopy()
-				controllerutil.RemoveFinalizer(kivePolicyCopy, kivev2alpha1.KivePolicyFinalizerName)
+				controllerutil.RemoveFinalizer(kivePolicyCopy, KivePolicyFinalizerName)
+				err := r.Client.Patch(ctx, kivePolicyCopy, client.MergeFrom(&kivePolicy))
+				if err != nil {
 
-				err := r.Update(ctx, kivePolicyCopy)
-				if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
-					log.Error(err, fmt.Sprintf("Reconcile Error Update finalizer for KivePolicy %s", kivePolicy.Name))
+					// Try again
+					log.Info("Reconcile Error Update finalizer for KivePolicy, trying again", "name", kivePolicy.Name, "error", err)
+					return ctrl.Result{Requeue: true}, nil
 				}
 
-				log.Info("Successfully deleted KivePolicy", "name", kivePolicyCopy.Name)
+				// Patch causes reconciliation, so we return from this one
+				log.Info("Successfully deleted KivePolicy", "name", kivePolicy.Name)
+				return ctrl.Result{}, nil
 			}
 			continue Policy
 		}
@@ -208,17 +229,22 @@ Policy:
 									// The trap-id is used to link this KiveData to this trap
 									TrapIdLabel: trapID,
 								},
-								Finalizers: []string{kivev2alpha1.KiveDataFinalizerName},
+								Finalizers: []string{KiveDataFinalizerName},
 							},
 							Spec: kivev2alpha1.KiveDataSpec{
 								InodeNo:  inode,
 								DevID:    dev,
 								KernelID: KernelID,
+								Metadata: map[string]string{},
 							},
 						}
 
-						err = r.Client.Patch(ctx, kiveData, client.Apply, client.ForceOwnership, client.FieldOwner("kivepolicy-controller"))
-						if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+						for key, val := range kiveTrap.Metadata {
+							kiveData.Spec.Metadata[key] = val
+						}
+
+						err = r.Client.Patch(ctx, kiveData, client.Apply, client.ForceOwnership, client.FieldOwner(FieldOwnerKiveController))
+						if err != nil {
 							log.Error(err, fmt.Sprintf("Reconcile Error patch KiveData resource %s", kiveData.Name))
 							continue Container
 						}
@@ -249,7 +275,7 @@ Policy:
 	}
 	kiveData.Annotations["force-reconcile"] = time.Now().Format(time.RFC3339)
 	err = r.Patch(ctx, &kiveData, client.MergeFrom(orig))
-	if err != nil && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+	if err != nil {
 		log.Error(err, fmt.Sprintf("Reconcile Error Patch KiveData %s", kiveData.Name))
 	}
 	return ctrl.Result{}, nil

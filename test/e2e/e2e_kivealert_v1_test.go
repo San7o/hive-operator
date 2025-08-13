@@ -32,9 +32,8 @@ var _ = Describe("KiveAlertV1 Simple", Ordered, func() {
 
 	var kiveTestPolicy = &kivev1.KivePolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "kive-policy-v1-test",
-			Namespace:  testNamespaceName,
-			Finalizers: []string{kivev1.KivePolicyFinalizerName},
+			Name:      "kive-policy-v1-test",
+			Namespace: testNamespaceName,
 		},
 
 		Spec: kivev1.KivePolicySpec{

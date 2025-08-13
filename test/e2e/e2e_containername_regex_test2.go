@@ -30,9 +30,8 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 
 	var kiveTestPolicy = &kivev2alpha1.KivePolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "kive-policy-test-regex2",
-			Namespace:  testNamespaceName,
-			Finalizers: []string{kivev2alpha1.KivePolicyFinalizerName},
+			Name:      "kive-policy-test-regex2",
+			Namespace: testNamespaceName,
 		},
 		Spec: kivev2alpha1.KivePolicySpec{
 			Traps: []kivev2alpha1.KiveTrap{

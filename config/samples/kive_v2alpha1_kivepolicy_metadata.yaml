@@ -15,3 +15,5 @@ spec:
       namespace: default
       matchLabels:
         security-level: high
+    metadata:
+      security: high

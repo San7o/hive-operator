@@ -18,10 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	KivePolicyFinalizerName = "kivepolicy.kivebpf.san7o.github.io/finalizer"
-)
-
 type KivePolicySpec struct {
 	// Version for KiveAlert output
 	AlertVersion string `json:"alertVersion,omitempty"`
