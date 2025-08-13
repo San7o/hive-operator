@@ -30,15 +30,6 @@ will create a local cluster using <a
 href="https://github.com/kubernetes-sigs/kind">kind</a> with one control
 node and one worker node. Additionally, It sets up a local docker
 registry to push the operator image during development.</p>
-<p>If you are using Kind, or any other method where the node runs inside
-a container, you need to mount <code>/proc</code> inside the node at
-<code>/host/real/proc</code>. The script above already does it. This is
-needed because the eBPF program runs in the host kernel and the operator
-needs to access the host procfs to generate the <code>KiveAlert</code>.
-If you do not do this, the operator will gracefully report a message and
-some fields in the alert will remain empty (namely, <code>cwd</code>).
-If you are using virtual machines / real nodes or hypervisors (likely in
-production clusters), this is not needed.</p>
 <p>Run the following command to create the cluster (needs to be run only
 once):</p>
 <div class="sourceCode" id="cb1"><pre
@@ -46,6 +37,9 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="
 <p>You can delete the cluster with <code>delete-cluster.sh</code> or
 with <code>make delete-cluster-local</code> when you do not need It
 anymore.</p>
+<p>On minikube:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minikube</span> start <span class="at">--container-runtime</span><span class="op">=</span>containerd</span></code></pre></div>
 <h2 id="dev-environments">Dev Environments</h2>
 <p>For convenience, this project uses different environments to manage
 building and deploying. By default, there are two different
@@ -58,13 +52,13 @@ Makefile from the env file without changing the Makefile.</p>
 <p>For example, the <code>IMG</code> variable tells the Makefile where
 to push images and tells the operator where to pull them. You can add an
 entry to your custom environment <code>.env-custom</code> like so:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">IMG</span><span class="op">=</span>registry/my-bautiful-name:latest</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="va">IMG</span><span class="op">=</span>registry/my-bautiful-name:latest</span></code></pre></div>
 <p>To select which environment to use, append
 <code>ENV=&lt;ENV-NAME&gt;</code> to your make commands, for
 example:</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy ENV=custom</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy ENV=custom</span></code></pre></div>
 <p>The default environment is <code>local</code>, in this case you can
 omit the <code>ENV</code> from the make command to use the local
 environment. You can use environments on all make commands.</p>
@@ -73,11 +67,11 @@ environment. You can use environments on all make commands.</p>
 RBAC policies, CRD manifests and the eBPF program. Those need to be
 regenerated every time they are updated.</p>
 <p>To generate the RBAC policies, run:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate</span></code></pre></div>
-<p>To create the CRD manifests, run:</p>
 <div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> manifests</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate</span></code></pre></div>
+<p>To create the CRD manifests, run:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> manifests</span></code></pre></div>
 <p>To generate the eBPF program, you need to have the following
 dependencies in your system:</p>
 <ul>
@@ -89,11 +83,11 @@ dependencies in your system:</p>
 </ul>
 <p>On Ubuntu, you can run the following command to install the required
 dependencies:</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apt-get</span> install make clang llvm libbpf-dev golang linux-headers-<span class="va">$(</span><span class="fu">uname</span> <span class="at">-r</span><span class="va">)</span></span></code></pre></div>
-<p>Once you have the dependencies, run:</p>
 <div class="sourceCode" id="cb7"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate-ebpf</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apt-get</span> install make clang llvm libbpf-dev golang linux-headers-<span class="va">$(</span><span class="fu">uname</span> <span class="at">-r</span><span class="va">)</span></span></code></pre></div>
+<p>Once you have the dependencies, run:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> generate-ebpf</span></code></pre></div>
 <p>If you just want to test the eBPF program without building /
 deploying the entire operator, please refer to the <a
 href="./EBPF-TESTING.html">BPF-TESTING</a> document.</p>
@@ -107,55 +101,66 @@ depending on your permissions.</p>
 <p>To build the docker image, first <strong>make sure that generated
 files are updated</strong> (section above), then build the image
 with:</p>
-<div class="sourceCode" id="cb8"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker-build</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker-build</span></code></pre></div>
 <p>If you generated the cluster with <code>registry-cluster.sh</code>,
 you can push it to a test local docker repository:</p>
-<div class="sourceCode" id="cb9"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker-push</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker-push</span></code></pre></div>
 <p>Or specify how to tag / push the image by modifying the
 <code>IMG</code> env variable in your environment.</p>
 <p>To do both <code>docker-build</code> and <code>docker-push</code> in
 a single command, you can run:</p>
-<div class="sourceCode" id="cb10"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> docker</span></code></pre></div>
 <h2 id="deploy-the-operator">Deploy the operator</h2>
 <p>Before deploying the operator, make sure you have
 <code>cert-manager</code> installed for secure TLS connections
 (required):</p>
-<div class="sourceCode" id="cb11"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml</span></code></pre></div>
-<p>If you just want to load <em>only</em> the custom resources, run:</p>
 <div class="sourceCode" id="cb12"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> install</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml</span></code></pre></div>
+<p>If you just want to load <em>only</em> the custom resources, run:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> install</span></code></pre></div>
 <p>If you want to deploy the full operator (including resources),
 run:</p>
-<div class="sourceCode" id="cb13"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> deploy</span></code></pre></div>
 <p>You can now proceed by reading the <a href="./USAGE.html">USAGE</a>
 document which will explain how to use the operator.</p>
+<p>Important note: if you are using Kind, or any other cluster where the
+nodes run inside a container, the <code>cwd</code> and
+<code>arguments</code> in the <code>KiveAlert</code> will be empty or
+incorrect. This happens because the <code>/proc</code> filesystem inside
+a node in a Kind cluster is not the real host procfs. For this reason,
+if you want to read <code>cwd</code> and <code>arguments</code> you need
+to mount <code>/proc</code> inside the node in
+<code>/host/real/proc</code> (done by default if you used the script to
+generate the cluster provided by this project). Then, after deploying
+the operator, you need to patch it by applying the config in
+<code>hack/kind-mount-procfs.yaml</code>.</p>
 <h2 id="testing">Testing</h2>
 <p>To run end to end tests, first make sure that you have a cluster
 running with the operator deployed, and that there is not
 <code>KivePolicy</code> present. Then, simply run:</p>
-<div class="sourceCode" id="cb14"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> test</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> test</span></code></pre></div>
 <h2 id="useful-commands">Useful commands</h2>
 <p>When building a new docker image, you want the kive pods to update to
 the new version. The pods are already configured to fetch the latest
 version of the image in the local test docker repository, to do so you
 just need to kill them. You can use the following command:</p>
-<div class="sourceCode" id="cb15"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> kill-pods</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> kill-pods</span></code></pre></div>
 <p>This will also remove all the <code>KiveData</code> resources so that
 you start with a clean configuration, as if you just applied the
 <code>KivePolicies</code>.</p>
 <p>To completely remove the operator from the cluster, run:</p>
-<div class="sourceCode" id="cb16"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> undeploy</span></code></pre></div>
-<p>Other commands can be found via <code>make help</code>.</p>
 <div class="sourceCode" id="cb17"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> help</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> undeploy</span></code></pre></div>
+<p>Other commands can be found via <code>make help</code>.</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> help</span></code></pre></div>
 
 <footer>
   

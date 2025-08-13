@@ -78,6 +78,7 @@ func (dst *KivePolicy) ConvertFrom(srcRaw conversion.Hub) error {
 		trapv1.Create = trap.Create
 		trapv1.Mode = trap.Mode
 		trapv1.Callback = trap.Callback
+		trapv1.Metadata = map[string]string{}
 
 		for key, value := range trap.Metadata {
 			trapv1.Metadata[key] = value

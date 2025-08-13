@@ -121,7 +121,7 @@ func main() {
 		// (CA). The primary risk is potentially allowing unauthorized
 		// access to sensitive metrics data.
 		//
-		// TLS is currently not suported so by default the the argument
+		// TLS is currently not supported so by default the the argument
 		// "metrics-bind-address" is set to 0 to disable metrics
 		// completely, until TLS is fully supported.
 		TLSOpts: tlsOpts,

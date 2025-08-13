@@ -718,7 +718,7 @@ spec:
         - --kive-pod-health-probe-bind-address=:8083
         command:
         - /manager
-        image: giovann103/kivebpf:latest
+        image: giovann103/kivebpf:dev
         livenessProbe:
           httpGet:
             path: /healthz

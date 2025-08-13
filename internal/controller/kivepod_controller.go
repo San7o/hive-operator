@@ -18,8 +18,6 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -87,13 +85,12 @@ Data:
 
 		if !found {
 
+			log.Info("Deleting KiveData")
 			err := r.Client.Delete(ctx, &kiveData)
-			if err != nil && !apierrors.IsNotFound(err) && !apierrors.IsConflict(err) && apierrors.ReasonForError(err) != metav1.StatusReasonInvalid {
+			if err != nil {
 				log.Error(err, fmt.Sprintf("Reconcile Error Deleting KiveData %s after pod event", kiveData.Name))
 				continue Data
 			}
-
-			log.Info("Deleted KiveData")
 		}
 	}
 

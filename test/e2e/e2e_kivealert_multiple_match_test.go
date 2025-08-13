@@ -32,9 +32,8 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 
 	var kiveTestPolicy = &kivev2alpha1.KivePolicy{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       "kive-policy-test1",
-			Namespace:  testNamespaceName,
-			Finalizers: []string{kivev2alpha1.KivePolicyFinalizerName},
+			Name:      "kive-policy-test1",
+			Namespace: testNamespaceName,
 		},
 
 		Spec: kivev2alpha1.KivePolicySpec{
@@ -167,8 +166,8 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 
 			By("Waiting for pod cration")
 			key := client.ObjectKeyFromObject(&testPod)
-			deadline := time.Now().Add(timeout)
-			for time.Now().Before(deadline) {
+			deadline := time.Now().UTC().Add(timeout)
+			for time.Now().UTC().Before(deadline) {
 				var p corev1.Pod
 				if err := Client.Get(ctx, key, &p); err != nil {
 					Expect(fmt.Errorf("Get Pod: %w", err)).NotTo(HaveOccurred())
@@ -193,8 +192,8 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 
 			By("Waiting for pod2 cration")
 			key = client.ObjectKeyFromObject(&testPod2)
-			deadline = time.Now().Add(timeout)
-			for time.Now().Before(deadline) {
+			deadline = time.Now().UTC().Add(timeout)
+			for time.Now().UTC().Before(deadline) {
 				var p corev1.Pod
 				if err := Client.Get(ctx, key, &p); err != nil {
 					Expect(fmt.Errorf("Get Pod2: %w", err)).NotTo(HaveOccurred())
@@ -224,13 +223,13 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 			}
 		})
 
-		sinceTime := time.Now()
-
 		It("Should have created the file in the matched pod", func() {
 			cmd := exec.Command("kubectl", "exec", "-n", testNamespaceName, testPod.Name, "--", "cat", kiveTestPolicy.Spec.Traps[0].Path)
 			fmt.Printf("Executing: %s", cmd.String())
 			Expect(cmd.Run()).NotTo(HaveOccurred())
 		})
+
+		sinceTime := time.Now().UTC()
 
 		It("Should have generated an KiveAlert", func() {
 
@@ -252,7 +251,7 @@ var _ = Describe("KiveAlert Simple", Ordered, func() {
 			}
 		})
 
-		sinceTime = time.Now()
+		sinceTime = time.Now().UTC()
 
 		It("Should have created the file in the matched pod2", func() {
 			cmd := exec.Command("kubectl", "exec", "-n", testNamespaceName, testPod2.Name, "--", "cat", kiveTestPolicy.Spec.Traps[0].Path)

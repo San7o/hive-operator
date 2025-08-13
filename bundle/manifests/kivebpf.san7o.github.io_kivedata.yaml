@@ -1,11 +1,22 @@
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: kivebpf-system/kivebpf-serving-cert
     controller-gen.kubebuilder.io/version: v0.16.1
+  creationTimestamp: null
   name: kivedata.kivebpf.san7o.github.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: kivebpf-webhook-service
+          namespace: kivebpf-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: kivebpf.san7o.github.io
   names:
     kind: KiveData
@@ -106,3 +117,9 @@ spec:
     storage: true
     subresources:
       status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: null
+  storedVersions: null

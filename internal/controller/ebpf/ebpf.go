@@ -215,6 +215,7 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 					KernelID: kiveData.Spec.KernelID,
 					Callback: kiveData.ObjectMeta.Annotations["callback"],
 				},
+				CustomMetadata: map[string]string{},
 				Pod: kivev2alpha1.PodMetadata{
 					Name:      kiveData.Annotations["pod-name"],
 					Namespace: kiveData.Annotations["namespace"],
@@ -236,6 +237,10 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 					Cwd:       cwd,
 					Arguments: args,
 				},
+			}
+
+			for key, val := range kiveData.Spec.Metadata {
+				out.CustomMetadata[key] = val
 			}
 
 			return out, nil
