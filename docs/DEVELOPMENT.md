@@ -15,16 +15,6 @@ create a local cluster using
 and one worker node. Additionally, It sets up a local docker registry
 to push the operator image during development.
 
-If you are using Kind, or any other method where the node runs inside
-a container, you need to mount `/proc` inside the node at
-`/host/real/proc`. The script above already does it. This is needed
-because the eBPF program runs in the host kernel and the operator
-needs to access the host procfs to generate the `KiveAlert`. If you do
-not do this, the operator will gracefully report a message and some
-fields in the alert will remain empty (namely, `cwd`). If you are
-using virtual machines / real nodes or hypervisors (likely in
-production clusters), this is not needed.
-
 Run the following command to create the cluster (needs to be run only
 once):
 
@@ -167,6 +157,17 @@ make deploy
 
 You can now proceed by reading the [USAGE](./USAGE.md) document which
 will explain how to use the operator.
+
+Important note: if you are using Kind, or any other cluster where the
+nodes run inside a container, the `cwd` and `arguments` in the
+`KiveAlert` will be empty or incorrect. This happens because the
+`/proc` filesystem inside a node in a Kind cluster is not the real
+host procfs. For this reason, if you want to read `cwd` and
+`arguments` you need to mount `/proc` inside the node in
+`/host/real/proc` (done by default if you used the script to generate
+the cluster provided by this project). Then, after deploying the
+operator, you need to patch it by applying the config in
+`hack/kind-mount-procfs.yaml`.
 
 ## Testing
 

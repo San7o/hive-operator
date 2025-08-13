@@ -1,0 +1,288 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy-v1",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "alertVersion": "v1",
+            "traps": [
+              {
+                "create": true,
+                "matchAny": [
+                  {
+                    "matchLabels": {
+                      "security-level": "high"
+                    },
+                    "namespace": "default",
+                    "pod": "nginx-pod"
+                  }
+                ],
+                "mode": 444,
+                "path": "/secretv1.txt"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KiveData",
+          "metadata": {
+            "annotations": {
+              "callback": "",
+              "container_id": "containerd://da9e46ae1873ec463c9dafd08d2be762867e92b740b5c5b4534c6ad0c270d1e5",
+              "container_name": "nginx",
+              "kive_policy_name": "kive-sample-policy",
+              "namespace": "default",
+              "node_name": "kive-worker2",
+              "path": "/secret.txt",
+              "pod_ip": "10.244.1.2",
+              "pod_name": "nginx-pod"
+            },
+            "creationTimestamp": "2025-07-25T08:06:12Z",
+            "generation": 1,
+            "labels": {
+              "trap-id": "c4705ec263cc353100b6f18a129e32b67b79171bcb0c90b2731a7923ea4dcee"
+            },
+            "name": "kive-data-nginx-pod-default-13667586",
+            "namespace": "kivebpf-system",
+            "resourceVersion": "23395",
+            "uid": "788bcb67-a9de-480d-a179-e40234116459"
+          },
+          "spec": {
+            "inode-no": 13667586,
+            "kernel-id": "fc9a30d5-6140-4dd1-b8ef-c638f19ebd71"
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "traps": [
+              {
+                "create": true,
+                "matchAny": [
+                  {
+                    "matchLabels": {
+                      "security-level": "high"
+                    },
+                    "namespace": "default",
+                    "pod": "nginx-pod"
+                  }
+                ],
+                "mode": 444,
+                "path": "/secret.txt"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy-regex",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "traps": [
+              {
+                "create": true,
+                "matchAny": [
+                  {
+                    "container-name": ".*",
+                    "namespace": "default"
+                  }
+                ],
+                "mode": 444,
+                "path": "/regex.txt"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy-regex2",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "traps": [
+              {
+                "create": true,
+                "matchAny": [
+                  {
+                    "container-name": "123.*",
+                    "namespace": "default",
+                    "pod": "nginx-pod"
+                  }
+                ],
+                "mode": 444,
+                "path": "/regex2.txt"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy2",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "traps": [
+              {
+                "matchAny": [
+                  {
+                    "namespace": "default"
+                  }
+                ],
+                "path": "/etc/passwd"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy3",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "traps": [
+              {
+                "matchAny": [
+                  {
+                    "matchLabels": {
+                      "security-level": "high"
+                    }
+                  }
+                ],
+                "path": "/etc/shadow"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "kivebpf.san7o.github.io/v2alpha1",
+          "kind": "KivePolicy",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "kivebpf"
+            },
+            "name": "kive-sample-policy4",
+            "namespace": "kivebpf-system"
+          },
+          "spec": {
+            "traps": [
+              {
+                "create": true,
+                "path": "/test.txt"
+              }
+            ]
+          }
+        }
+      ]
+    capabilities: Basic Install
+    createdAt: "2025-08-13T15:28:06Z"
+    operators.operatorframework.io.bundle.channels.v1: stable,alpha
+    operators.operatorframework.io.bundle.default.channel.v1: stable
+    operators.operatorframework.io/builder: operator-sdk-v1.39.1
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+  name: kivebpf.v1.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: KiveData
+      name: kivedata.kivebpf.san7o.github.io
+      version: v1
+    - kind: KiveData
+      name: kivedata.kivebpf.san7o.github.io
+      version: v2alpha1
+    - kind: KivePolicy
+      name: kivepolicies.kivebpf.san7o.github.io
+      version: v1
+    - kind: KivePolicy
+      name: kivepolicies.kivebpf.san7o.github.io
+      version: v2alpha1
+  description: Kive is a free and open source eBPF-powered file access monitoring
+    Kubernetes operator. Kivebpf provides a stable API to place inode-based traps
+    on files and receive alerts when a file is accessed.
+  displayName: kivebpf
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: []
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - ebpf
+  - monitoring
+  - observability
+  links:
+  - name: Kivebpf
+    url: https://kivebpf.domain
+  maintainers:
+  - email: giovanni.santini@proton.me
+    name: Giovanni Santini
+  maturity: stable
+  provider:
+    name: Giovanni Santini (San7o)
+    url: https://github.com/San7o/kivebpf
+  version: 1.0.0
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    conversionCRDs:
+    - kivedata.kivebpf.san7o.github.io
+    - kivepolicies.kivebpf.san7o.github.io
+    deploymentName: kivebpf-webhook
+    generateName: ckivedatakivepolicies.kb.io
+    sideEffects: None
+    targetPort: 9443
+    type: ConversionWebhook
+    webhookPath: /convert

@@ -57,6 +57,10 @@ spec:
           spec:
             description: KiveDataSpec defines the desired state of KiveData
             properties:
+              dev-id:
+                description: The device number of the inode
+                format: int32
+                type: integer
               inode-no:
                 description: The inode number of the file
                 format: int64
@@ -64,6 +68,11 @@ spec:
               kernel-id:
                 description: A string to uniquely identify a running kernel
                 type: string
+              metadata:
+                additionalProperties:
+                  type: string
+                description: (optional) Additional information
+                type: object
             type: object
         type: object
     served: true
@@ -94,6 +103,10 @@ spec:
           spec:
             description: KiveDataSpec defines the desired state of KiveData
             properties:
+              dev-id:
+                description: The device number of the inode
+                format: int32
+                type: integer
               inodeNo:
                 description: The inode number of the file
                 format: int64
@@ -101,6 +114,11 @@ spec:
               kernelId:
                 description: A string to uniquely identify a running kernel
                 type: string
+              metadata:
+                additionalProperties:
+                  type: string
+                description: (optional) Additional information
+                type: object
             type: object
         type: object
     served: true
@@ -738,9 +756,6 @@ spec:
         - mountPath: /host/proc
           name: proc
           readOnly: true
-        - mountPath: /host/real/proc
-          name: realproc
-          readOnly: true
       dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsNonRoot: true
@@ -759,10 +774,6 @@ spec:
           path: /proc
           type: Directory
         name: proc
-      - hostPath:
-          path: /host/real/proc
-          type: Directory
-        name: realproc
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

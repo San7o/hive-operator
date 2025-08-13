@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kivebpf
+  name: kivebpf-kivepolicy-viewer-role
+rules:
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kivebpf.san7o.github.io
+  resources:
+  - kivepolicies/status
+  verbs:
+  - get

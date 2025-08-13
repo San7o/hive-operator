@@ -1,0 +1,48 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    operators.operatorframework.io.bundle.channels.v1: stable,alpha
+    operators.operatorframework.io.bundle.default.channel.v1: stable
+  name: kivebpf.v1.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: {}
+  description: Kive is a free and open source eBPF-powered file access monitoring
+    Kubernetes operator. Kivebpf provides a stable API to place inode-based traps
+    on files and receive alerts when a file is accessed.
+  displayName: kivebpf
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - ebpf
+  - monitoring
+  - observability
+  links:
+  - name: Kivebpf
+    url: https://kivebpf.domain
+  maintainers:
+  - email: giovanni.santini@proton.me
+    name: Giovanni Santini
+  maturity: stable
+  provider:
+    name: Giovanni Santini (San7o)
+    url: https://github.com/San7o/kivebpf
+  version: 1.0.0
