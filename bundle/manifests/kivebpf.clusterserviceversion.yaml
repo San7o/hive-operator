@@ -110,7 +110,7 @@ metadata:
                 "create": true,
                 "matchAny": [
                   {
-                    "container-name": ".*",
+                    "containerName": "regex:ngi.*",
                     "namespace": "default"
                   }
                 ],
@@ -136,7 +136,7 @@ metadata:
                 "create": true,
                 "matchAny": [
                   {
-                    "container-name": "123.*",
+                    "containerName": "regex:123.*",
                     "namespace": "default",
                     "pod": "nginx-pod"
                   }
@@ -216,7 +216,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2025-08-13T18:02:46Z"
+    createdAt: "2025-08-13T19:37:00Z"
     operators.operatorframework.io.bundle.channels.v1: stable,alpha
     operators.operatorframework.io.bundle.default.channel.v1: stable
     operators.operatorframework.io/builder: operator-sdk-v1.39.1

@@ -390,7 +390,13 @@ items matched with a logical AND, which include:
 
 - `pod`: the name of the pod
 - `namespace`: the namespace of the pod
-- `container-name`: a regex to match the name of containers
+- `container-name`: the name of the container, or a patter to match the
+  name. There are three possible cases:
+  - if this field is prepended by `regex:`, the rest of the string
+    will represent a regular expression
+  - if the fiels is prepended by `glob:`, then this is a
+    filesystem-style regex, as described in go `filepath.Match`.
+  - otherwise, the name of the container will be compared exactly
 - `ip`: the ipv4 of the pod
 - `matchLabels`: a list of labels and values
 

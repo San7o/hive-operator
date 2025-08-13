@@ -42,7 +42,7 @@ var _ = Describe("ContainerName Regex 2", Ordered, func() {
 						kivev2alpha1.KiveTrapMatch{
 							PodName:       "test-pod",
 							Namespace:     "kive-test",
-							ContainerName: "test-nope.*",
+							ContainerName: "regex:test-nope.*",
 						},
 					},
 				},

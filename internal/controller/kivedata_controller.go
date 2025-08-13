@@ -107,8 +107,7 @@ Data:
 
 				err := ebpf.RemoveInode(ebpf.BpfMapKey{Inode: kiveData.Spec.InodeNo, Dev: kiveData.Spec.DevID})
 				if err != nil {
-					log.Error(err, fmt.Sprintf("Reconcile Error Remove Inode during deletion of KiveData %s", kiveData.Name))
-					return ctrl.Result{Requeue: true}, nil
+					log.Info("Reconcile Error Remove Inode during deletion of KiveData %s: %w", kiveData.Name, err)
 				}
 
 				controllerutil.RemoveFinalizer(kiveDataCopy, KiveDataFinalizerName)

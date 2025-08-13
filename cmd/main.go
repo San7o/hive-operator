@@ -198,7 +198,8 @@ func main() {
 	}
 
 	if err = (&controller.KivePodReconciler{
-		Client: kivePodMgr.GetClient(),
+		Client:         kivePodMgr.GetClient(),
+		UncachedClient: kivePodMgr.GetAPIReader(),
 	}).SetupWithManager(kivePodMgr); err != nil {
 		setupLog.Error(err, "unable to create KivePod controller", "controller", "KivePod")
 		os.Exit(1)

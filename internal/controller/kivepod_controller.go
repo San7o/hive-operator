@@ -30,6 +30,7 @@ import (
 
 type KivePodReconciler struct {
 	client.Client
+	UncachedClient client.Reader
 }
 
 // There are two main operations we are concearned about with
@@ -52,12 +53,12 @@ func (r *KivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		comm.KernelIDLabel: KernelID,
 	}
 	kiveDataList := &kivev2alpha1.KiveDataList{}
-	err := r.Client.List(ctx, kiveDataList, kiveDataLabels)
+	err := r.UncachedClient.List(ctx, kiveDataList, kiveDataLabels)
 	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
 	}
 	podList := &corev1.PodList{}
-	err = r.Client.List(ctx, podList)
+	err = r.UncachedClient.List(ctx, podList)
 	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get PodList resource: %w", err)
 	}
@@ -92,17 +93,19 @@ Data:
 		}
 	}
 
-	// Trigger a KivePolicy reconciliation event to handle
-	// pod creation. If a pod is not yet ready, the KiveData
-	// Reconciliation should loop until all the pods are ready.
+	// Trigger a KivePolicy reconciliation event to handle pod
+	// creation. If a pod is not yet ready, the reconciliation should
+	// loop until all the pods are ready.
 	kivePolicyList := &kivev2alpha1.KivePolicyList{}
-	err = r.Client.List(ctx, kivePolicyList)
+	err = r.UncachedClient.List(ctx, kivePolicyList)
 	if err != nil { // Fatal
 		return reconcile.Result{Requeue: shouldRequeue}, fmt.Errorf("Reconcile Error Failed to get Kive Policy resource: %w", err)
 	}
+
 	if len(kivePolicyList.Items) == 0 {
 		return ctrl.Result{Requeue: shouldRequeue}, nil
 	}
+
 	kivePolicy := kivePolicyList.Items[0]
 	orig := kivePolicy.DeepCopy()
 	if kivePolicy.Annotations == nil {

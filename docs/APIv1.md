@@ -37,11 +37,17 @@ type KiveTrap struct {
 
 // Match all the following optional fields (logical AND)
 type KiveTrapMatch struct {
-	// Filter pods by name
-	PodName string `json:"pod,omitempty"`
-	// Filter container by name, can be a regex with syntax described at
-	// https://golang.org/s/re2syntax
-	ContainerName string `json:"containerName,omitempty"`
+    // Filter pods by name
+    PodName string `json:"pod,omitempty"`
+    // Filter container by name.
+    //  - if this field is prepended by "regex:", the rest of the string
+    //    will represent a regular expression matched with go regexp
+    //    library (https://golang.org/s/re2syntax)
+    //  - if the fiels is prepended by "glob:", then this is a
+    //    filesystem-style regex, as described in go filepath.Match
+    //    library (https://pkg.go.dev/path/filepath#Match)
+    //  - otherwise, the name of the container will be compared exactly
+    ContainerName string `json:"containerName,omitempty"`
 	// Filter pods by namespace
 	Namespace string `json:"namespace,omitempty"`
 	// Filter pods by IP
