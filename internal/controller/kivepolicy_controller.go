@@ -133,15 +133,6 @@ Policy:
 		Match:
 			for _, kiveTrapMatch := range kiveTrap.MatchAny {
 
-				labels := client.MatchingLabels{
-					TrapIDLabel: trapID,
-				}
-				kiveDataList := &kivev2alpha1.KiveDataList{}
-				err = r.UncachedClient.List(ctx, kiveDataList, labels)
-				if err != nil { // Fatal
-					return ctrl.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
-				}
-
 				// Get Pods that match this KiveTrap
 				labelMap := make(client.MatchingLabels)
 				labelMap = kiveTrapMatch.MatchLabels
