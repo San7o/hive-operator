@@ -73,7 +73,7 @@ func KiveDataTrapCmp(kiveData kivev2alpha1.KiveData, kiveTrap kivev2alpha1.KiveT
 	if err != nil {
 		return false, fmt.Errorf("KiveDataTrapCmp Error Hash ID: %w", err)
 	}
-	return kiveData.ObjectMeta.Labels[TrapIdLabel] == trapID, nil
+	return kiveData.ObjectMeta.Labels[TrapIDLabel] == trapID, nil
 }
 
 func KiveDataContainerCmp(kiveData kivev2alpha1.KiveData, pod corev1.Pod, containerStatus corev1.ContainerStatus) bool {

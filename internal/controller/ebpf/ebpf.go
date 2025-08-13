@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	comm "github.com/San7o/kivebpf/internal/controller/comm"
 	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
@@ -212,7 +213,7 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 					Path:     kiveData.Annotations["path"],
 					Inode:    data.Ino,
 					Mask:     data.Mask,
-					KernelID: kiveData.Spec.KernelID,
+					KernelID: kiveData.ObjectMeta.Labels[comm.KernelIDLabel],
 					Callback: kiveData.ObjectMeta.Annotations["callback"],
 				},
 				CustomMetadata: map[string]string{},

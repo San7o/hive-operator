@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	comm "github.com/San7o/kivebpf/internal/controller/comm"
 	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
@@ -133,7 +134,7 @@ Policy:
 			for _, kiveTrapMatch := range kiveTrap.MatchAny {
 
 				labels := client.MatchingLabels{
-					TrapIdLabel: trapID,
+					TrapIDLabel: trapID,
 				}
 				kiveDataList := &kivev2alpha1.KiveDataList{}
 				err = r.UncachedClient.List(ctx, kiveDataList, labels)
@@ -227,14 +228,14 @@ Policy:
 								},
 								Labels: map[string]string{
 									// The trap-id is used to link this KiveData to this trap
-									TrapIdLabel: trapID,
+									TrapIDLabel:        trapID,
+									comm.KernelIDLabel: KernelID,
 								},
 								Finalizers: []string{KiveDataFinalizerName},
 							},
 							Spec: kivev2alpha1.KiveDataSpec{
 								InodeNo:  inode,
 								DevID:    dev,
-								KernelID: KernelID,
 								Metadata: map[string]string{},
 							},
 						}

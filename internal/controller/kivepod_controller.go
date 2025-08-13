@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
+	comm "github.com/San7o/kivebpf/internal/controller/comm"
 )
 
 type KivePodReconciler struct {
@@ -47,8 +48,11 @@ func (r *KivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 	shouldRequeue := false
 	log.Info("Pod watch event triggered.")
 
+	kiveDataLabels := client.MatchingLabels{
+		comm.KernelIDLabel: KernelID,
+	}
 	kiveDataList := &kivev2alpha1.KiveDataList{}
-	err := r.Client.List(ctx, kiveDataList)
+	err := r.Client.List(ctx, kiveDataList, kiveDataLabels)
 	if err != nil { // Fatal
 		return reconcile.Result{}, fmt.Errorf("Reconcile Error Failed to get KiveData resource: %w", err)
 	}
@@ -61,13 +65,7 @@ func (r *KivePodReconciler) Reconcile(ctx context.Context, req reconcile.Request
 Data:
 	for _, kiveData := range kiveDataList.Items {
 
-		if kiveData.Spec.KernelID != KernelID {
-			// We are only concearned about the kiveData on this machine,
-			// to avoid conflicts.
-			continue Data
-		}
 		found := false
-
 	Pod:
 		for _, pod := range podList.Items {
 			if kiveData.Annotations["pod-name"] == pod.Name &&
