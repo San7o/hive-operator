@@ -26,7 +26,7 @@ spec:
     matchAny:
     - pod: nginx-pod
       namespace: default
-      containerName: "rgex:nginx-.*"
+      containerName: "regex:nginx-.*"
       matchLabels:
         security-level: high
     metadata:

@@ -2,8 +2,8 @@
 VERSION ?= 1.0.0
 # The kernel version is the concatenation of major and minor version
 # Release builds should be compiled with 510 (minimum supported)
-# KERNEL_VERSION = 510
-KERNEL_VERSION ?= 611
+KERNEL_VERSION = 510
+# KERNEL_VERSION ?= 611
 
 ENV?=local
 include .env-${ENV}
