@@ -211,7 +211,7 @@ Policy:
 									"callback":           kiveTrap.Callback,
 									"pod-name":           pod.Name,
 									"namespace":          pod.Namespace,
-									"pod-ip":             pod.Status.PodIPs[0].IP,
+									"pod-ip":             pod.Status.PodIP,
 									"path":               kiveTrap.Path,
 									"container-id":       containerData.ID,
 									"container-name":     containerData.Name,

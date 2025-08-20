@@ -6,6 +6,10 @@
 
 #include "vmlinux.h"
 
+#ifndef TASK_COMM_LEN
+#define TASK_COMM_LEN 16
+#endif
+
 struct log_data {
 	pid_t pid;                /* process id */
 	gid_t tgid;               /* thread group id */

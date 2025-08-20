@@ -16,7 +16,7 @@
 static __always_inline void
 kprobe_output(long unsigned int inode, dev_t dev, int mask)
 {
-  struct log_data data;
+  struct log_data data = {};
   
   __u64 pid_tgid = bpf_get_current_pid_tgid();
   __u64 uid_gid = bpf_get_current_uid_gid();
@@ -42,16 +42,22 @@ kprobe_output(long unsigned int inode, dev_t dev, int mask)
 SEC("kprobe/inode_permission")
 int kprobe_inode_permission(struct pt_regs *ctx)
 {
-    struct mnt_idmap *idmap = (struct mnt_idmap*) PT_REGS_PARM1(ctx);
+  #if KERNEL_VERSION > 511
     struct inode *inode = (struct inode*) PT_REGS_PARM2(ctx);
     int mask = (int) PT_REGS_PARM3(ctx);
+  #else
+    struct inode *inode = (struct inode*) PT_REGS_PARM1(ctx);
+    int mask = (int) PT_REGS_PARM2(ctx);
+  #endif
 
+    if (!inode)
+      return 0;
+    
     long unsigned int ino = BPF_CORE_READ(inode, i_ino);
     dev_t dev = BPF_CORE_READ(inode, i_sb, s_dev);
-    struct map_key key = {
-      .inode = ino,
-      .dev   = dev,
-    };
+    struct map_key key = {};
+    key.inode = ino;
+    key.dev   = dev;
 
     if (bpf_map_lookup_elem(&traced_inodes, &key))
     {

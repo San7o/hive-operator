@@ -71,7 +71,7 @@ Data:
 		for _, pod := range podList.Items {
 			if kiveData.Annotations["pod-name"] == pod.Name &&
 				kiveData.Annotations["namespace"] == pod.Namespace &&
-				kiveData.Annotations["pod-ip"] == pod.Status.PodIPs[0].IP {
+				kiveData.Annotations["pod-ip"] == pod.Status.PodIP {
 
 				if pod.Status.Phase != corev1.PodSucceeded &&
 					pod.Status.Phase != corev1.PodFailed {

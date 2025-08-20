@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ebpfdev
+  namespace: default
+spec:
+  containers:
+    - name: ebpfdev
+      image: giovann103/ebpfdev:latest
+      securityContext:
+        privileged: true
+      command: ["/bin/bash", "-c", "sleep infinity"]
+      volumeMounts:
+        - mountPath: /sys
+          name: sys
+        - mountPath: /lib/modules
+          name: lib-modules
+        - mountPath: /usr/src
+          name: usr-src
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
+        limits:
+          cpu: "2"
+          memory: "2Gi"
+  volumes:
+    - name: sys
+      hostPath:
+        path: /sys
+    - name: lib-modules
+      hostPath:
+        path: /lib/modules
+    - name: usr-src
+      hostPath:
+        path: /usr/src
+  restartPolicy: Never

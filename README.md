@@ -107,13 +107,13 @@ kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main
 ## Supported Environments
 
 
-| Component           | Supported Version(s)      | Notes                                                  |
-|---------------------|---------------------------|--------------------------------------------------------|
-| Kubernetes          | v1.33.x                   | Officially tested.                                     |
-| Container Runtime   | containerd                | Only `containerd` is supported at the moment.          |
-| Go (for dev build)  | 1.24                      | Required for building the operator.                    |
-| Linux Version       | 6.14                      | Tested on linux 6.14.                                  |
-| Architectures       | x86_64                    | The eBPF program works only on x86_64.                 |
+| Component           | Supported Version(s)      | Notes                                                         |
+|---------------------|---------------------------|---------------------------------------------------------------|
+| Kubernetes          | v1.33.x                   | Officially tested.                                            |
+| Container Runtime   | containerd                | Only `containerd` is supported at the moment.                 |
+| Go (for dev build)  | 1.24                      | Required for building the operator.                           |
+| Linux Version       | >= 5.10                   | All kernels from 5.10 are supported. Tested on 5.10 and 6.14. |
+| Architectures       | x86_64                    | The eBPF program works only on x86_64.                        |
 
 # Development
 
