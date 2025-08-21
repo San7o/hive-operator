@@ -40,6 +40,9 @@ anymore.</p>
 <p>On minikube:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minikube</span> start <span class="at">--container-runtime</span><span class="op">=</span>containerd</span></code></pre></div>
+<p>Note: the operator currently cannot run on EKS or other providers
+because self-signed certificates are not yet configured to work on real
+clusters. Support should be implemented in a future release.</p>
 <h2 id="dev-environments">Dev Environments</h2>
 <p>For convenience, this project uses different environments to manage
 building and deploying. By default, there are two different

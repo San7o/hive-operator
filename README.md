@@ -6,6 +6,8 @@ Kubernetes operator.
 Kivebpf is used by [Koney](https://github.com/dynatrace-oss/koney/) to
 place deception policies on kubernetes clusters.
 
+Note that Kivebpf is not yet ready for production use.
+
 # Basic Usage
 
 You can specify a path to monitor and in which containers by
@@ -84,6 +86,9 @@ following is an example alert:
 }
 ```
 
+
+- `cwd` and `arguments` are currently disabled
+
 If you specify a `callback` in the `KivePolicy`, then the data will be
 sent to the URL of the callback through an HTTP POST request.
 
@@ -94,13 +99,18 @@ the operator in more detail. You can find more examples in
 ## Quick deploy
 
 To deploy the operator, first make sure you have `cert-manager`
-installed for secure TLS connections (required):
+installed for secure TLS connections.
+
+Note: This dependency is currently required but it should be dropped
+in a future release. Additionally, `cert-manager` currently configures
+a self-signing issuer: this is not meant to be used on EKS or other
+providers, please use Minikube or Kind to test the operator.
 
 ```bash
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
 ```
 
-Then simply install the operator with from the [official docker
+Then simply install the operator from the [official docker
 repository](https://hub.docker.com/repository/docker/giovann103/kivebpf/general):
 
 ```bash

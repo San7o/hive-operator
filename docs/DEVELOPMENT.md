@@ -31,6 +31,10 @@ On minikube:
 minikube start --container-runtime=containerd
 ```
 
+Note: the operator currently cannot run on EKS or other providers
+because self-signed certificates are not yet configured to work on
+real clusters. Support should be implemented in a future release.
+
 ## Dev Environments
 
 For convenience, this project uses different environments to manage
