@@ -79,25 +79,6 @@ func (r *KiveDataReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 Data:
 	for _, kiveData := range kiveDataList.Items {
 
-		// Check if there is a finalizer
-		if !controllerutil.ContainsFinalizer(&kiveData, KiveDataFinalizerName) {
-
-			kiveDataCopy := kiveData.DeepCopy()
-			controllerutil.AddFinalizer(kiveDataCopy, KiveDataFinalizerName)
-			err := r.Client.Patch(ctx, kiveDataCopy, client.MergeFrom(&kiveData))
-			if err != nil {
-
-				// Try again
-				log.Info("Reconcile Could not add finalizer to KiveData, trying again", "name", kiveData.Name, "error", err)
-				return ctrl.Result{Requeue: true}, nil
-			} else {
-
-				// Patch causes reconciliation, so we return from this one
-				log.Info("Successfully added finalizer to KiveData", "name", kiveData.Name)
-				return ctrl.Result{}, nil
-			}
-		}
-
 		// Check if this KiveData is being deleted
 		if !kiveData.ObjectMeta.DeletionTimestamp.IsZero() {
 
@@ -127,6 +108,26 @@ Data:
 			}
 			continue Data
 		}
+		
+		// Check if there is a finalizer
+		if !controllerutil.ContainsFinalizer(&kiveData, KiveDataFinalizerName) {
+
+			kiveDataCopy := kiveData.DeepCopy()
+			controllerutil.AddFinalizer(kiveDataCopy, KiveDataFinalizerName)
+			err := r.Client.Patch(ctx, kiveDataCopy, client.MergeFrom(&kiveData))
+			if err != nil {
+
+				// Try again
+				log.Info("Reconcile Could not add finalizer to KiveData, trying again", "name", kiveData.Name, "error", err)
+				return ctrl.Result{Requeue: true}, nil
+			} else {
+
+				// Patch causes reconciliation, so we return from this one
+				log.Info("Successfully added finalizer to KiveData", "name", kiveData.Name)
+				return ctrl.Result{}, nil
+			}
+		}
+
 
 		found := false
 	Policy:

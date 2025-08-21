@@ -109,10 +109,9 @@ kubectl apply -f https://raw.githubusercontent.com/San7o/kivebpf/refs/heads/main
 
 ## Supported Environments
 
-
 | Component           | Supported Version(s)      | Notes                                                         |
 |---------------------|---------------------------|---------------------------------------------------------------|
-| Kubernetes          | v1.33.x                   | Officially tested.                                            |
+| Kubernetes          | v1.33.x minikube or kind  | `cert-manager` on EKS is currently not configured. Support for EKS is in development. |
 | Container Runtime   | containerd                | Only `containerd` is supported at the moment.                 |
 | Go (for dev build)  | 1.24                      | Required for building the operator.                           |
 | Linux Version       | >= 5.10                   | All kernels from 5.10 are supported. Tested on 5.10 and 6.14. |

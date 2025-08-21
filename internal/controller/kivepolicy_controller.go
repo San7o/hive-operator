@@ -75,25 +75,6 @@ func (r *KivePolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 Policy:
 	for _, kivePolicy := range kivePolicyList.Items {
 
-		// Check if there is a finalizer
-		if !controllerutil.ContainsFinalizer(&kivePolicy, KivePolicyFinalizerName) {
-
-			kivePolicyCopy := kivePolicy.DeepCopy()
-			controllerutil.AddFinalizer(kivePolicyCopy, KivePolicyFinalizerName)
-			err := r.Client.Patch(ctx, kivePolicyCopy, client.MergeFrom(&kivePolicy))
-			if err != nil {
-
-				// Try again
-				log.Info("Reconcile Could not add finalizer for KivePolicy, trying again", "name", kivePolicy.Name, "error", err)
-				return ctrl.Result{Requeue: true}, nil
-			} else {
-
-				// Patch causes reconciliation, so we return from this one
-				log.Info("Successfully added finalizer to KivePolicy", "name", kivePolicy.Name)
-				return ctrl.Result{}, nil
-			}
-		}
-
 		// Check if this policy is being deleted
 		if !kivePolicy.ObjectMeta.DeletionTimestamp.IsZero() {
 
@@ -114,6 +95,25 @@ Policy:
 				return ctrl.Result{}, nil
 			}
 			continue Policy
+		}
+		
+		// Check if there is a finalizer
+		if !controllerutil.ContainsFinalizer(&kivePolicy, KivePolicyFinalizerName) {
+
+			kivePolicyCopy := kivePolicy.DeepCopy()
+			controllerutil.AddFinalizer(kivePolicyCopy, KivePolicyFinalizerName)
+			err := r.Client.Patch(ctx, kivePolicyCopy, client.MergeFrom(&kivePolicy))
+			if err != nil {
+
+				// Try again
+				log.Info("Reconcile Could not add finalizer for KivePolicy, trying again", "name", kivePolicy.Name, "error", err)
+				return ctrl.Result{Requeue: true}, nil
+			} else {
+
+				// Patch causes reconciliation, so we return from this one
+				log.Info("Successfully added finalizer to KivePolicy", "name", kivePolicy.Name)
+				return ctrl.Result{}, nil
+			}
 		}
 
 	Trap:
