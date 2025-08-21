@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"time"
 
@@ -30,7 +29,6 @@ import (
 
 	kivev2alpha1 "github.com/San7o/kivebpf/api/v2alpha1"
 	comm "github.com/San7o/kivebpf/internal/controller/comm"
-	container "github.com/San7o/kivebpf/internal/controller/container"
 )
 
 const (
@@ -63,9 +61,21 @@ func LoadEbpf(ctx context.Context) error {
 		return fmt.Errorf("LoadEbpf Error Load eBPF objects: %w", err)
 	}
 
-	Kprobe, err = link.Kprobe(KprobedFunc, Objs.KprobeInodePermission, nil)
+	kernelIsOld, err := isKernelOld()
 	if err != nil {
-		return fmt.Errorf("LoadEbpf Error Open kprobe: %w", err)
+		return fmt.Errorf("LoadEbpf Error Check kernel version: %w", err)
+	}
+
+	if kernelIsOld {
+		Kprobe, err = link.Kprobe(KprobedFunc, Objs.KprobeInodePermissionOld, nil)
+		if err != nil {
+			return fmt.Errorf("LoadEbpf Error Open kprobe (old kernel): %w", err)
+		}
+	} else {
+		Kprobe, err = link.Kprobe(KprobedFunc, Objs.KprobeInodePermissionNew, nil)
+		if err != nil {
+			return fmt.Errorf("LoadEbpf Error Open kprobe: %w", err)
+		}
 	}
 
 	RingbuffReader, err = ringbuf.NewReader(Objs.Rb)
@@ -153,8 +163,9 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 		if kiveData.Spec.InodeNo == data.Ino {
 
 			cwd := ""
-			cmdLine := ""
-			readSuccess := true
+			args := ""
+			binary := ""
+
 			// If the node is a container on some host, then we need to read
 			// the host's procfs which is assumed to be mounted in
 			// /host/real/proc. If this does not exist, either the cluster
@@ -163,38 +174,46 @@ func ReadAlert(ctx context.Context, cli client.Reader) (kivev2alpha1.KiveAlert, 
 			// since procfs of a node is not the same as the host if the
 			// node is a container on the host (for example, for clusters
 			// created using Kind)
-			cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.RealHostProcMountpoint, data.Pid))
-			if err != nil {
-				cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
+			//
+			// TODO: this is a hack and has been disabled until a better
+			//       solution is ound
+			/*
+				cmdLine := ""
+				readSuccess := true
+				cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.RealHostProcMountpoint, data.Pid))
 				if err != nil {
-					readSuccess = false
-					// error is handled gracefully
-					log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
-				}
-			}
-
-			if readSuccess {
-
-				cmdlinePath := fmt.Sprintf("%s/%d/cmdline", container.RealHostProcMountpoint, data.Pid)
-				cmdlineBytes, err := os.ReadFile(cmdlinePath)
-				if err != nil {
-					cmdlinePath = fmt.Sprintf("%s/%d/cmdline", container.ProcMountpoint, data.Pid)
-					cmdlineBytes, err = os.ReadFile(cmdlinePath)
+					cwd, err = os.Readlink(fmt.Sprintf("%s/%d/cwd", container.ProcMountpoint, data.Pid))
 					if err != nil {
+						readSuccess = false
 						// error is handled gracefully
-						log.Info(fmt.Sprintf("Could not read %s/%d/cmdline while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+						log.Info(fmt.Sprintf("Could not read %s/%d/cwd while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
 					}
 				}
-				cmdLine = string(cmdlineBytes)
-			}
 
-			binary := ""
-			args := ""
-			if cmdLine == "" {
-				binary = int8ArrayToString(data.Comm)
-			} else {
-				binary, args = parseCmdline(cmdLine)
-			}
+				if readSuccess {
+
+					cmdlinePath := fmt.Sprintf("%s/%d/cmdline", container.RealHostProcMountpoint, data.Pid)
+					cmdlineBytes, err := os.ReadFile(cmdlinePath)
+					if err != nil {
+						cmdlinePath = fmt.Sprintf("%s/%d/cmdline", container.ProcMountpoint, data.Pid)
+						cmdlineBytes, err = os.ReadFile(cmdlinePath)
+						if err != nil {
+							// error is handled gracefully
+							log.Info(fmt.Sprintf("Could not read %s/%d/cmdline while generating an KiveAlert, this can happen if the process terminated too quickly for the operator to react or the node is running in a container and procfs is not mounted in %s", container.ProcMountpoint, data.Pid, container.RealHostProcMountpoint))
+						}
+					}
+					cmdLine = string(cmdlineBytes)
+				}
+			*/
+
+			binary = int8ArrayToString(data.Comm[:])
+
+			// TODO: see above
+			/*
+				if cmdLine != "" {
+					binary, args = parseCmdline(cmdLine)
+				}
+			*/
 
 			kiveAlertVersion := kiveData.Annotations["kive-alert-version"]
 			if kiveAlertVersion == "" {

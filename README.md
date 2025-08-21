@@ -1,7 +1,10 @@
 # kivebpf
 
-Kive is a free and open source eBPF-powered file access monitoring
+Kivebpf is a free and open source eBPF-powered file access monitoring
 Kubernetes operator.
+
+Kivebpf is used by [Koney](https://github.com/dynatrace-oss/koney/) to
+place deception policies on kubernetes clusters.
 
 # Basic Usage
 

@@ -76,7 +76,8 @@ type bpfSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfProgramSpecs struct {
-	KprobeInodePermission *ebpf.ProgramSpec `ebpf:"kprobe_inode_permission"`
+	KprobeInodePermissionNew *ebpf.ProgramSpec `ebpf:"kprobe_inode_permission_new"`
+	KprobeInodePermissionOld *ebpf.ProgramSpec `ebpf:"kprobe_inode_permission_old"`
 }
 
 // bpfMapSpecs contains maps before they are loaded into the kernel.
@@ -134,12 +135,14 @@ type bpfVariables struct {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfPrograms struct {
-	KprobeInodePermission *ebpf.Program `ebpf:"kprobe_inode_permission"`
+	KprobeInodePermissionNew *ebpf.Program `ebpf:"kprobe_inode_permission_new"`
+	KprobeInodePermissionOld *ebpf.Program `ebpf:"kprobe_inode_permission_old"`
 }
 
 func (p *bpfPrograms) Close() error {
 	return _BpfClose(
-		p.KprobeInodePermission,
+		p.KprobeInodePermissionNew,
+		p.KprobeInodePermissionOld,
 	)
 }
 

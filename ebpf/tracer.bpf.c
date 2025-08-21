@@ -39,31 +39,52 @@ kprobe_output(long unsigned int inode, dev_t dev, int mask)
  *	               	     struct inode *inode, int mask)
  *  Description: Check if accessing an inode is allowed
  */
+// kprobe_inode_permission_old should be loaded on kernels < 5.12
 SEC("kprobe/inode_permission")
-int kprobe_inode_permission(struct pt_regs *ctx)
+int kprobe_inode_permission_old(struct pt_regs *ctx)
 {
-  #if KERNEL_VERSION > 511
-    struct inode *inode = (struct inode*) PT_REGS_PARM2(ctx);
-    int mask = (int) PT_REGS_PARM3(ctx);
-  #else
-    struct inode *inode = (struct inode*) PT_REGS_PARM1(ctx);
-    int mask = (int) PT_REGS_PARM2(ctx);
-  #endif
+  struct inode *inode = (struct inode*) PT_REGS_PARM1(ctx);
+  int mask = (int) PT_REGS_PARM2(ctx);
 
-    if (!inode)
-      return 0;
-    
-    long unsigned int ino = BPF_CORE_READ(inode, i_ino);
-    dev_t dev = BPF_CORE_READ(inode, i_sb, s_dev);
-    struct map_key key = {};
-    key.inode = ino;
-    key.dev   = dev;
-
-    if (bpf_map_lookup_elem(&traced_inodes, &key))
-    {
-      kprobe_output(ino, dev, mask);
-      return 0;
-    }
-    
+  if (!inode)
     return 0;
+    
+  long unsigned int ino = BPF_CORE_READ(inode, i_ino);
+  dev_t dev = BPF_CORE_READ(inode, i_sb, s_dev);
+  struct map_key key = {};
+  key.inode = ino;
+  key.dev   = dev;
+
+  if (bpf_map_lookup_elem(&traced_inodes, &key))
+  {
+    kprobe_output(ino, dev, mask);
+    return 0;
+  }
+    
+  return 0;
+}
+
+// kprobe_inode_permission_new should be loaded on kernels >= 5.12
+SEC("kprobe/inode_permission")
+int kprobe_inode_permission_new(struct pt_regs *ctx)
+{
+  struct inode *inode = (struct inode*) PT_REGS_PARM2(ctx);
+  int mask = (int) PT_REGS_PARM3(ctx);
+ 
+  if (!inode)
+    return 0;
+    
+  long unsigned int ino = BPF_CORE_READ(inode, i_ino);
+  dev_t dev = BPF_CORE_READ(inode, i_sb, s_dev);
+  struct map_key key = {};
+  key.inode = ino;
+  key.dev   = dev;
+
+  if (bpf_map_lookup_elem(&traced_inodes, &key))
+  {
+    kprobe_output(ino, dev, mask);
+    return 0;
+  }
+    
+  return 0;
 }

@@ -14,7 +14,9 @@ package ebpf
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/cilium/ebpf"
 )
@@ -46,7 +48,7 @@ func RemoveInode(mapKey BpfMapKey) error {
 	return nil
 }
 
-func int8ArrayToString(arr [16]int8) string {
+func int8ArrayToString(arr []int8) string {
 	b := make([]byte, 0, len(arr))
 	for _, c := range arr {
 		if c == 0 {
@@ -80,4 +82,29 @@ func parseCmdline(cmdline string) (binary string, args string) {
 	}
 
 	return binary, args
+}
+
+/*
+ *  The function check_permission was hanged in linux 5.12, hence
+ *  we need to load a different program if the version is newer or
+ *  older than that.
+ */
+func isKernelOld() (bool, error) {
+
+	var uname syscall.Utsname
+	if err := syscall.Uname(&uname); err != nil {
+		return false, fmt.Errorf("isKernelOld Error Syscall Uname: %w", err)
+	}
+
+	release := int8ArrayToString(uname.Release[:])
+	major, err := strconv.Atoi(strings.Split(release, ".")[0])
+	if err != nil {
+		return false, fmt.Errorf("isKernelOld Error Conversion to integer of major kernel version: %w", err)
+	}
+	minor, err := strconv.Atoi(strings.Split(release, ".")[1])
+	if err != nil {
+		return false, fmt.Errorf("isKernelOld Error Conversion to integer of minor kernel version: %w", err)
+	}
+
+	return major < 5 || (major == 5 && minor <= 11), nil
 }
